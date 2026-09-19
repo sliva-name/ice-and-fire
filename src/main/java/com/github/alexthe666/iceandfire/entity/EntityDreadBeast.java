@@ -42,15 +42,11 @@ public class EntityDreadBeast extends EntityDreadMob implements IAnimatedEntity,
 
     private static final EntityDataAccessor<Float> SCALE = SynchedEntityData.defineId(EntityDreadBeast.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Integer> VARIANT = SynchedEntityData.defineId(EntityDreadBeast.class, EntityDataSerializers.INT);
-    private static final float INITIAL_WIDTH = 1.2F;
-    private static final float INITIAL_HEIGHT = 0.9F;
     public static Animation ANIMATION_SPAWN = Animation.create(40);
     public static Animation ANIMATION_BITE = Animation.create(15);
     private int animationTick;
     private Animation currentAnimation;
     private final int hostileTicks = 0;
-    private float firstWidth = 1.0F;
-    private float firstHeight = 1.0F;
 
     public EntityDreadBeast(EntityType type, Level worldIn) {
         super(type, worldIn);
@@ -100,6 +96,12 @@ public class EntityDreadBeast extends EntityDreadMob implements IAnimatedEntity,
 
     public void setSize(float scale) {
         this.entityData.set(SCALE, scale);
+        this.refreshDimensions();
+    }
+
+    @Override
+    protected EntityDimensions getDefaultDimensions(@NotNull Pose poseIn) {
+        return this.getType().getDimensions().scale(Math.max(0.01F, this.getSize()));
     }
 
     @Override
@@ -113,10 +115,6 @@ public class EntityDreadBeast extends EntityDreadMob implements IAnimatedEntity,
     @Override
     public void aiStep() {
         super.aiStep();
-        if (Math.abs(firstWidth - INITIAL_WIDTH * getSize()) > 0.01F || Math.abs(firstHeight - INITIAL_HEIGHT * getSize()) > 0.01F) {
-            firstWidth = INITIAL_WIDTH * getSize();
-            firstHeight = INITIAL_HEIGHT * getSize();
-        }
         if (this.getAnimation() == ANIMATION_SPAWN && this.getAnimationTick() < 30) {
             BlockState belowBlock = this.level().getBlockState(this.blockPosition().below());
             if (belowBlock.getBlock() != Blocks.AIR) {

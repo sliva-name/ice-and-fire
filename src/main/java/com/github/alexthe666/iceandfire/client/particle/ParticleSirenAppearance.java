@@ -42,8 +42,14 @@ public class ParticleSirenAppearance extends Particle implements IafAppearancePa
         poses.mulPose(Axis.XP.rotationDegrees(150.0F * ageScale - 60.0F));
         poses.scale(-1.0F, -1.0F, 1.0F);
         poses.translate(0.0D, -1.101F, 1.5D);
+        SirenRenderState state = new SirenRenderState();
+        state.singing = true;
+        state.singProgress = 20.0F;
+        state.singingPose = this.sirenType % 3;
+        state.onGround = true;
+        state.ageInTicks = this.age + partialTick;
         return Optional.of(new IafAppearanceParticleGroup.Instance(
-            this.model, new SirenRenderState(), poses,
+            this.model, state, poses,
             RenderTypes.entityTranslucent(RenderSiren.getSirenOverlayTexture(this.sirenType)),
             ARGB.colorFromFloat(alpha, 1.0F, 1.0F, 1.0F), 15728880));
     }

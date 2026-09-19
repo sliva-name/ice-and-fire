@@ -387,7 +387,7 @@ public class EntityCockatrice extends TamableAnimal implements IAnimatedEntity, 
 
     @Override
     public void setOrderedToSit(boolean sitting) {
-        super.setSwimming(sitting);
+        super.setOrderedToSit(sitting);
         if (!this.level().isClientSide()) {
             this.isSitting = sitting;
         }
@@ -594,10 +594,10 @@ public class EntityCockatrice extends TamableAnimal implements IAnimatedEntity, 
                         this.setTamingPlayer(attackTarget.getId());
                         this.setTamingLevel(this.getTamingLevel() + 1);
                         if (this.getTamingLevel() % 100 == 0) {
-                            this.level().broadcastEntityEvent(this, (byte) 46);
+                            this.level().broadcastEntityEvent(this, (byte) 85);
                         }
                         if (this.getTamingLevel() >= 1000) {
-                            this.level().broadcastEntityEvent(this, (byte) 45);
+                            this.level().broadcastEntityEvent(this, (byte) 84);
                             if (this.getTamingPlayer() instanceof Player)
                                 this.tame((Player) this.getTamingPlayer());
                             this.setTarget(null);
@@ -774,9 +774,9 @@ public class EntityCockatrice extends TamableAnimal implements IAnimatedEntity, 
 
     @Override
     public void handleEntityEvent(byte id) {
-        if (id == 45) {
+        if (id == 84) {
             this.playEffect(true);
-        } else if (id == 46) {
+        } else if (id == 85) {
             this.playEffect(false);
         } else {
             super.handleEntityEvent(id);

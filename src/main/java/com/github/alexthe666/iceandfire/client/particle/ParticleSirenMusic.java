@@ -8,18 +8,21 @@ import org.jetbrains.annotations.NotNull;
 
 public class ParticleSirenMusic extends SingleQuadParticle {
 
-    float noteParticleScale;
     float colorScale;
 
     public ParticleSirenMusic(ClientLevel world, double x, double y, double z, double motX, double motY, double motZ, float size) {
         super(world, x, y, z, motX, motY, motZ, IafParticleSprites.get(IafParticleSprites.SIREN_MUSIC));
         this.setPos(x, y, z);
-        this.colorScale = (float) 1;
+        this.gravity = 0.0F;
+        this.hasPhysics = false;
+        this.lifetime = 16;
+        this.yd += 0.2D;
+        this.quadSize *= size;
+        this.colorScale = 1.0F;
         this.rCol = Math.max(0.0F, Mth.sin((colorScale + 0.0F) * 6.2831855F) * 0.65F + 0.35F);
         this.gCol = Math.max(0.0F, Mth.sin((colorScale + 0.33333334F) * 6.2831855F) * 0.65F + 0.35F);
         this.bCol = Math.max(0.0F, Mth.sin((colorScale + 0.6666667F) * 6.2831855F) * 0.65F + 0.35F);
     }
-
 
     @Override
     public void tick() {
@@ -35,12 +38,6 @@ public class ParticleSirenMusic extends SingleQuadParticle {
         this.rCol = Math.max(0.0F, Mth.sin((colorScale + 0.0F) * 6.2831855F) * 0.65F + 0.35F);
         this.gCol = Math.max(0.0F, Mth.sin((colorScale + 0.33333334F) * 6.2831855F) * 0.65F + 0.35F);
         this.bCol = Math.max(0.0F, Mth.sin((colorScale + 0.6666667F) * 6.2831855F) * 0.65F + 0.35F);
-
-    }
-
-
-    public int getFXLayer() {
-        return 3;
     }
 
     @Override
@@ -52,5 +49,4 @@ public class ParticleSirenMusic extends SingleQuadParticle {
     protected SingleQuadParticle.Layer getLayer() {
         return IafParticleSprites.layer(this.sprite);
     }
-
 }

@@ -80,7 +80,7 @@ public class RenderStoneStatue extends EntityRenderer<EntityStoneStatue, StoneSt
     @Override
     public void extractRenderState(EntityStoneStatue entity, StoneStatueRenderState state, float partialTick) {
         super.extractRenderState(entity, state, partialTick);
-        state.statueScale = StoneStatuePose.scale(entity.getScale());
+        state.statueScale = StoneStatuePose.scale(entity.getAgeScale());
         state.yRot = Mth.lerp(partialTick, entity.yRotO, entity.getYRot());
         state.crackAmount = entity.getCrackAmount();
         state.crackTexture = StoneStatuePose.crackTexture(state.crackAmount);

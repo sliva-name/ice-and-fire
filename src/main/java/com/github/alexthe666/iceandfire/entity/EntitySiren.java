@@ -79,12 +79,14 @@ public class EntitySiren extends Monster implements IAnimatedEntity, IVillagerFe
     public static Animation ANIMATION_PULL = Animation.create(20);
     public ChainBuffer tail_buffer;
     public float singProgress;
+    public float prevSingProgress;
     public float swimProgress;
+    public float prevSwimProgress;
     public int singCooldown;
     private int animationTick;
     private Animation currentAnimation;
     private boolean isSinging;
-    private boolean isSwimming;
+    private boolean sirenSwimming;
     private boolean isLandNavigator;
     private int ticksAgressive;
     protected float iafMaxUpStep;
@@ -184,7 +186,15 @@ public class EntitySiren extends Monster implements IAnimatedEntity, IVillagerFe
     }
 
     @Override
+    protected EntityDimensions getDefaultDimensions(@NotNull Pose poseIn) {
+        // Pose.SWIMMING would squash the 1.6x0.9 mermaid box. Size is not pose-based.
+        return this.getType().getDimensions();
+    }
+
+    @Override
     public void aiStep() {
+        this.prevSingProgress = this.singProgress;
+        this.prevSwimProgress = this.swimProgress;
         super.aiStep();
         yBodyRot = getYRot();
 
@@ -231,11 +241,11 @@ public class EntitySiren extends Monster implements IAnimatedEntity, IVillagerFe
             this.setSinging(false);
         }
 
-        if (this.isInWater() && !this.isSwimming()) {
-            this.setSwimming(true);
+        if (this.isInWater() && !this.isSirenSwimming()) {
+            this.setSirenSwimming(true);
         }
-        if (!this.isInWater() && this.isSwimming()) {
-            this.setSwimming(false);
+        if (!this.isInWater() && this.isSirenSwimming()) {
+            this.setSirenSwimming(false);
         }
         LivingEntity target = getTarget();
         boolean pathOnHighGround = this.isPathOnHighGround() || !this.level().isClientSide() && target != null && !target.isInWater();
@@ -264,7 +274,7 @@ public class EntitySiren extends Monster implements IAnimatedEntity, IVillagerFe
         } else if (!singing && singProgress > 0.0F) {
             singProgress -= 1F;
         }
-        boolean swimming = isSwimming();
+        boolean swimming = isSirenSwimming();
         if (swimming && swimProgress < 20.0F) {
             swimProgress += 1F;
         } else if (!swimming && swimProgress > 0.0F) {
@@ -339,7 +349,7 @@ public class EntitySiren extends Monster implements IAnimatedEntity, IVillagerFe
         tag.putBoolean("Aggressive", this.isAgressive());
         tag.putInt("SingingPose", this.getSingingPose());
         tag.putBoolean("Singing", this.isSinging());
-        tag.putBoolean("Swimming", this.isSwimming());
+        tag.putBoolean("Swimming", this.isSirenSwimming());
         tag.putBoolean("Passive", this.isCharmed());
 
     }
@@ -351,7 +361,7 @@ public class EntitySiren extends Monster implements IAnimatedEntity, IVillagerFe
         this.setAggressive(tag.getBooleanOr("Aggressive", false));
         this.setSingingPose(tag.getIntOr("SingingPose", 0));
         this.setSinging(tag.getBooleanOr("Singing", false));
-        this.setSwimming(tag.getBooleanOr("Swimming", false));
+        this.setSirenSwimming(tag.getBooleanOr("Swimming", false));
         this.setCharmed(tag.getBooleanOr("Passive", false));
 
     }
@@ -382,19 +392,17 @@ public class EntitySiren extends Monster implements IAnimatedEntity, IVillagerFe
         return isSinging() && !wantsToSing();
     }
 
-    @Override
-    public boolean isSwimming() {
+    public boolean isSirenSwimming() {
         if (this.level().isClientSide()) {
-            return this.isSwimming = this.entityData.get(SWIMMING).booleanValue();
+            return this.sirenSwimming = this.entityData.get(SWIMMING).booleanValue();
         }
-        return isSwimming;
+        return sirenSwimming;
     }
 
-    @Override
-    public void setSwimming(boolean swimming) {
+    public void setSirenSwimming(boolean swimming) {
         this.entityData.set(SWIMMING, swimming);
         if (!this.level().isClientSide()) {
-            this.isSwimming = swimming;
+            this.sirenSwimming = swimming;
         }
     }
 

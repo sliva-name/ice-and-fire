@@ -28,8 +28,9 @@ public class RenderDreadBeast extends MobRenderer<EntityDreadBeast, DreadBeastRe
 
     @Override
     public void extractRenderState(EntityDreadBeast entity, DreadBeastRenderState state, float partialTick) {
-        // The native renderer applies entity.getScale() once through the living render state.
         super.extractRenderState(entity, state, partialTick);
+        float size = entity.getSize();
+        state.scale = size < 0.01F ? 1F : size;
         state.variant = entity.getVariant();
         var animation = entity.getAnimation();
         state.animation = animation == EntityDreadBeast.ANIMATION_BITE ? AnimationKind.BITE

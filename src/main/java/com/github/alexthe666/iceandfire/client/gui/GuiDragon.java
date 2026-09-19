@@ -39,7 +39,7 @@ public class GuiDragon extends AbstractContainerScreen<ContainerDragon> {
         graphics.blit(RenderPipelines.GUI_TEXTURED, texture, k, l, 0, 0, this.imageWidth, this.imageHeight, 256, 256);
         Entity entity = IceAndFire.PROXY.getReferencedMob();
         if (entity instanceof EntityDragonBase dragon) {
-            float dragonScale = 1F / Math.max(0.0001F, dragon.getScale());
+            float dragonScale = 1F / Math.max(0.0001F, dragon.getAgeScale());
             int scale = Math.max(1, (int) (dragonScale * 23F));
             int entX = k + 88;
             int entY = l + (int) (0.5F * (dragon.flyProgress)) + 55;

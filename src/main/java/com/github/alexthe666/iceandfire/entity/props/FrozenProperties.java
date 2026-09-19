@@ -25,8 +25,9 @@ public class FrozenProperties {
 
     private static CompoundTag getOrCreateFrozenData(CompoundTag entityData) {
         if (entityData.contains(FROZEN_DATA)) {
-            return (CompoundTag) entityData.get(FROZEN_DATA);
-        } else return createDefaultData();
+            return entityData.getCompoundOrEmpty(FROZEN_DATA);
+        }
+        return createDefaultData();
     }
 
     private static CompoundTag createDefaultData() {

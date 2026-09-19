@@ -33,9 +33,9 @@ public class RenderSiren extends MobRenderer<EntitySiren, SirenRenderState, Enti
             : animation == EntitySiren.ANIMATION_PULL ? SirenRenderState.PULL : null;
         state.animationTick = entity.getAnimationTick();
         state.partialTick = partialTick;
-        state.swimProgress = entity.swimProgress;
-        state.singProgress = entity.singProgress;
-        state.swimming = entity.isSwimming();
+        state.swimProgress = entity.prevSwimProgress + (entity.swimProgress - entity.prevSwimProgress) * partialTick;
+        state.singProgress = entity.prevSingProgress + (entity.singProgress - entity.prevSingProgress) * partialTick;
+        state.swimming = entity.isSirenSwimming();
         state.singing = entity.isSinging();
         state.singingPose = entity.getSingingPose();
         state.onGround = entity.onGround();

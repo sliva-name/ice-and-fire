@@ -138,14 +138,14 @@ public class EntityIceDragon extends EntityDragonBase {
     @Override
     public void addAdditionalSaveData(ValueOutput compound) {
         super.addAdditionalSaveData(compound);
-        compound.putBoolean("Swimming", this.isSwimming());
+        compound.putBoolean("Swimming", this.isDragonSwimming());
         compound.putInt("SwimmingTicks", this.ticksSwiming);
     }
 
     @Override
     public void readAdditionalSaveData(ValueInput compound) {
         super.readAdditionalSaveData(compound);
-        this.setSwimming(compound.getBooleanOr("Swimming", false));
+        this.setDragonSwimming(compound.getBooleanOr("Swimming", false));
         this.ticksSwiming = compound.getIntOr("SwimmingTicks", 0);
     }
 
@@ -226,24 +226,24 @@ public class EntityIceDragon extends EntityDragonBase {
         } else if (!swimming && swimProgress > 0.0F) {
             swimProgress -= 0.5F;
         }
-        if (this.isInMaterialWater() && !this.isSwimming() && (!this.isFlying() && !this.isHovering() || this.flyTicks > 100)) {
-            this.setSwimming(true);
+        if (this.isInMaterialWater() && !this.isDragonSwimming() && (!this.isFlying() && !this.isHovering() || this.flyTicks > 100)) {
+            this.setDragonSwimming(true);
             this.setHovering(false);
             this.setFlying(false);
             this.flyTicks = 0;
             this.ticksSwiming = 0;
         }
-        if ((!this.isInMaterialWater() || this.isHovering() || this.isFlying()) && this.isSwimming()) {
-            this.setSwimming(false);
+        if ((!this.isInMaterialWater() || this.isHovering() || this.isFlying()) && this.isDragonSwimming()) {
+            this.setDragonSwimming(false);
             this.ticksSwiming = 0;
         }
-        if (this.isSwimming() && !this.isModelDead()) {
+        if (this.isDragonSwimming() && !this.isModelDead()) {
             ticksSwiming++;
             if ((this.isInMaterialWater() || this.isOverWater()) && (ticksSwiming > 4000 || this.getTarget() != null && this.isInWater() != this.getTarget().isInWater()) && !this.isBaby() && !this.isHovering() && !this.isFlying()) {
                 this.setHovering(true);
                 this.jumpFromGround();
                 this.setDeltaMovement(this.getDeltaMovement().add(0.0D, 0.8D, 0.0D));
-                this.setSwimming(false);
+                this.setDragonSwimming(false);
             }
         }
         if (!this.level().isClientSide() && this.getControllingPassenger() == null && (this.isHovering() && !this.isFlying() && (this.isInMaterialWater() || this.isOverWater()))) {
@@ -588,8 +588,7 @@ public class EntityIceDragon extends EntityDragonBase {
         }
     }
 
-    @Override
-    public boolean isSwimming() {
+    public boolean isDragonSwimming() {
         if (this.level().isClientSide()) {
             boolean swimming = this.entityData.get(SWIMMING).booleanValue();
             this.isSwimming = swimming;
@@ -598,8 +597,7 @@ public class EntityIceDragon extends EntityDragonBase {
         return isSwimming;
     }
 
-    @Override
-    public void setSwimming(boolean swimming) {
+    public void setDragonSwimming(boolean swimming) {
         this.entityData.set(SWIMMING, swimming);
         if (!this.level().isClientSide()) {
             this.isSwimming = swimming;

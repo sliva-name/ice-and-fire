@@ -28,8 +28,9 @@ public class SirenProperties {
 
     private static CompoundTag getOrCreateCharmData(CompoundTag entityData) {
         if (entityData.contains(SIREN_DATA)) {
-            return (CompoundTag) entityData.get(SIREN_DATA);
-        } else return createDefaultData();
+            return entityData.getCompoundOrEmpty(SIREN_DATA);
+        }
+        return createDefaultData();
     }
 
     private static void clearCharmedStatus(LivingEntity entity) {
@@ -113,7 +114,13 @@ public class SirenProperties {
 
     public static void tickCharmedEntity(LivingEntity entity) {
         EntitySiren siren = getSiren(entity);
-        if (siren != null && siren.isActuallySinging()) {
+        if (siren == null) {
+            if (getOrCreateCharmData(entity).getBooleanOr(SIREN_CHARMED, false)) {
+                clearCharmedStatus(entity);
+            }
+            return;
+        }
+        if (siren.isActuallySinging()) {
             if (EntitySiren.isWearingEarplugs(entity) || getSingTime(entity) > IafConfig.sirenMaxSingTime) {
                 clearCharmedStatus(entity);
                 siren.singCooldown = IafConfig.sirenTimeBetweenSongs;
@@ -133,7 +140,7 @@ public class SirenProperties {
                 }
                 CompoundTag sirenData = getOrCreateCharmData(entity);
                 sirenData.putBoolean(SIREN_CHARMED, true);
-                sirenData.putInt(SIREN_TIME, getSingTime(entity));
+                sirenData.putInt(SIREN_TIME, getSingTime(entity) + 1);
                 updateCharmData(entity, sirenData);
 
                 if (rand.nextInt(7) == 0) {

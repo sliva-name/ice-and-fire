@@ -403,7 +403,7 @@ public class EntityAmphithere extends TamableAnimal implements ISyncMount, IAnim
             ridingTime = 0;
         }
         if (!this.isTame() && ridingTime > IafConfig.amphithereTameTime && this.getUntamedRider() != null && this.getUntamedRider() instanceof Player) {
-            this.level().broadcastEntityEvent(this, (byte) 45);
+            this.level().broadcastEntityEvent(this, (byte) 86);
             this.tame((Player) this.getUntamedRider());
             if (this.getTarget() == this.getUntamedRider())
                 this.setTarget(null);
@@ -1173,7 +1173,7 @@ public class EntityAmphithere extends TamableAnimal implements ISyncMount, IAnim
     @Override
 
     public void handleEntityEvent(byte id) {
-        if (id == 45) {
+        if (id == 86) {
             this.playEffect();
         } else {
             super.handleEntityEvent(id);

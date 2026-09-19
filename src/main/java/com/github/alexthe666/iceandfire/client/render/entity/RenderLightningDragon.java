@@ -49,7 +49,7 @@ public class RenderLightningDragon extends RenderDragonBase {
         // The dispatcher supplies the interpolated entity pose. Subtract the current position,
         // as the legacy renderer did, to keep the head/target and lingering bolts in that frame.
         lightningState.lightning = lightningRender.extract(entity, entity.level().getGameTime() + (double) partialTick,
-            dragon.getHeadPosition(), target(dragon), dragon.getScale(), entity.position());
+            dragon.getHeadPosition(), target(dragon), dragon.getAgeScale(), entity.position());
     }
 
     @Override
