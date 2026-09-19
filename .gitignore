@@ -23,6 +23,11 @@ run
 /data
 server
 
+# local run / IDE clutter
+logs/
+.cursor/
+port-26.1/%TEMP%/
+
 # Files from Forge MDK
 forge*changelog.txt
 
