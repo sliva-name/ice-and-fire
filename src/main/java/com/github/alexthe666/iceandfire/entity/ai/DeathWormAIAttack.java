@@ -86,7 +86,7 @@ public class DeathWormAIAttack extends Goal {
         final double d0 = (target.getX() - this.worm.getX()) * 0.2 * smoothX;
         //Math.signum(target.getPosY() - this.worm.getPosY());
         final double d2 = (target.getZ() - this.worm.getZ()) * 0.2 * smoothZ;
-        final float up = (worm.getScale() > 3 ? 0.8F : 0.5F) + worm.getRandom().nextFloat() * 0.5F;
+        final float up = (worm.getAgeScale() > 3 ? 0.8F : 0.5F) + worm.getRandom().nextFloat() * 0.5F;
         this.worm.setDeltaMovement(this.worm.getDeltaMovement().add(d0 * 0.3D, up, d2 * 0.3D));
         this.worm.getNavigation().stop();
         this.worm.setWormJumping(20);

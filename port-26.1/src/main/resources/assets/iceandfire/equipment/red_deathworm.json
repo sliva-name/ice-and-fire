@@ -1,0 +1,14 @@
+{
+    "layers":  {
+                   "humanoid":  [
+                                    {
+                                        "texture":  "iceandfire:red_deathworm"
+                                    }
+                                ],
+                   "humanoid_leggings":  [
+                                             {
+                                                 "texture":  "iceandfire:red_deathworm"
+                                             }
+                                         ]
+               }
+}

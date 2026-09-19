@@ -34,8 +34,8 @@ import java.util.Objects;
 
 /**
  * 1.18 used {@code ForgeSpawnEggItem(Supplier)} so eggs could register
- * before entity types existed. 26.1 vanilla eggs need {@code ENTITY_DATA}
- * at construction; this keeps the supplier lookup until use time.
+ * before entity types existed. 26.1 {@code Item.Properties.spawnEgg}
+ * writes {@code ENTITY_DATA}; use-time still prefers the supplier.
  */
 public class IafSpawnEggItem extends SpawnEggItem {
     private final RegistryObject<? extends EntityType<?>> type;

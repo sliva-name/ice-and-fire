@@ -5,6 +5,7 @@ import com.github.alexthe666.iceandfire.IceAndFire;
 import com.github.alexthe666.iceandfire.client.gui.GuiMyrmexAddRoom;
 import com.github.alexthe666.iceandfire.client.gui.GuiMyrmexStaff;
 import com.github.alexthe666.iceandfire.client.gui.bestiary.GuiBestiary;
+import com.github.alexthe666.iceandfire.client.model.item.IafItemModelRegistry;
 import com.github.alexthe666.iceandfire.client.particle.*;
 import com.github.alexthe666.iceandfire.client.render.entity.layer.LayerDragonArmor;
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
@@ -49,6 +50,8 @@ public class ClientProxy extends CommonProxy {
 
     @Override
     public void init() {
+        // Before the first resource reload parses assets/iceandfire/items/*.json.
+        IafItemModelRegistry.register();
         RegisterKeyMappingsEvent.BUS.addListener(IafKeybindRegistry::register);
         PlayerRenderEvents.register();
         ClientEvents.register();

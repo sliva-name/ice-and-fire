@@ -1,0 +1,14 @@
+{
+    "layers":  {
+                   "humanoid":  [
+                                    {
+                                        "texture":  "iceandfire:myrmexdesert"
+                                    }
+                                ],
+                   "humanoid_leggings":  [
+                                             {
+                                                 "texture":  "iceandfire:myrmexdesert"
+                                             }
+                                         ]
+               }
+}

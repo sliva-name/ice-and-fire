@@ -429,9 +429,9 @@ public class IafItemRegistry {
     public static final RegistryObject<Item> SPAWN_EGG_HYDRA = spawnEgg("spawn_egg_hydra", IafEntityRegistry.HYDRA);
     public static final RegistryObject<Item> SPAWN_EGG_GHOST = spawnEgg("spawn_egg_ghost", IafEntityRegistry.GHOST);
 
-    /** 26.1 spawn eggs carry their entity through ENTITY_DATA; egg colors move to item-model tints. */
+    /** 26.1 vanilla {@code SpawnEggItem.getType} reads {@code DataComponents.ENTITY_DATA}. */
     private static RegistryObject<Item> spawnEgg(String name, RegistryObject<? extends EntityType<?>> type) {
-        return register(name, () -> new IafSpawnEggItem(type, defaultBuilder().stacksTo(64)));
+        return register(name, () -> new IafSpawnEggItem(type, defaultBuilder().stacksTo(64).spawnEgg(type.get())));
     }
 
     /**

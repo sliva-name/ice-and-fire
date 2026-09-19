@@ -1,6 +1,13 @@
 plugins {
     id 'java-library'
+    id 'net.minecraftforge.accesstransformers'
     id 'net.minecraftforge.gradle'
+}
+
+minecraft {
+    // Same AT as the root project: both projects mavenize into one shared repo, so the
+    // dependency jars must be identical or the last run wins and drops the transforms.
+    accessTransformers = files('../src/main/resources/META-INF/accesstransformer.cfg')
 }
 
 version = '1.11.3-26.1-port-dev'

@@ -35,13 +35,15 @@ public class ItemDragonsteelArmor extends Item implements IafArmorIdentity, IPro
         return this.iafMaterial.getDefenseForSlot(this.armorSlot);
     }
 
-    public String getArmorTexture(ItemStack stack, net.minecraft.world.entity.Entity entity, EquipmentSlot slot, String type) {
-        if (iafMaterial == DRAGONSTEEL_FIRE_ARMOR_MATERIAL) {
-            return "iceandfire:textures/models/armor/armor_dragonsteel_fire" + (slot == EquipmentSlot.LEGS ? "_legs.png" : ".png");
-        } else if (iafMaterial == DRAGONSTEEL_ICE_ARMOR_MATERIAL) {
-            return "iceandfire:textures/models/armor/armor_dragonsteel_ice" + (slot == EquipmentSlot.LEGS ? "_legs.png" : ".png");
-        } else {
-            return "iceandfire:textures/models/armor/armor_dragonsteel_lightning" + (slot == EquipmentSlot.LEGS ? "_legs.png" : ".png");
-        }
+    // Textures: assets/iceandfire/equipment/dragonsteel_<type>.json (1.18 getArmorTexture is gone in 26.1).
+    @Override
+    public void initializeClient(java.util.function.Consumer<net.minecraftforge.client.extensions.common.IClientItemExtensions> consumer) {
+        consumer.accept(com.github.alexthe666.iceandfire.client.render.IafArmorRenderProperties.armorModel((stack, inner) -> {
+            if (iafMaterial == DRAGONSTEEL_FIRE_ARMOR_MATERIAL)
+                return new com.github.alexthe666.iceandfire.client.model.armor.ModelDragonsteelFireArmor(inner);
+            if (iafMaterial == DRAGONSTEEL_ICE_ARMOR_MATERIAL)
+                return new com.github.alexthe666.iceandfire.client.model.armor.ModelDragonsteelIceArmor(inner);
+            return new com.github.alexthe666.iceandfire.client.model.armor.ModelDragonsteelLightningArmor(inner);
+        }));
     }
 }

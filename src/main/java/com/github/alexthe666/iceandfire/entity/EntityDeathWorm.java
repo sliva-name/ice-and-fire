@@ -266,8 +266,9 @@ public class EntityDeathWorm extends TamableAnimal implements ISyncMount, ICusto
     protected void checkFallDamage(double y, boolean onGroundIn, @NotNull BlockState state, @NotNull BlockPos pos) {
     }
 
+    /** 1.18 {@code getDefaultLootTable()}: variant + giant loot tables. */
     @Nullable
-    protected Identifier getDefaultLootTable() {
+    protected Identifier getVariantLootTable() {
         switch (this.getVariant()) {
             case 0:
                 return this.getAgeScale() > 3 ? TAN_GIANT_LOOT : TAN_LOOT;
@@ -277,6 +278,15 @@ public class EntityDeathWorm extends TamableAnimal implements ISyncMount, ICusto
                 return this.getAgeScale() > 3 ? WHITE_GIANT_LOOT : WHITE_LOOT;
         }
         return null;
+    }
+
+    @Override
+    protected void dropFromLootTable(@NotNull ServerLevel level, @NotNull DamageSource source, boolean causedByPlayer) {
+        // 26.1 removed the overridable getDefaultLootTable(); pick the variant table here instead.
+        Identifier table = getVariantLootTable();
+        if (table != null) {
+            this.dropFromLootTable(level, source, causedByPlayer, com.github.alexthe666.iceandfire.entity.util.IafLoot.table(table));
+        }
     }
 
     @Nullable

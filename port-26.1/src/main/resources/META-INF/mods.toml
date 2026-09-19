@@ -2,6 +2,9 @@ modLoader = "javafml"
 loaderVersion = "[62,)"
 license = "GNU LESSER GENERAL PUBLIC LICENSE"
 issueTrackerURL = "https://github.com/Alex-the-666/ice-and-fire/issues"
+accessTransformers = [
+  "META-INF/accesstransformer.cfg"
+]
 
 [[mods]]
 modId = "iceandfire"

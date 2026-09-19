@@ -24,9 +24,11 @@ public class ItemCopperArmor extends Item implements IafArmorIdentity {
         return iafMaterial;
     }
 
-    @Nullable
-    public String getArmorTexture(ItemStack stack, Entity entity, EquipmentSlot slot, String type) {
-        return "iceandfire:textures/models/armor/" + (slot == EquipmentSlot.LEGS ? "armor_copper_metal_layer_2" : "armor_copper_metal_layer_1") + ".png";
+    // Textures: assets/iceandfire/equipment/copper.json (1.18 getArmorTexture is gone in 26.1).
+    @Override
+    public void initializeClient(java.util.function.Consumer<net.minecraftforge.client.extensions.common.IClientItemExtensions> consumer) {
+        consumer.accept(com.github.alexthe666.iceandfire.client.render.IafArmorRenderProperties.armorModel(
+            (stack, inner) -> new ModelCopperArmor(inner)));
     }
 
 

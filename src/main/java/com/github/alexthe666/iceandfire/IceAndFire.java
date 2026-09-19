@@ -58,10 +58,10 @@ public class IceAndFire {
         ServerStartedEvent.BUS.addListener(this::onServerStarted);
         ServerAboutToStartEvent.BUS.addListener(Priority.LOWEST, IceAndFire::onServerAboutToStart);
 
+        IafEntityRegistry.ENTITIES.register(modBus);
         IafItemRegistry.ITEMS.register(modBus);
         IafCreativeTabs.TABS.register(modBus);
         IafBlockRegistry.BLOCKS.register(modBus);
-        IafEntityRegistry.ENTITIES.register(modBus);
         IafTileEntityRegistry.TYPES.register(modBus);
         IafPlacementFilterRegistry.PLACEMENT_MODIFIER_TYPES.register(modBus);
         IafWorldRegistry.FEATURES.register(modBus);
@@ -86,6 +86,7 @@ public class IceAndFire {
 
     public static void onServerAboutToStart(ServerAboutToStartEvent event) {
         // Features and spawners inject from IafBiomeModifier (26.1 cannot write MobSpawnSettings.spawners).
+        IafVillagerRegistry.addScribeHouses(event.getServer().registryAccess());
     }
 
     public void onServerStarted(ServerStartedEvent event) {

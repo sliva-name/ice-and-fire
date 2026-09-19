@@ -1,22 +1,11 @@
 package com.github.alexthe666.iceandfire.client.particle;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.*;
-import org.joml.Quaternionf;
-import com.mojang.math.Axis;
-import org.joml.Vector3f;
-import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.particle.SingleQuadParticle;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.resources.Identifier;
-import net.minecraft.util.Mth;
-import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
 public class ParticleHydraBreath extends SingleQuadParticle {
-    private static final Identifier HYDRA_POISON = Identifier.parse("iceandfire:textures/particles/hydra_poison.png");
     float reddustParticleScale;
 
     public ParticleHydraBreath(ClientLevel worldIn, double xCoordIn, double yCoordIn, double zCoordIn, float p_i46349_8_, float p_i46349_9_, float p_i46349_10_) {
@@ -24,7 +13,7 @@ public class ParticleHydraBreath extends SingleQuadParticle {
     }
 
     protected ParticleHydraBreath(ClientLevel worldIn, double xCoordIn, double yCoordIn, double zCoordIn, float scale, float red, float green, float blue) {
-        super(worldIn, xCoordIn, yCoordIn, zCoordIn, 0.0D, 0.0D, 0.0D, IafParticleSprites.missing());
+        super(worldIn, xCoordIn, yCoordIn, zCoordIn, 0.0D, 0.0D, 0.0D, IafParticleSprites.get(IafParticleSprites.HYDRA_POISON));
         this.xd *= 0.10000000149011612D;
         this.yd *= 0.10000000149011612D;
         this.zd *= 0.10000000149011612D;
@@ -38,10 +27,8 @@ public class ParticleHydraBreath extends SingleQuadParticle {
         this.lifetime = (int) ((float) this.lifetime * scale);
     }
 
-
-
-
-    public void onUpdate() {
+    @Override
+    public void tick() {
         this.xo = x;
         this.yo = y;
         this.zo = z;
@@ -74,26 +61,6 @@ public class ParticleHydraBreath extends SingleQuadParticle {
 
     @Override
     protected SingleQuadParticle.Layer getLayer() {
-        return IafParticleSprites.layer(HYDRA_POISON);
-    }
-
-    @Override
-    protected float getU0() {
-        return 0.0F;
-    }
-
-    @Override
-    protected float getU1() {
-        return 1.0F;
-    }
-
-    @Override
-    protected float getV0() {
-        return 0.0F;
-    }
-
-    @Override
-    protected float getV1() {
-        return 1.0F;
+        return IafParticleSprites.layer(this.sprite);
     }
 }

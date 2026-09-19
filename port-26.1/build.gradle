@@ -1,5 +1,7 @@
 plugins {
     id 'java'
+    // Must be applied before ForgeGradle so `minecraft.accessTransformers` is honoured.
+    id 'net.minecraftforge.accesstransformers' version '5.0.3'
     id 'net.minecraftforge.gradle' version '7.0.17'
 }
 
@@ -9,6 +11,9 @@ base.archivesName = 'iceandfire'
 java.toolchain.languageVersion = JavaLanguageVersion.of(25)
 
 minecraft {
+    // Official (Mojang) names. Opens the private client ID mappers used to register the
+    // mod's special item model renderers and item model properties (see IafItemModelRegistry).
+    accessTransformers = files('src/main/resources/META-INF/accesstransformer.cfg')
     runs {
         configureEach {
             workingDir = layout.projectDirectory.dir('run')
@@ -23,6 +28,7 @@ minecraft {
 
 // Compile every existing class: missing APIs must remain visible during migration.
 sourceSets.main.java.setSrcDirs(['../src/main/java'])
+sourceSets.main.java.exclude 'com/github/alexthe666/iceandfire/world/gen/mixin/**'
 sourceSets.main.resources.srcDir '../src/main/resources'
 sourceSets {
     jeiApi {
@@ -53,20 +59,20 @@ tasks.withType(JavaCompile).configureEach {
     options.compilerArgs.addAll(['-Xmaxerrs', '1000'])
 }
 
+def overlayResources = layout.projectDirectory.dir('src/main/resources').asFile
 tasks.named('processResources', Copy) {
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
-    filesMatching(['META-INF/mods.toml', 'pack.mcmeta', 'iceandfire.mixins.json']) {
-        // Overlay copies must win over the 1.18 files from ../src/main/resources.
-        duplicatesStrategy = DuplicatesStrategy.INCLUDE
-    }
     eachFile { details ->
         def rel = details.relativePath.pathString.replace('\\', '/')
         def abs = details.file.absolutePath.replace('\\', '/')
         def overlay = abs.contains('/port-26.1/src/main/resources/') || abs.contains('/port-26.1\\src\\main\\resources\\')
-        if (rel == 'META-INF/accesstransformer.cfg' && !overlay) {
+        // Any 26.1 overlay file wins over the 1.18 copy at the same relative path
+        // (mods.toml, pack.mcmeta, mixins json, accesstransformer.cfg, rewritten models, ...).
+        if (!overlay && new File(overlayResources, rel).isFile()) {
             details.exclude()
         }
-        if ((rel in ['META-INF/mods.toml', 'pack.mcmeta', 'iceandfire.mixins.json']) && !overlay) {
+        // The 1.18 SRG-name access transformer is not valid for 26.1.
+        if (rel == 'META-INF/accesstransformer.cfg' && !overlay) {
             details.exclude()
         }
         if (rel.contains('/tags/items/') || rel.contains('/tags/blocks/') || rel.contains('/tags/entity_types/')) {
@@ -77,6 +83,10 @@ tasks.named('processResources', Copy) {
         }
         if (rel.contains('/models/tabula/') && rel != rel.toLowerCase()) {
             details.relativePath = details.relativePath.parent.append(true, details.name.toLowerCase())
+        }
+        // 26.1 structure NBT lives at data/<ns>/structure/, not the 1.18 structures/ folder.
+        if (rel.contains('/structures/')) {
+            details.relativePath = RelativePath.parse(true, rel.replace('/structures/', '/structure/'))
         }
     }
 }
@@ -433,18 +443,31 @@ tasks.register('writeCompileClasspath') {
     }
 }
 
-// Local run configs need exploded/dev jars. Keep assemble/build/publish blocked.
-def wantsDistribution = gradle.startParameter.taskNames.any { name ->
-    name == 'jar' || name == 'assemble' || name == 'build' || name == 'publish' ||
-        name.endsWith(':jar') || name.endsWith(':assemble') || name.endsWith(':build') || name.endsWith(':publish')
+def mixinsClasses = layout.buildDirectory.dir('classes/java/mixins')
+tasks.register('compileMixinsJava', JavaCompile) {
+    dependsOn compileJava, processResources
+    source fileTree('../src/main/java') {
+        include 'com/github/alexthe666/iceandfire/world/gen/mixin/**'
+    }
+    classpath = sourceSets.main.compileClasspath + files(layout.buildDirectory.dir('sourceSets/main'))
+    destinationDirectory = mixinsClasses
+    javaCompiler = javaToolchains.compilerFor { languageVersion = JavaLanguageVersion.of(25) }
+    options.encoding = 'UTF-8'
+    options.release = 21
+    options.compilerArgs.addAll(['-Xmaxerrs', '1000', '-proc:none'])
 }
+tasks.named('classes') {
+    dependsOn compileMixinsJava
+    doLast {
+        copy {
+            from tasks.named('compileMixinsJava', JavaCompile)
+            into tasks.named('compileJava', JavaCompile).get().destinationDirectory
+        }
+    }
+}
+
 tasks.named('jar') {
     manifest {
         attributes['MixinConfigs'] = 'iceandfire.mixins.json'
-    }
-    doFirst {
-        if (wantsDistribution) {
-            throw new GradleException('The 26.1 port is incomplete. See PORTING.md in the repository root.')
-        }
     }
 }

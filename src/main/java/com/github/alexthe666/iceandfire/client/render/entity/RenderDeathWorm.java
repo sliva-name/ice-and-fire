@@ -32,14 +32,15 @@ public class RenderDeathWorm extends MobRenderer<EntityDeathWorm, DeathWormRende
     @Override
     public void extractRenderState(EntityDeathWorm entity, DeathWormRenderState state, float partialTick) {
         super.extractRenderState(entity, state, partialTick);
+        // LivingEntity.getScale() is final in 26.1 (Attributes.SCALE). Worm size is getAgeScale().
+        state.scale = entity.getAgeScale();
         state.animation = entity.getAnimation() == EntityDeathWorm.ANIMATION_BITE ? DeathWormRenderState.BITE : null;
         state.animationTick = entity.getAnimationTick();
         state.partialTick = partialTick;
         state.variant = entity.getVariant();
-        state.jumpProgress = entity.prevJumpProgress + (entity.jumpProgress - entity.prevJumpProgress) * (state.ageInTicks - entity.tickCount);
+        state.jumpProgress = entity.prevJumpProgress + (entity.jumpProgress - entity.prevJumpProgress) * partialTick;
         state.jumping = entity.getWormJumping() > 0;
         state.tailYaw = entity.tail_buffer == null ? 0 : entity.tail_buffer.sampleYaw(partialTick);
-        // LivingEntityRenderer already extracts and applies getScale(). Do not scale twice.
     }
 
     @Override

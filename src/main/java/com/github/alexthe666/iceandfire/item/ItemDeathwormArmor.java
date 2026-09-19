@@ -24,13 +24,10 @@ public class ItemDeathwormArmor extends Item implements IafArmorIdentity {
         return iafMaterial;
     }
 
-    public String getArmorTexture(ItemStack stack, Entity entity, EquipmentSlot slot, String type) {
-        if (this.iafMaterial() == IafItemRegistry.DEATHWORM_2_ARMOR_MATERIAL) {
-            return "iceandfire:textures/models/armor/armor_deathworm_red" + (slot == EquipmentSlot.LEGS ? "_legs.png" : ".png");
-        } else if (this.iafMaterial() == IafItemRegistry.DEATHWORM_1_ARMOR_MATERIAL) {
-            return "iceandfire:textures/models/armor/armor_deathworm_white" + (slot == EquipmentSlot.LEGS ? "_legs.png" : ".png");
-        } else {
-            return "iceandfire:textures/models/armor/armor_deathworm_yellow" + (slot == EquipmentSlot.LEGS ? "_legs.png" : ".png");
-        }
+    // Textures: assets/iceandfire/equipment/<color>_deathworm.json (1.18 getArmorTexture is gone in 26.1).
+    @Override
+    public void initializeClient(java.util.function.Consumer<net.minecraftforge.client.extensions.common.IClientItemExtensions> consumer) {
+        consumer.accept(com.github.alexthe666.iceandfire.client.render.IafArmorRenderProperties.armorModel(
+            (stack, inner) -> new ModelDeathWormArmor(ModelDeathWormArmor.getBakedModel(inner))));
     }
 }

@@ -1642,6 +1642,12 @@ public abstract class EntityDragonBase extends TamableAnimal implements IPassabi
     }
 
     @Override
+    protected boolean shouldDropLoot(@NotNull ServerLevel level) {
+        // 1.18 shouldDropLoot() was the vanilla death-loot gate as well as the "adult" check.
+        return shouldDropLoot();
+    }
+
+    @Override
     public boolean isBaby() {
         return getDragonStage() < 2;
     }
@@ -2568,7 +2574,9 @@ public abstract class EntityDragonBase extends TamableAnimal implements IPassabi
         return ChainProperties.hasChainData(this);
     }
 
-    protected void dropFromLootTable(@NotNull DamageSource damageSourceIn, boolean attackedRecently) {
+    @Override
+    protected void dropFromLootTable(@NotNull ServerLevel level, @NotNull DamageSource damageSourceIn, boolean attackedRecently) {
+        // Dragons drop nothing on death; loot comes from the corpse via getDeadLootTable().
     }
 
     public HitResult rayTraceRider(Entity rider, double blockReachDistance, float partialTicks) {

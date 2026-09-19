@@ -49,8 +49,11 @@ public class ItemTrollArmor extends Item implements IafArmorIdentity {
         };
     }
 
-    public String getArmorTexture(ItemStack stack, Entity entity, EquipmentSlot slot, String type) {
-        return "iceandfire:textures/models/armor/armor_troll_" + troll.name().toLowerCase(Locale.ROOT) + (slot == EquipmentSlot.LEGS ? "_legs.png" : ".png");
+    // Textures: assets/iceandfire/equipment/<material>.json (1.18 getArmorTexture is gone in 26.1).
+    @Override
+    public void initializeClient(java.util.function.Consumer<net.minecraftforge.client.extensions.common.IClientItemExtensions> consumer) {
+        consumer.accept(com.github.alexthe666.iceandfire.client.render.IafArmorRenderProperties.armorModel(
+            (stack, inner) -> new ModelTrollArmor(inner)));
     }
 
     @Override

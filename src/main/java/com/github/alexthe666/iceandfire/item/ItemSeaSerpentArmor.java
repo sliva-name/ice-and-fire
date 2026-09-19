@@ -51,8 +51,11 @@ public class ItemSeaSerpentArmor extends Item implements IafArmorIdentity {
         });
     }
 
-    public String getArmorTexture(ItemStack stack, Entity entity, EquipmentSlot slot, String type) {
-        return "iceandfire:textures/models/armor/armor_tide_" + armor_type.resourceName + (slot == EquipmentSlot.LEGS ? "_legs.png" : ".png");
+    // Textures: assets/iceandfire/equipment/sea_serpent_scales_<color>.json (1.18 getArmorTexture is gone in 26.1).
+    @Override
+    public void initializeClient(java.util.function.Consumer<net.minecraftforge.client.extensions.common.IClientItemExtensions> consumer) {
+        consumer.accept(com.github.alexthe666.iceandfire.client.render.IafArmorRenderProperties.armorModel(
+            (stack, inner) -> new ModelSeaSerpentArmor(inner)));
     }
 
     @Override

@@ -27,13 +27,14 @@ public class ModelDeathWormArmor extends ArmorModelBase {
 
     public ModelDeathWormArmor(ModelPart modelPart) {
         super(modelPart);
-        spineH1 = modelPart.getChild("hat").getChild("spineH1");
-        spineH2 = modelPart.getChild("hat").getChild("spineH2");
-        spineH3 = modelPart.getChild("hat").getChild("spineH3");
-        spineH4 = modelPart.getChild("hat").getChild("spineH4");
-        spineH5 = modelPart.getChild("hat").getChild("spineH5");
-        spineH6 = modelPart.getChild("hat").getChild("spineH6");
-        spineH7 = modelPart.getChild("hat").getChild("spineH7");
+        ModelPart hat = modelPart.getChild("head").getChild("hat");
+        spineH1 = hat.getChild("spineH1");
+        spineH2 = hat.getChild("spineH2");
+        spineH3 = hat.getChild("spineH3");
+        spineH4 = hat.getChild("spineH4");
+        spineH5 = hat.getChild("spineH5");
+        spineH6 = hat.getChild("spineH6");
+        spineH7 = hat.getChild("spineH7");
         spineR1 = modelPart.getChild("right_arm").getChild("spineR1");
         spineR2 = modelPart.getChild("right_arm").getChild("spineR2");
         spineL1 = modelPart.getChild("left_arm").getChild("spineL1");
@@ -43,6 +44,7 @@ public class ModelDeathWormArmor extends ArmorModelBase {
     public static MeshDefinition createMesh(CubeDeformation deformation, float offset) {
         MeshDefinition meshdefinition = HumanoidModel.createMesh(deformation, offset);
         PartDefinition partdefinition = meshdefinition.getRoot();
+        PartDefinition hat = partdefinition.getChild("head").getChild("hat");
 
         partdefinition.getChild("right_arm").addOrReplaceChild("spineR1", CubeListBuilder.create().texOffs(32, 40).addBox(-0.5F, -1.7F, -0.5F, 1, 3, 1), PartPose.offsetAndRotation(-1.0F, -2.7F, 0.0F, -0.4914847173616032F, 0.0F, 0.0F));
         partdefinition.getChild("left_arm").addOrReplaceChild("spineL1", CubeListBuilder.create().texOffs(32, 40).addBox(-0.5F, -1.7F, -0.5F, 1, 3, 1), PartPose.offsetAndRotation(1.0F, -2.7F, 0.0F, -0.4914847173616032F, 0.0F, 0.0F));
@@ -50,13 +52,13 @@ public class ModelDeathWormArmor extends ArmorModelBase {
         partdefinition.getChild("right_arm").addOrReplaceChild("spineR2", CubeListBuilder.create().texOffs(32, 40).addBox(-0.6F, -1.7F, -0.5F, 1, 2, 1), PartPose.offsetAndRotation(-2.5F, -1.6F, 0.0F, -0.4914847173616032F, 0.0F, 0.0F));
         partdefinition.getChild("left_arm").addOrReplaceChild("spineL2", CubeListBuilder.create().texOffs(32, 40).addBox(-0.4F, -1.7F, -0.5F, 1, 2, 1), PartPose.offsetAndRotation(2.5F, -1.6F, 0.0F, -0.4914847173616032F, 0.0F, 0.0F));
 
-        partdefinition.getChild("hat").addOrReplaceChild("spineH1", CubeListBuilder.create().texOffs(32, 40).addBox(-0.5F, -1.7F, -0.5F, 1, 3, 1), PartPose.offsetAndRotation(0.0F, -9.0F, -3.0F, -0.4914847173616032F, 0.0F, 0.0F));
-        partdefinition.getChild("hat").addOrReplaceChild("spineH2", CubeListBuilder.create().texOffs(32, 40).addBox(-0.5F, -2.7F, -0.5F, 1, 4, 1), PartPose.offsetAndRotation(0.0F, -9.0F, 0.0F, -0.4914847173616032F, 0.0F, 0.0F));
-        partdefinition.getChild("hat").addOrReplaceChild("spineH3", CubeListBuilder.create().texOffs(32, 40).addBox(-0.5F, -1.7F, -0.5F, 1, 3, 1), PartPose.offsetAndRotation(0.0F, -9.0F, 3.0F, -0.8651597102135892F, 0.0F, 0.0F));
-        partdefinition.getChild("hat").addOrReplaceChild("spineH4", CubeListBuilder.create().texOffs(32, 40).addBox(-0.5F, -2.7F, -0.5F, 1, 4, 1), PartPose.offsetAndRotation(0.0F, -8.0F, 5.0F, -1.5481070465189704F, 0.0F, 0.0F));
-        partdefinition.getChild("hat").addOrReplaceChild("spineH5", CubeListBuilder.create().texOffs(32, 40).addBox(-0.5F, -1.7F, -0.5F, 1, 3, 1), PartPose.offsetAndRotation(0.0F, -6.0F, 5.0F, -1.8212510744560826F, 0.0F, 0.0F));
-        partdefinition.getChild("hat").addOrReplaceChild("spineH6", CubeListBuilder.create().texOffs(32, 40).addBox(-0.5F, -2.7F, -0.5F, 1, 5, 1), PartPose.offsetAndRotation(0.0F, -3.5F, 5.0F, -2.0032889154390916F, 0.0F, 0.0F));
-        partdefinition.getChild("hat").addOrReplaceChild("spineH7", CubeListBuilder.create().texOffs(32, 40).addBox(-0.5F, -1.7F, -0.5F, 1, 3, 1), PartPose.offsetAndRotation(0.0F, -1.3F, 4.5F, -2.0032889154390916F, 0.0F, 0.0F));
+        hat.addOrReplaceChild("spineH1", CubeListBuilder.create().texOffs(32, 40).addBox(-0.5F, -1.7F, -0.5F, 1, 3, 1), PartPose.offsetAndRotation(0.0F, -9.0F, -3.0F, -0.4914847173616032F, 0.0F, 0.0F));
+        hat.addOrReplaceChild("spineH2", CubeListBuilder.create().texOffs(32, 40).addBox(-0.5F, -2.7F, -0.5F, 1, 4, 1), PartPose.offsetAndRotation(0.0F, -9.0F, 0.0F, -0.4914847173616032F, 0.0F, 0.0F));
+        hat.addOrReplaceChild("spineH3", CubeListBuilder.create().texOffs(32, 40).addBox(-0.5F, -1.7F, -0.5F, 1, 3, 1), PartPose.offsetAndRotation(0.0F, -9.0F, 3.0F, -0.8651597102135892F, 0.0F, 0.0F));
+        hat.addOrReplaceChild("spineH4", CubeListBuilder.create().texOffs(32, 40).addBox(-0.5F, -2.7F, -0.5F, 1, 4, 1), PartPose.offsetAndRotation(0.0F, -8.0F, 5.0F, -1.5481070465189704F, 0.0F, 0.0F));
+        hat.addOrReplaceChild("spineH5", CubeListBuilder.create().texOffs(32, 40).addBox(-0.5F, -1.7F, -0.5F, 1, 3, 1), PartPose.offsetAndRotation(0.0F, -6.0F, 5.0F, -1.8212510744560826F, 0.0F, 0.0F));
+        hat.addOrReplaceChild("spineH6", CubeListBuilder.create().texOffs(32, 40).addBox(-0.5F, -2.7F, -0.5F, 1, 5, 1), PartPose.offsetAndRotation(0.0F, -3.5F, 5.0F, -2.0032889154390916F, 0.0F, 0.0F));
+        hat.addOrReplaceChild("spineH7", CubeListBuilder.create().texOffs(32, 40).addBox(-0.5F, -1.7F, -0.5F, 1, 3, 1), PartPose.offsetAndRotation(0.0F, -1.3F, 4.5F, -2.0032889154390916F, 0.0F, 0.0F));
 
         return meshdefinition;
     }

@@ -54,8 +54,19 @@ public class ItemScaleArmor extends Item implements IafArmorIdentity, IProtectAg
         });
     }
 
-    public String getArmorTexture(ItemStack stack, Entity entity, EquipmentSlot slot, String type) {
-        return "iceandfire:textures/models/armor/" + armor_type.name() + (slot == EquipmentSlot.LEGS ? "_legs.png" : ".png");
+    // Textures: assets/iceandfire/equipment/armor_dragon_scales<N>.json (1.18 getArmorTexture is gone in 26.1).
+    @Override
+    public void initializeClient(java.util.function.Consumer<net.minecraftforge.client.extensions.common.IClientItemExtensions> consumer) {
+        consumer.accept(com.github.alexthe666.iceandfire.client.render.IafArmorRenderProperties.armorModel((stack, inner) -> {
+            DragonType dragonType = this.armor_type.eggType.dragonType;
+            if (DragonType.FIRE == dragonType)
+                return new ModelFireDragonScaleArmor(inner);
+            if (DragonType.ICE == dragonType)
+                return new ModelIceDragonScaleArmor(inner);
+            if (DragonType.LIGHTNING == dragonType)
+                return new ModelLightningDragonScaleArmor(inner);
+            return null;
+        }));
     }
 
 

@@ -45,9 +45,7 @@ public class DragonAnimationsLibrary {
      * @see #registerSingle(IEnumDragonPoses, IEnumDragonModelTypes)
      */
     public static void register(IEnumDragonPoses[] poses, IEnumDragonModelTypes[] modelTypes) {
-        for(IEnumDragonPoses p : poses)
-            for(IEnumDragonModelTypes m : modelTypes)
-                registerSingle(p, m, "iceandfire");
+        register(poses, modelTypes, "iceandfire");
     }
 
     /**
@@ -62,6 +60,11 @@ public class DragonAnimationsLibrary {
         for(IEnumDragonPoses p : poses)
             for(IEnumDragonModelTypes m : modelTypes)
                 registerSingle(p, m, modID);
+        // Second pass: SWIM_POSE is registered before SWIM4, so missing fire
+        // files cannot alias until every present pose is loaded.
+        for(IEnumDragonPoses p : poses)
+            for(IEnumDragonModelTypes m : modelTypes)
+                aliasMissingPose(p, m);
     }
 
     /**
@@ -86,6 +89,32 @@ public class DragonAnimationsLibrary {
 
         //put model
         models.put(toKey(pose, modelType), result);
+    }
+
+    /**
+     * Fire dragons never shipped {@code Swimming}/{@code Swim5} tabula files
+     * (ice and lightning did). 26.1 also lowercases pack paths, so the missing
+     * files log as {@code firedragon_swimming.tbl}. Reuse Swim4 rather than
+     * leaving a null slot that NPEs the swim animator.
+     */
+    private static void aliasMissingPose(IEnumDragonPoses pose, IEnumDragonModelTypes modelType) {
+        if (models.containsKey(toKey(pose, modelType)) || !(pose instanceof EnumDragonPoses dragonPose)) {
+            return;
+        }
+        EnumDragonPoses fallback = switch (dragonPose) {
+            case SWIM_POSE, SWIM5 -> EnumDragonPoses.SWIM4;
+            default -> null;
+        };
+        if (fallback == null) {
+            return;
+        }
+        TabulaModel<?> source = models.get(toKey(fallback, modelType));
+        if (source == null) {
+            return;
+        }
+        LOGGER.warn("Missing tabula pose " + pose.getPose() + modelType.getModelType()
+            + "; using " + fallback.getPose());
+        models.put(toKey(pose, modelType), source);
     }
 
     /**

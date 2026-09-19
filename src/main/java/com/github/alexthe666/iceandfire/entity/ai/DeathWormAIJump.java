@@ -77,7 +77,7 @@ public class DeathWormAIJump extends JumpGoal {
     @Override
     public void start() {
         Direction direction = this.dolphin.getMotionDirection();
-        final float up = (dolphin.getScale() > 3 ? 0.7F : 0.4F) + dolphin.getRandom().nextFloat() * 0.4F;
+        final float up = (dolphin.getAgeScale() > 3 ? 0.7F : 0.4F) + dolphin.getRandom().nextFloat() * 0.4F;
         this.dolphin
             .setDeltaMovement(this.dolphin.getDeltaMovement().add(direction.getStepX() * 0.6D, up, direction.getStepZ() * 0.6D));
         this.dolphin.getNavigation().stop();

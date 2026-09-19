@@ -1,22 +1,11 @@
 package com.github.alexthe666.iceandfire.client.particle;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.*;
-import org.joml.Quaternionf;
-import com.mojang.math.Axis;
-import org.joml.Vector3f;
-import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.particle.SingleQuadParticle;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.resources.Identifier;
-import net.minecraft.util.Mth;
-import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
 public class ParticlePixieDust extends SingleQuadParticle {
-    private static final Identifier PIXIE_DUST = Identifier.parse("iceandfire:textures/particles/pixie_dust.png");
     float reddustParticleScale;
 
     public ParticlePixieDust(ClientLevel worldIn, double xCoordIn, double yCoordIn, double zCoordIn, float p_i46349_8_, float p_i46349_9_, float p_i46349_10_) {
@@ -24,7 +13,7 @@ public class ParticlePixieDust extends SingleQuadParticle {
     }
 
     protected ParticlePixieDust(ClientLevel worldIn, double xCoordIn, double yCoordIn, double zCoordIn, float scale, float red, float green, float blue) {
-        super(worldIn, xCoordIn, yCoordIn, zCoordIn, 0.0D, 0.0D, 0.0D, IafParticleSprites.missing());
+        super(worldIn, xCoordIn, yCoordIn, zCoordIn, 0.0D, 0.0D, 0.0D, IafParticleSprites.get(IafParticleSprites.PIXIE_DUST));
         this.xd *= 0.10000000149011612D;
         this.yd *= 0.10000000149011612D;
         this.zd *= 0.10000000149011612D;
@@ -38,10 +27,8 @@ public class ParticlePixieDust extends SingleQuadParticle {
         this.lifetime = (int) ((float) this.lifetime * scale);
     }
 
-
-
-
-    public void onUpdate() {
+    @Override
+    public void tick() {
         this.xo = x;
         this.yo = y;
         this.zo = z;
@@ -68,32 +55,18 @@ public class ParticlePixieDust extends SingleQuadParticle {
     }
 
     @Override
+    protected int getLightCoords(float partialTick) {
+        // 1.18 getLightColor: pixie dust is always fullbright.
+        return 240;
+    }
+
+    @Override
     public @NotNull ParticleRenderType getGroup() {
         return ParticleRenderType.SINGLE_QUADS;
     }
 
     @Override
     protected SingleQuadParticle.Layer getLayer() {
-        return IafParticleSprites.layer(PIXIE_DUST);
-    }
-
-    @Override
-    protected float getU0() {
-        return 0.0F;
-    }
-
-    @Override
-    protected float getU1() {
-        return 1.0F;
-    }
-
-    @Override
-    protected float getV0() {
-        return 0.0F;
-    }
-
-    @Override
-    protected float getV1() {
-        return 1.0F;
+        return IafParticleSprites.layer(this.sprite);
     }
 }

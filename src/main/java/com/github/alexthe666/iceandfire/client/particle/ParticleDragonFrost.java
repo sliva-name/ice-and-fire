@@ -1,27 +1,16 @@
 package com.github.alexthe666.iceandfire.client.particle;
 
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.*;
-import org.joml.Quaternionf;
-import com.mojang.math.Axis;
-import org.joml.Vector3f;
-import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.particle.SingleQuadParticle;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
-import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 
 public class ParticleDragonFrost extends SingleQuadParticle {
 
-    private static final Identifier SNOWFLAKE = Identifier.parse("iceandfire:textures/particles/snowflake_0.png");
-    private static final Identifier SNOWFLAKE_BIG = Identifier.parse("iceandfire:textures/particles/snowflake_1.png");
     private final float dragonSize;
     private final double initialX;
     private final double initialY;
@@ -37,7 +26,7 @@ public class ParticleDragonFrost extends SingleQuadParticle {
 
 
     public ParticleDragonFrost(ClientLevel worldIn, double xCoordIn, double yCoordIn, double zCoordIn, double xSpeedIn, double ySpeedIn, double zSpeedIn, float dragonSize) {
-        super(worldIn, xCoordIn, yCoordIn, zCoordIn, xSpeedIn, ySpeedIn, zSpeedIn, IafParticleSprites.missing());
+        super(worldIn, xCoordIn, yCoordIn, zCoordIn, xSpeedIn, ySpeedIn, zSpeedIn, IafParticleSprites.get(IafParticleSprites.SNOWFLAKE));
         this.lifetime = 30;
         this.initialX = xCoordIn;
         this.initialY = yCoordIn;
@@ -49,6 +38,10 @@ public class ParticleDragonFrost extends SingleQuadParticle {
         this.dragonSize = dragonSize;
         this.speedBonus = random.nextFloat() * 0.015F;
         big = random.nextBoolean();
+        // 1.18 picked the big snowflake texture per particle.
+        if (big) {
+            this.setSprite(IafParticleSprites.get(IafParticleSprites.SNOWFLAKE_BIG));
+        }
     }
 
     public ParticleDragonFrost(ClientLevel world, double x, double y, double z, double motX, double motY, double motZ, EntityDragonBase entityDragonBase, int startingAge) {
@@ -63,17 +56,19 @@ public class ParticleDragonFrost extends SingleQuadParticle {
         this.age = startingAge;
     }
 
-
-
     @Override
     public int getLifetime() {
         return dragon == null ? 10 : 30;
     }
 
-
     @Override
     public void tick() {
         super.tick();
+        // 1.18 removed the particle from render() once it outlived getLifetime().
+        if (age > this.getLifetime()) {
+            this.remove();
+            return;
+        }
 
         if (dragon == null) {
             float distX = (float) (this.initialX - x);
@@ -103,27 +98,7 @@ public class ParticleDragonFrost extends SingleQuadParticle {
 
     @Override
     protected SingleQuadParticle.Layer getLayer() {
-        return IafParticleSprites.layer(SNOWFLAKE);
-    }
-
-    @Override
-    protected float getU0() {
-        return 0.0F;
-    }
-
-    @Override
-    protected float getU1() {
-        return 1.0F;
-    }
-
-    @Override
-    protected float getV0() {
-        return 0.0F;
-    }
-
-    @Override
-    protected float getV1() {
-        return 1.0F;
+        return IafParticleSprites.layer(this.sprite);
     }
 
 }

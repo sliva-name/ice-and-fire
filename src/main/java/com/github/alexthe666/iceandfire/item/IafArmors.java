@@ -32,8 +32,21 @@ public final class IafArmors {
         };
     }
 
+    /**
+     * 1.18 material names ({@code "silver"}, {@code "red deathworm"},
+     * {@code "iceandfire:armor_dragon_scales3"}) as a 26.1 id path. The result names the
+     * equipment asset ({@code assets/iceandfire/equipment/<path>.json}) and repair tag.
+     */
+    public static String assetPath(CustomArmorMaterial material) {
+        String name = material.getName().toLowerCase(java.util.Locale.ROOT);
+        if (name.startsWith("iceandfire:")) {
+            name = name.substring("iceandfire:".length());
+        }
+        return name.replace(' ', '_').replace(':', '_');
+    }
+
     public static ArmorMaterial vanilla(CustomArmorMaterial material) {
-        String path = material.getName().replace(' ', '_').replace(':', '_').toLowerCase();
+        String path = assetPath(material);
         TagKey<Item> repair = TagKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath("iceandfire", "repairs_" + path));
         ResourceKey<EquipmentAsset> asset = ResourceKey.create(EquipmentAssets.ROOT_ID, Identifier.fromNamespaceAndPath("iceandfire", path));
         return material.toArmorMaterial(repair, asset);

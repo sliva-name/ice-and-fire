@@ -8,14 +8,11 @@ import com.github.alexthe666.iceandfire.world.gen.processor.VillageHouseProcesso
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.mojang.datafixers.util.Pair;
-import com.mojang.serialization.Lifecycle;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import net.minecraft.core.WritableRegistry;
 import net.minecraft.core.Holder;
-import net.minecraft.data.worldgen.*;
-import net.minecraft.resources.ResourceKey;
+import net.minecraft.core.Registry;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.ai.village.poi.PoiType;
@@ -32,10 +29,9 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 
+import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.OptionalInt;
-import java.util.Random;
-import java.util.stream.Collectors;
 
 public class IafVillagerRegistry {
 
@@ -60,11 +56,18 @@ public class IafVillagerRegistry {
     }
 
     public static void setup() {
-        // 26.1 village pools are registry/datapack objects; scribe house injection stays in addStructureToPool once those APIs are wired.
-        if (IafConfig.villagerHouseWeight > 0) {
-            for (String type : VILLAGE_TYPES) {
-                addStructureToPool(Identifier.parse("village/" + type + "/houses"), Identifier.fromNamespaceAndPath("iceandfire", "village/" + type + "_scriber_1"), IafConfig.villagerHouseWeight);
-            }
+        // Village pool mutation needs the loaded datapack registry; see addScribeHouses.
+    }
+
+    public static void addScribeHouses(RegistryAccess access) {
+        if (IafConfig.villagerHouseWeight <= 0) {
+            return;
+        }
+        Registry<StructureTemplatePool> pools = access.lookupOrThrow(Registries.TEMPLATE_POOL);
+        for (String type : VILLAGE_TYPES) {
+            addStructureToPool(pools, Identifier.parse("village/" + type + "/houses"),
+                Identifier.fromNamespaceAndPath("iceandfire", "village/" + type + "_scriber_1"),
+                IafConfig.villagerHouseWeight);
         }
     }
 
@@ -102,11 +105,46 @@ public class IafVillagerRegistry {
         trades.get(5).add((entity, random) -> IafOffers.of(new ItemStack(IafItemRegistry.ECTOPLASM.get(), 6), new ItemStack(Items.EMERALD, 1), 7, 3, itemForEmeraldMultiplier));
     }
 
-    private static void addStructureToPool(Identifier pool, Identifier toAdd, int weight) {
-        // 1.18 mutated BuiltinRegistries.TEMPLATE_POOL in-place. 26.1 pools are frozen registry objects.
-        if (HOUSE_PROCESSOR == null || weight <= 0 || pool == null || toAdd == null) {
+    private static void addStructureToPool(Registry<StructureTemplatePool> pools, Identifier poolId, Identifier toAdd, int weight) {
+        if (weight <= 0) {
             return;
         }
+        StructureTemplatePool pool = pools.getValue(poolId);
+        if (pool == null) {
+            IceAndFire.LOGGER.warn("Missing village house pool {}, scribe house {} was not added", poolId, toAdd);
+            return;
+        }
+        StructurePoolElement element = StructurePoolElement.legacy(toAdd.toString(), HOUSE_PROCESSOR)
+            .apply(StructureTemplatePool.Projection.RIGID);
+        try {
+            injectPoolElement(pool, element, weight);
+        } catch (ReflectiveOperationException e) {
+            IceAndFire.LOGGER.error("Failed to inject scribe house {} into {}", toAdd, poolId, e);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void injectPoolElement(StructureTemplatePool pool, StructurePoolElement element, int weight)
+            throws ReflectiveOperationException {
+        Field rawField = StructureTemplatePool.class.getDeclaredField("rawTemplates");
+        rawField.setAccessible(true);
+        List<Pair<StructurePoolElement, Integer>> raw = (List<Pair<StructurePoolElement, Integer>>) rawField.get(pool);
+        if (!(raw instanceof ArrayList)) {
+            raw = new ArrayList<>(raw);
+            rawField.set(pool, raw);
+        }
+        raw.add(Pair.of(element, weight));
+
+        Field templatesField = StructureTemplatePool.class.getDeclaredField("templates");
+        templatesField.setAccessible(true);
+        List<StructurePoolElement> templates = (List<StructurePoolElement>) templatesField.get(pool);
+        for (int i = 0; i < weight; i++) {
+            templates.add(element);
+        }
+
+        Field maxSize = StructureTemplatePool.class.getDeclaredField("maxSize");
+        maxSize.setAccessible(true);
+        maxSize.setInt(pool, Integer.MIN_VALUE);
     }
 
 }

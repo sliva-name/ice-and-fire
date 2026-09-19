@@ -37,7 +37,7 @@ public class ModelSilverArmor extends ArmorModelBase {
         partdefinition.getChild("head").addOrReplaceChild("helmWingR", CubeListBuilder.create().texOffs(2, 37).addBox(-0.5F, -1.0F, 0.0F, 1, 4, 6), PartPose.offsetAndRotation(-3.0F, -6.3F, 1.3F, 0.5235987755982988F, -0.4363323129985824F, -0.05235987755982988F));
         partdefinition.getChild("head").addOrReplaceChild("helmWingL", CubeListBuilder.create().texOffs(2, 37).mirror().addBox(-0.5F, -1.0F, 0.0F, 1, 4, 6), PartPose.offsetAndRotation(3.0F, -6.3F, 1.3F, 0.5235987755982988F, 0.4363323129985824F, 0.05235987755982988F));
 
-        partdefinition.getChild("hat").addOrReplaceChild("crest", CubeListBuilder.create().texOffs(18, 32).addBox(0.0F, -0.5F, 0.0F, 1, 9, 9), PartPose.offsetAndRotation(0.0F, -7.9F, -0.1F, 1.2292353921796064F, 0.0F, 0.0F));
+        partdefinition.getChild("head").getChild("hat").addOrReplaceChild("crest", CubeListBuilder.create().texOffs(18, 32).addBox(0.0F, -0.5F, 0.0F, 1, 9, 9), PartPose.offsetAndRotation(0.0F, -7.9F, -0.1F, 1.2292353921796064F, 0.0F, 0.0F));
 
         partdefinition.getChild("body").addOrReplaceChild("robeLowerBack", CubeListBuilder.create().texOffs(4, 55).mirror().addBox(-4.0F, 0.0F, -2.5F, 8, 8, 1), PartPose.offsetAndRotation(0.0F, 12.0F, 0.0F, 0.0F, 3.141592653589793F, 0.0F));
         partdefinition.getChild("body").addOrReplaceChild("robeLower", CubeListBuilder.create().texOffs(4, 55).addBox(-4.0F, 0.0F, -2.5F, 8, 8, 1), PartPose.offset(0.0F, 12.0F, 0.0F));

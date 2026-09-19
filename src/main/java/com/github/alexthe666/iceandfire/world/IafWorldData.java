@@ -51,7 +51,8 @@ public class IafWorldData extends SavedData {
 
     private static IafWorldData fromSaved(Map<FeatureType, List<Pair<String, BlockPos>>> map) {
         LAST_GENERATED.clear();
-        LAST_GENERATED.putAll(map);
+        // Codec.listOf() / unboundedMap decode to immutable collections.
+        map.forEach((type, entries) -> LAST_GENERATED.put(type, new ArrayList<>(entries)));
         return new IafWorldData();
     }
 
@@ -73,7 +74,11 @@ public class IafWorldData extends SavedData {
     }
 
     public boolean check(final FeatureType type, final BlockPos position, final String id) {
-        List<Pair<String, BlockPos>> entries = LAST_GENERATED.computeIfAbsent(type, key -> new ArrayList<>());
+        List<Pair<String, BlockPos>> entries = LAST_GENERATED.get(type);
+        if (!(entries instanceof ArrayList)) {
+            entries = entries == null ? new ArrayList<>() : new ArrayList<>(entries);
+            LAST_GENERATED.put(type, entries);
+        }
 
         boolean canGenerate = true;
         Pair<String, BlockPos> toRemove = null;

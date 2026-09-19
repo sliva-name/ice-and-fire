@@ -14,6 +14,9 @@ import com.github.alexthe666.iceandfire.client.render.entity.*;
 import com.github.alexthe666.iceandfire.client.render.tile.*;
 import com.github.alexthe666.iceandfire.entity.IafEntityRegistry;
 import com.github.alexthe666.iceandfire.entity.tile.IafTileEntityRegistry;
+import com.github.alexthe666.iceandfire.client.particle.IafAppearanceParticleGroup;
+import com.github.alexthe666.iceandfire.client.particle.IafParticleRenderTypes;
+import net.minecraft.client.particle.ParticleEngine;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.minecraft.client.renderer.entity.ThrownItemRenderer;
@@ -38,6 +41,7 @@ public class IafClientSetup {
 
 
     public static void clientInit() {
+        ParticleEngine.registerParticleGroup(IafParticleRenderTypes.APPEARANCE, IafAppearanceParticleGroup::new);
         EntityRenderers.register(IafEntityRegistry.FIRE_DRAGON.get(), x -> new RenderDragonBase(x, FIRE_DRAGON_BASE_MODEL, 0));
         EntityRenderers.register(IafEntityRegistry.ICE_DRAGON.get(), manager -> new RenderDragonBase(manager, ICE_DRAGON_BASE_MODEL, 1));
         EntityRenderers.register(IafEntityRegistry.LIGHTNING_DRAGON.get(), manager -> new RenderLightningDragon(manager, LIGHTNING_DRAGON_BASE_MODEL, 2));

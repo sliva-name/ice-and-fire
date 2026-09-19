@@ -1,0 +1,9 @@
+{
+  "model": {
+    "type": "minecraft:special",
+    "base": "iceandfire:item/gorgon_head_special",
+    "model": {
+      "type": "iceandfire:gorgon_head"
+    }
+  }
+}

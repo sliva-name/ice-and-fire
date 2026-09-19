@@ -1,31 +1,30 @@
 package com.github.alexthe666.iceandfire.client.particle;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.*;
-import org.joml.Quaternionf;
-import com.mojang.math.Axis;
-import org.joml.Vector3f;
-import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.particle.SingleQuadParticle;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.core.BlockPos;
-import net.minecraft.resources.Identifier;
-import net.minecraft.util.Mth;
-import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
 public class ParticleSerpentBubble extends SingleQuadParticle {
-    private static final Identifier BUBBLE_TEXTURE = Identifier.parse("iceandfire:textures/particles/sea_serpent_bubble.png");
 
     public ParticleSerpentBubble(ClientLevel world, double x, double y, double z, double motX, double motY, double motZ, float size) {
-        super(world, x, y, z, motX, motY, motZ, IafParticleSprites.missing());
+        super(world, x, y, z, motX, motY, motZ, IafParticleSprites.get(IafParticleSprites.SEA_SERPENT_BUBBLE));
         this.setPos(x, y, z);
         this.quadSize = 0.3F;
     }
 
+    @Override
+    public void tick() {
+        super.tick();
+        if (age > this.getLifetime()) {
+            this.remove();
+        }
+    }
 
+    @Override
+    protected int getLightCoords(float partialTick) {
+        return 240;
+    }
 
     public int getFXLayer() {
         return 3;
@@ -38,27 +37,7 @@ public class ParticleSerpentBubble extends SingleQuadParticle {
 
     @Override
     protected SingleQuadParticle.Layer getLayer() {
-        return IafParticleSprites.layer(BUBBLE_TEXTURE);
-    }
-
-    @Override
-    protected float getU0() {
-        return 0.0F;
-    }
-
-    @Override
-    protected float getU1() {
-        return 1.0F;
-    }
-
-    @Override
-    protected float getV0() {
-        return 0.0F;
-    }
-
-    @Override
-    protected float getV1() {
-        return 1.0F;
+        return IafParticleSprites.layer(this.sprite);
     }
 
 }
