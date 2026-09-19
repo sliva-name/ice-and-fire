@@ -1,5 +1,7 @@
 package com.github.alexthe666.iceandfire.block;
 
+import net.minecraft.world.level.block.state.properties.EnumProperty;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import com.github.alexthe666.iceandfire.IceAndFire;
 import com.github.alexthe666.iceandfire.entity.tile.TileEntityLectern;
 import net.minecraft.core.BlockPos;
@@ -18,8 +20,7 @@ import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
-import net.minecraft.world.level.block.state.properties.DirectionProperty;
-import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -31,20 +32,25 @@ import java.util.Random;
 import static com.github.alexthe666.iceandfire.entity.tile.IafTileEntityRegistry.IAF_LECTERN;
 
 public class BlockLectern extends BaseEntityBlock {
-    public static final DirectionProperty FACING = DirectionProperty.create("facing", Direction.Plane.HORIZONTAL);
+    public static final EnumProperty<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;
     protected static final VoxelShape AABB = Block.box(4, 0, 4, 12, 19, 12);
 
     public BlockLectern() {
         super(
-            Properties
-                .of(Material.WOOD)
+            IafBlockRegistry.id(Properties
+                .of().mapColor(MapColor.WOOD)
                 .noOcclusion()
                 .dynamicShape()
                 .strength(2, 5)
-                .sound(SoundType.WOOD)
+                .sound(SoundType.WOOD))
         );
 
         this.registerDefaultState(this.getStateDefinition().any().setValue(FACING, Direction.NORTH));
+    }
+
+    @Override
+    protected com.mojang.serialization.MapCodec<? extends BaseEntityBlock> codec() {
+        return simpleCodec(properties -> new BlockLectern());
     }
 
     @Override
@@ -69,14 +75,14 @@ public class BlockLectern extends BaseEntityBlock {
 
 
     @Override
-    public void onRemove(@NotNull BlockState state, Level worldIn, @NotNull BlockPos pos, @NotNull BlockState newState, boolean isMoving) {
+    protected void affectNeighborsAfterRemoval(@NotNull BlockState state, @NotNull net.minecraft.server.level.ServerLevel worldIn, @NotNull BlockPos pos, boolean movedByPiston) {
         BlockEntity tileentity = worldIn.getBlockEntity(pos);
 
         if (tileentity instanceof TileEntityLectern) {
             Containers.dropContents(worldIn, pos, (TileEntityLectern) tileentity);
             worldIn.updateNeighbourForOutputSignal(pos, this);
         }
-        super.onRemove(state, worldIn, pos, newState, isMoving);
+        super.affectNeighborsAfterRemoval(state, worldIn, pos, movedByPiston);
     }
 
     public boolean canPlaceBlockAt(Level worldIn, BlockPos pos) {
@@ -102,7 +108,7 @@ public class BlockLectern extends BaseEntityBlock {
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level p_153182_, @NotNull BlockState p_153183_, @NotNull BlockEntityType<T> entityType) {
-        return p_153182_.isClientSide ? createTickerHelper(entityType, IAF_LECTERN.get(), TileEntityLectern::bookAnimationTick) : null;
+        return p_153182_.isClientSide() ? createTickerHelper(entityType, IAF_LECTERN.get(), TileEntityLectern::bookAnimationTick) : null;
     }
 
 
@@ -122,9 +128,9 @@ public class BlockLectern extends BaseEntityBlock {
     }
 
     @Override
-    public @NotNull InteractionResult use(@NotNull BlockState state, @NotNull Level worldIn, @NotNull BlockPos pos, Player player, @NotNull InteractionHand handIn, @NotNull BlockHitResult hit) {
+    protected @NotNull InteractionResult useWithoutItem(@NotNull BlockState state, @NotNull Level worldIn, @NotNull BlockPos pos, Player player, @NotNull BlockHitResult hit) {
         if (!player.isShiftKeyDown()) {
-            if (worldIn.isClientSide) {
+            if (worldIn.isClientSide()) {
                 IceAndFire.PROXY.setRefrencedTE(worldIn.getBlockEntity(pos));
             } else {
                 MenuProvider inamedcontainerprovider = this.getMenuProvider(state, worldIn, pos);

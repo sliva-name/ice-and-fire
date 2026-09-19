@@ -1,5 +1,10 @@
 package com.github.alexthe666.iceandfire.entity.tile;
 
+import com.github.alexthe666.iceandfire.entity.util.IafOwners;
+
+import net.minecraft.core.UUIDUtil;
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
 import com.github.alexthe666.iceandfire.IafConfig;
 import com.github.alexthe666.iceandfire.entity.EntityDragonEgg;
 import com.github.alexthe666.iceandfire.entity.EntityIceDragon;
@@ -36,14 +41,14 @@ public class TileEntityEggInIce extends BlockEntity {
     public static void tickEgg(Level level, BlockPos pos, BlockState state, TileEntityEggInIce entityEggInIce) {
         entityEggInIce.age++;
         if (entityEggInIce.age >= IafConfig.dragonEggTime && entityEggInIce.type != null && !entityEggInIce.spawned) {
-            if (!level.isClientSide) {
+            if (!level.isClientSide()) {
                 EntityIceDragon dragon = new EntityIceDragon(level);
                 dragon.setPos(pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5);
                 dragon.setVariant(entityEggInIce.type.ordinal() - 4);
                 dragon.setGender(ThreadLocalRandom.current().nextBoolean());
-                dragon.setTame(true);
+                dragon.setTame(true, false);
                 dragon.setHunger(50);
-                dragon.setOwnerUUID(entityEggInIce.ownerUUID);
+                IafOwners.setUUID(dragon, entityEggInIce.ownerUUID);
                 level.addFreshEntity(dragon);
                 entityEggInIce.spawned = true;
                 level.destroyBlock(pos, false);
@@ -55,7 +60,7 @@ public class TileEntityEggInIce extends BlockEntity {
     }
 
     @Override
-    public void saveAdditional(@NotNull CompoundTag tag) {
+    public void saveAdditional(@NotNull ValueOutput tag) {
         if (type != null) {
             tag.putByte("Color", (byte) type.ordinal());
         } else {
@@ -65,23 +70,23 @@ public class TileEntityEggInIce extends BlockEntity {
         if (ownerUUID == null) {
             tag.putString("OwnerUUID", "");
         } else {
-            tag.putUUID("OwnerUUID", ownerUUID);
+            tag.store("OwnerUUID", UUIDUtil.CODEC, ownerUUID);
         }
     }
 
     @Override
-    public void load(@NotNull CompoundTag tag) {
-        super.load(tag);
-        type = EnumDragonEgg.values()[tag.getByte("Color")];
-        age = tag.getInt("Age");
+    public void loadAdditional(@NotNull ValueInput tag) {
+        super.loadAdditional(tag);
+        type = EnumDragonEgg.values()[tag.getByteOr("Color", (byte) 0)];
+        age = tag.getIntOr("Age", 0);
         UUID s = null;
 
-        if (tag.hasUUID("OwnerUUID")) {
-            s = tag.getUUID("OwnerUUID");
+        if (tag.read("OwnerUUID", UUIDUtil.CODEC).isPresent()) {
+            s = tag.read("OwnerUUID", UUIDUtil.CODEC).orElseThrow();
         } else {
             try {
-                String s1 = tag.getString("OwnerUUID");
-                s = OldUsersConverter.convertMobOwnerIfNecessary(this.level.getServer(), s1);
+                String s1 = tag.getStringOr("OwnerUUID", "");
+                s = OldUsersConverter.convertMobOwnerIfNecessary(getLevel() == null ? null : getLevel().getServer(), s1);
             } catch (Exception ignored) {
             }
         }
@@ -91,37 +96,29 @@ public class TileEntityEggInIce extends BlockEntity {
     }
 
     @Override
-    public void handleUpdateTag(CompoundTag parentNBTTagCompound) {
-        this.load(parentNBTTagCompound);
-    }
-
-    @Override
-    public @NotNull CompoundTag getUpdateTag() {
-        CompoundTag nbtTagCompound = new CompoundTag();
-        saveAdditional(nbtTagCompound);
-        return nbtTagCompound;
+    public @NotNull CompoundTag getUpdateTag(net.minecraft.core.HolderLookup.Provider registries) {
+        return this.saveWithFullMetadata(registries);
     }
 
     @Override
     @Nullable
     public ClientboundBlockEntityDataPacket getUpdatePacket() {
-        CompoundTag nbtTagCompound = new CompoundTag();
-        saveAdditional(nbtTagCompound);
         return ClientboundBlockEntityDataPacket.create(this);
     }
 
-    @Override
-    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt) {
-        load(pkt.getTag());   // read from the nbt in the packet
+    public void onDataPacket(Connection connection, ClientboundBlockEntityDataPacket pkt) {
+        if (pkt.getTag() != null && getLevel() != null) {
+            this.loadWithComponents(net.minecraft.world.level.storage.TagValueInput.create(net.minecraft.util.ProblemReporter.DISCARDING, getLevel().registryAccess(), pkt.getTag()));
+        }
     }
 
     public void spawnEgg() {
         if (type != null) {
-            EntityDragonEgg egg = new EntityDragonEgg(IafEntityRegistry.DRAGON_EGG.get(), level);
+            EntityDragonEgg egg = new EntityDragonEgg(IafEntityRegistry.DRAGON_EGG.get(), getLevel());
             egg.setEggType(type);
             egg.setPos(worldPosition.getX() + 0.5, worldPosition.getY() + 1, worldPosition.getZ() + 0.5);
             egg.setOwnerId(this.ownerUUID);
-            if (!level.isClientSide) {
+            if (!level.isClientSide()) {
                 level.addFreshEntity(egg);
             }
         }

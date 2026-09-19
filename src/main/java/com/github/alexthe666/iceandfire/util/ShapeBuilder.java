@@ -4,7 +4,7 @@ import com.google.common.collect.AbstractIterator;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 
-import java.util.Random;
+import net.minecraft.util.RandomSource;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -82,15 +82,15 @@ public class ShapeBuilder {
         return this;
     }
 
-    public ShapeBuilder getAllInRandomlyDistributedRangeYCutOffSphereMutable(int maxRadiusX, int minRadiusX, int yCutOff, Random rand, BlockPos center) {
+    public ShapeBuilder getAllInRandomlyDistributedRangeYCutOffSphereMutable(int maxRadiusX, int minRadiusX, int yCutOff, RandomSource rand, BlockPos center) {
         return getAllInRandomlyDistributedRangeYCutOffSphereMutable(maxRadiusX, minRadiusX, yCutOff, rand, center.getX(), center.getY(), center.getZ());
     }
 
-    public ShapeBuilder getAllInRandomlyDistributedRangeYCutOffSphereMutable(int maxRadiusX, int minRadiusX, int ycutoffmin, Random rand, int c1, int c2, int c3) {
+    public ShapeBuilder getAllInRandomlyDistributedRangeYCutOffSphereMutable(int maxRadiusX, int minRadiusX, int ycutoffmin, RandomSource rand, int c1, int c2, int c3) {
         return getAllInRandomlyDistributedRangeYCutOffSphereMutable(maxRadiusX, minRadiusX, ycutoffmin, ycutoffmin, rand, c1, c2, c3);
     }
 
-    public ShapeBuilder getAllInRandomlyDistributedRangeYCutOffSphereMutable(int maxRadiusX, int minRadiusX, int yCutOffMax, int yCutOffMin, Random rand, int c1, int c2, int c3) {
+    public ShapeBuilder getAllInRandomlyDistributedRangeYCutOffSphereMutable(int maxRadiusX, int minRadiusX, int yCutOffMax, int yCutOffMin, RandomSource rand, int c1, int c2, int c3) {
         int maxr2 = maxRadiusX * maxRadiusX;
         int minr2 = minRadiusX * minRadiusX;
         float rDifference = (float) minRadiusX / maxRadiusX;

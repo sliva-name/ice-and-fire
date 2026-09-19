@@ -4,10 +4,10 @@ import com.github.alexthe666.citadel.client.model.AdvancedEntityModel;
 import com.github.alexthe666.citadel.client.model.AdvancedModelBox;
 import com.github.alexthe666.citadel.client.model.basic.BasicModelPart;
 import com.github.alexthe666.iceandfire.client.model.util.HideableModelRenderer;
+import com.github.alexthe666.iceandfire.client.render.entity.DreadLichSkullRenderState;
 import com.google.common.collect.ImmutableList;
-import net.minecraft.world.entity.Entity;
 
-public class ModelDreadLichSkull extends AdvancedEntityModel {
+public class ModelDreadLichSkull extends AdvancedEntityModel<DreadLichSkullRenderState> {
     public HideableModelRenderer bipedHead;
     public HideableModelRenderer bipedHeadwear;
 
@@ -28,7 +28,7 @@ public class ModelDreadLichSkull extends AdvancedEntityModel {
     }
 
     @Override
-    public void setupAnim(Entity entityIn, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+    public void setupAnim(DreadLichSkullRenderState state) {
         this.resetToDefaultPose();
     }
 
@@ -41,5 +41,4 @@ public class ModelDreadLichSkull extends AdvancedEntityModel {
     public Iterable<AdvancedModelBox> getAllParts() {
         return ImmutableList.of(bipedHead, bipedHeadwear);
     }
-
 }

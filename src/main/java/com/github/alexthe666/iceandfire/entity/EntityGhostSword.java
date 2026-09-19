@@ -1,9 +1,9 @@
 package com.github.alexthe666.iceandfire.entity;
 
+import net.minecraft.network.syncher.SynchedEntityData;
 import com.google.common.collect.Lists;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientboundGameEventPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
@@ -14,20 +14,21 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.projectile.AbstractArrow;
+import net.minecraft.world.entity.projectile.arrow.AbstractArrow;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.network.NetworkHooks;
-import net.minecraftforge.network.PlayMessages;
+import net.minecraftforge.network.packets.SpawnEntity;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public class EntityGhostSword extends AbstractArrow {
+
+    private double iafBaseDamage = 9.0D;
 
     public EntityGhostSword(EntityType<? extends AbstractArrow> type, Level worldIn) {
         super(type, worldIn);
@@ -43,11 +44,12 @@ public class EntityGhostSword extends AbstractArrow {
 
     public EntityGhostSword(EntityType<? extends AbstractArrow> type, Level worldIn, LivingEntity shooter,
                             double dmg) {
-        super(type, shooter, worldIn);
+        super(type, shooter, worldIn, ItemStack.EMPTY, ItemStack.EMPTY);
         this.setBaseDamage(dmg);
+        this.iafBaseDamage = dmg;
     }
 
-    public EntityGhostSword(PlayMessages.SpawnEntity spawnEntity, Level worldIn) {
+    public EntityGhostSword(SpawnEntity spawnEntity, Level worldIn) {
         this(IafEntityRegistry.GHOST_SWORD.get(), worldIn);
     }
 
@@ -57,8 +59,8 @@ public class EntityGhostSword extends AbstractArrow {
     }
 
     @Override
-    protected void defineSynchedData() {
-        super.defineSynchedData();
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
     }
 
     @Override
@@ -77,7 +79,7 @@ public class EntityGhostSword extends AbstractArrow {
         double z = this.getZ() + this.random.nextFloat() * this.getBbWidth() * 2.0F - this.getBbWidth();
         float f = (this.getBbWidth() + this.getBbHeight() + this.getBbWidth()) * 0.333F + 0.5F;
         if (particleDistSq(x, y, z) < f * f) {
-            this.level.addParticle(ParticleTypes.SNEEZE, x, y + 0.5D, z, d0, d1, d2);
+            this.level().addParticle(ParticleTypes.SNEEZE, x, y + 0.5D, z, d0, d1, d2);
         }
         Vec3 vector3d = this.getDeltaMovement();
         double f3 = vector3d.horizontalDistance();
@@ -87,7 +89,7 @@ public class EntityGhostSword extends AbstractArrow {
         this.xRotO = this.getXRot();
         Vec3 vector3d2 = this.position();
         Vec3 vector3d3 = vector3d2.add(vector3d);
-        HitResult raytraceresult = this.level.clip(new ClipContext(vector3d2, vector3d3, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
+        HitResult raytraceresult = this.level().clip(new ClipContext(vector3d2, vector3d3, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
         if (raytraceresult.getType() != HitResult.Type.MISS) {
             vector3d3 = raytraceresult.getLocation();
         }
@@ -111,7 +113,7 @@ public class EntityGhostSword extends AbstractArrow {
                     this.onHit(raytraceresult);
 
                 }
-                this.hasImpulse = true;
+                this.hurtMarked = true;
             }
 
             if (entityraytraceresult == null || this.getPierceLevel() <= 0) {
@@ -133,7 +135,7 @@ public class EntityGhostSword extends AbstractArrow {
     @Override
     public void playSound(@NotNull SoundEvent soundIn, float volume, float pitch) {
         if (!this.isSilent() && soundIn != SoundEvents.ARROW_HIT && soundIn != SoundEvents.ARROW_HIT_PLAYER) {
-            this.level.playSound(null, this.getX(), this.getY(), this.getZ(), soundIn, this.getSoundSource(), volume, pitch);
+            this.level().playSound(null, this.getX(), this.getY(), this.getZ(), soundIn, this.getSoundSource(), volume, pitch);
         }
     }
 
@@ -141,7 +143,6 @@ public class EntityGhostSword extends AbstractArrow {
         return 15728880;
     }
 
-    @Override
     public float getBrightness() {
         return 1.0F;
     }
@@ -157,15 +158,13 @@ public class EntityGhostSword extends AbstractArrow {
     }
 
     @Override
-    public @NotNull Packet<?> getAddEntityPacket() {
-        return NetworkHooks.getEntitySpawningPacket(this);
+    protected @NotNull ItemStack getDefaultPickupItem() {
+        return ItemStack.EMPTY;
     }
-
     private IntOpenHashSet piercedEntities;
     private List<Entity> hitEntities;
     private int knockbackStrength;
 
-    @Override
     public void setKnockback(int knockbackStrengthIn) {
         this.knockbackStrength = knockbackStrengthIn;
     }
@@ -174,7 +173,7 @@ public class EntityGhostSword extends AbstractArrow {
     protected void onHitEntity(EntityHitResult result) {
         Entity entity = result.getEntity();
         float f = (float) this.getDeltaMovement().length();
-        int i = Mth.ceil(Math.max(f * this.getBaseDamage(), 0.0D));
+        int i = Mth.ceil(Math.max(f * this.iafBaseDamage, 0.0D));
         if (this.getPierceLevel() > 0) {
             if (this.piercedEntities == null) {
                 this.piercedEntities = new IntOpenHashSet(5);
@@ -197,23 +196,20 @@ public class EntityGhostSword extends AbstractArrow {
         }
 
         Entity entity1 = this.getOwner();
-        DamageSource damagesource = DamageSource.MAGIC;
+        DamageSource damagesource = this.damageSources().magic();
 
-        if (entity1 != null) {
-            if (entity1 instanceof LivingEntity) {
-                damagesource = DamageSource.arrow(this, entity1);
-                damagesource.setMagic();
-                ((LivingEntity) entity1).setLastHurtMob(entity);
-            }
+        if (entity1 instanceof LivingEntity livingOwner) {
+            damagesource = this.damageSources().indirectMagic(this, livingOwner);
+            livingOwner.setLastHurtMob(entity);
         }
 
         boolean flag = entity.getType() == EntityType.ENDERMAN;
         int j = entity.getRemainingFireTicks();
         if (this.isOnFire() && !flag) {
-            entity.setSecondsOnFire(5);
+            entity.igniteForSeconds(5);
         }
 
-        if (entity.hurt(damagesource, i)) {
+        if (entity.hurtOrSimulate(damagesource, i)) {
             if (flag) {
                 return;
             }
@@ -231,7 +227,7 @@ public class EntityGhostSword extends AbstractArrow {
 
                 this.doPostHurtEffects(livingentity);
                 if (entity1 != null && livingentity != entity1 && livingentity instanceof Player && entity1 instanceof ServerPlayer) {
-                    ((ServerPlayer) entity1).connection.send(new ClientboundGameEventPacket(ClientboundGameEventPacket.ARROW_HIT_PLAYER, 0.0F));
+                    ((ServerPlayer) entity1).connection.send(new ClientboundGameEventPacket(ClientboundGameEventPacket.PLAY_ARROW_HIT_SOUND, 0.0F));
                 }
 
                 if (!entity.isAlive() && this.hitEntities != null) {
@@ -247,7 +243,7 @@ public class EntityGhostSword extends AbstractArrow {
         } else {
             this.setDeltaMovement(this.getDeltaMovement().scale(-0.1D));
             //this.ticksInAir = 0;
-            if (!this.level.isClientSide && this.getDeltaMovement().lengthSqr() < 1.0E-7D) {
+            if (!this.level().isClientSide() && this.getDeltaMovement().lengthSqr() < 1.0E-7D) {
                 this.remove(RemovalReason.DISCARDED);
             }
         }

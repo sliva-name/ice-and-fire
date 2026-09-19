@@ -1,5 +1,9 @@
 package com.github.alexthe666.iceandfire.entity;
 
+import net.minecraft.server.level.ServerLevel;
+
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
 import com.github.alexthe666.citadel.animation.Animation;
 import com.github.alexthe666.citadel.animation.IAnimatedEntity;
 import com.github.alexthe666.iceandfire.IafConfig;
@@ -32,7 +36,7 @@ import javax.annotation.Nullable;
 public class EntityDreadQueen extends EntityDreadMob implements IAnimatedEntity, IVillagerFear, IAnimalFear {
 
     public static Animation ANIMATION_SPAWN = Animation.create(40);
-    private final ServerBossEvent bossInfo = (new ServerBossEvent(this.getDisplayName(), BossEvent.BossBarColor.BLUE, BossEvent.BossBarOverlay.PROGRESS));
+    private final ServerBossEvent bossInfo = new ServerBossEvent(this.getUUID(), this.getDisplayName(), BossEvent.BossBarColor.BLUE, BossEvent.BossBarOverlay.PROGRESS);
     private int animationTick;
     private Animation currentAnimation;
 
@@ -48,18 +52,8 @@ public class EntityDreadQueen extends EntityDreadMob implements IAnimatedEntity,
         this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(7, new RandomLookAroundGoal(this));
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
-        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false, new Predicate<LivingEntity>() {
-            @Override
-            public boolean apply(@Nullable LivingEntity entity) {
-                return DragonUtils.canHostilesTarget(entity);
-            }
-        }));
-        this.targetSelector.addGoal(3, new DreadAITargetNonDread(this, LivingEntity.class, false, new Predicate<LivingEntity>() {
-            @Override
-            public boolean apply(LivingEntity entity) {
-                return entity instanceof LivingEntity && DragonUtils.canHostilesTarget(entity);
-            }
-        }));
+        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false, (entity, serverLevel) -> DragonUtils.canHostilesTarget(entity)));
+        this.targetSelector.addGoal(3, new DreadAITargetNonDread(this, LivingEntity.class, false, (entity, serverLevel) -> DragonUtils.canHostilesTarget(entity)));
     }
 
     public static AttributeSupplier.Builder bakeAttributes() {
@@ -77,7 +71,7 @@ public class EntityDreadQueen extends EntityDreadMob implements IAnimatedEntity,
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag compound) {
+    public void readAdditionalSaveData(ValueInput compound) {
         super.readAdditionalSaveData(compound);
 
         if (this.hasCustomName()) {
@@ -86,8 +80,8 @@ public class EntityDreadQueen extends EntityDreadMob implements IAnimatedEntity,
     }
 
     @Override
-    protected void customServerAiStep() {
-        super.customServerAiStep();
+    protected void customServerAiStep(ServerLevel level) {
+        super.customServerAiStep(level);
         this.bossInfo.setProgress(this.getHealth() / this.getMaxHealth());
     }
 
@@ -113,16 +107,16 @@ public class EntityDreadQueen extends EntityDreadMob implements IAnimatedEntity,
 
     @Override
     @Nullable
-    public SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor worldIn, @NotNull DifficultyInstance difficultyIn, @NotNull MobSpawnType reason, @Nullable SpawnGroupData spawnDataIn, @Nullable CompoundTag dataTag) {
-        SpawnGroupData data = super.finalizeSpawn(worldIn, difficultyIn, reason, spawnDataIn, dataTag);
+    public SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor worldIn, @NotNull DifficultyInstance difficultyIn, @NotNull EntitySpawnReason reason, @Nullable SpawnGroupData spawnDataIn) {
+        SpawnGroupData data = super.finalizeSpawn(worldIn, difficultyIn, reason, spawnDataIn);
         this.setAnimation(ANIMATION_SPAWN);
-        this.populateDefaultEquipmentSlots(difficultyIn);
+        this.populateDefaultEquipmentSlots(this.random, difficultyIn);
         return data;
     }
 
     @Override
-    protected void populateDefaultEquipmentSlots(@NotNull DifficultyInstance difficulty) {
-        super.populateDefaultEquipmentSlots(difficulty);
+    protected void populateDefaultEquipmentSlots(@NotNull net.minecraft.util.RandomSource random, @NotNull DifficultyInstance difficulty) {
+        super.populateDefaultEquipmentSlots(random, difficulty);
         this.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(IafItemRegistry.DREAD_QUEEN_SWORD.get()));
         this.setItemSlot(EquipmentSlot.OFFHAND, new ItemStack(IafItemRegistry.DREAD_QUEEN_STAFF.get()));
     }

@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    "iceandfire:fire_dragon_blood",
+    "iceandfire:dragonbone_sword"
+  ],
+  "result": {
+    "count": 1,
+    "id": "iceandfire:dragonbone_sword_fire"
+  }
+}

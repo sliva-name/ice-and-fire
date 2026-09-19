@@ -1,17 +1,17 @@
 package com.github.alexthe666.iceandfire.client.model;
 
-import com.github.alexthe666.citadel.animation.IAnimatedEntity;
+import com.github.alexthe666.citadel.client.model.AdvancedEntityModel;
 import com.github.alexthe666.citadel.client.model.AdvancedModelBox;
 import com.github.alexthe666.citadel.client.model.ModelAnimator;
 import com.github.alexthe666.citadel.client.model.basic.BasicModelPart;
-import com.github.alexthe666.iceandfire.entity.EntityStymphalianBird;
+import com.github.alexthe666.iceandfire.client.render.entity.StymphalianBirdRenderState;
 import com.google.common.collect.ImmutableList;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.world.entity.Entity;
 
-public class ModelStymphalianBird extends ModelDragonBase<EntityStymphalianBird> {
+public class ModelStymphalianBird extends AdvancedEntityModel<StymphalianBirdRenderState> implements ICustomStatueModel {
     public AdvancedModelBox Body;
     public AdvancedModelBox LowerBody;
     public AdvancedModelBox Neck1;
@@ -311,11 +311,27 @@ public class ModelStymphalianBird extends ModelDragonBase<EntityStymphalianBird>
         this.updateDefaultPose();
     }
 
-    public void animate(IAnimatedEntity entity, float f, float f1, float f2, float f3, float f4, float f5) {
+    @Override
+    public void faceTarget(float yaw, float pitch, float rotationDivisor, AdvancedModelBox... boxes) {
+        // Preserve ModelDragonBase's floating-point operation order.
+        float actualRotationDivisor = rotationDivisor * (float) boxes.length;
+        float yawAmount = yaw * (float) Math.PI / 180F / actualRotationDivisor;
+        float pitchAmount = pitch * (float) Math.PI / 180F / actualRotationDivisor;
+        for (AdvancedModelBox box : boxes) {
+            box.rotateAngleY += yawAmount;
+            box.rotateAngleX += pitchAmount;
+        }
+    }
+
+    private void rotate(ModelAnimator animator, AdvancedModelBox part, float x, float y, float z) {
+        animator.rotate(part, (float) Math.toRadians(x), (float) Math.toRadians(y), (float) Math.toRadians(z));
+    }
+
+    public void animate(StymphalianBirdRenderState state) {
         this.resetToDefaultPose();
         animator = ModelAnimator.create();
-        animator.update(entity);
-        if (animator.setAnimation(EntityStymphalianBird.ANIMATION_PECK)) {
+        animator.update(state.animation, state.animationTick, state.partialTick);
+        if (animator.setAnimation(StymphalianBirdRenderState.PECK)) {
             animator.startKeyframe(5);
             this.rotate(animator, Neck1, -47, 0, 0);
             this.rotate(animator, NeckPivot, 17, 0, 0);
@@ -331,14 +347,14 @@ public class ModelStymphalianBird extends ModelDragonBase<EntityStymphalianBird>
             animator.endKeyframe();
             animator.resetKeyframe(5);
         }
-        if (animator.setAnimation(EntityStymphalianBird.ANIMATION_SPEAK)) {
+        if (animator.setAnimation(StymphalianBirdRenderState.SPEAK)) {
             animator.startKeyframe(5);
             this.rotate(animator, Jaw, 35, 0, 0);
             animator.startKeyframe(5);
             this.rotate(animator, Jaw, 0, 0, 0);
             animator.endKeyframe();
         }
-        if (animator.setAnimation(EntityStymphalianBird.ANIMATION_SHOOT_ARROWS)) {
+        if (animator.setAnimation(StymphalianBirdRenderState.SHOOT_ARROWS)) {
             animator.startKeyframe(20);
             shootPosture();
             animator.endKeyframe();
@@ -376,8 +392,13 @@ public class ModelStymphalianBird extends ModelDragonBase<EntityStymphalianBird>
     }
 
     @Override
-    public void setupAnim(EntityStymphalianBird entity, float f, float f1, float f2, float f3, float f4) {
-        animate(entity, f, f1, f2, f3, f4, 1);
+    public void setupAnim(StymphalianBirdRenderState entity) {
+        float f = entity.walkAnimationPos;
+        float f1 = entity.walkAnimationSpeed;
+        float f2 = entity.ageInTicks;
+        float f3 = entity.yRot;
+        float f4 = entity.xRot;
+        animate(entity);
         float speed_walk = 0.3F;
         float speed_idle = 0.05F;
         float speed_fly = 0.4F;
@@ -434,10 +455,10 @@ public class ModelStymphalianBird extends ModelDragonBase<EntityStymphalianBird>
             progressRotation(NeckPivot, entity.flyProgress, -0.31869712141416456F, 0.0F, 0.0F);
             progressRotation(ToeL4, entity.flyProgress, -0.22759093446006054F, -0.6108652381980153F, 0.0F);
 
-            this.chainFlap(WING_LEFT, speed_fly + (entity.getAnimation() == EntityStymphalianBird.ANIMATION_SHOOT_ARROWS ? 0.25F : 0), -degree_fly * 0.5F, 0, f2, 1);
-            this.chainFlap(WING_RIGHT, speed_fly + (entity.getAnimation() == EntityStymphalianBird.ANIMATION_SHOOT_ARROWS ? 0.25F : 0), degree_fly * 0.5F, 0, f2, 1);
+            this.chainFlap(WING_LEFT, speed_fly + (entity.animation == StymphalianBirdRenderState.SHOOT_ARROWS ? 0.25F : 0), -degree_fly * 0.5F, 0, f2, 1);
+            this.chainFlap(WING_RIGHT, speed_fly + (entity.animation == StymphalianBirdRenderState.SHOOT_ARROWS ? 0.25F : 0), degree_fly * 0.5F, 0, f2, 1);
 
-            if (entity.getAnimation() != EntityStymphalianBird.ANIMATION_SHOOT_ARROWS) {
+            if (entity.animation != StymphalianBirdRenderState.SHOOT_ARROWS) {
                 this.chainWave(NECK, speed_fly, degree_fly * 0.15F, 4, f2, 1);
                 this.bob(Body, speed_fly * 0.5F, degree_fly * 2.5F, true, f2, 1);
                 this.walk(BackLegL1, speed_fly, degree_fly * 0.15F, true, 1, 0.2F, f2, 1);

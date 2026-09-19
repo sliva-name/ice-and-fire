@@ -1,9 +1,8 @@
 package com.github.alexthe666.iceandfire.entity.ai;
 
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
-import net.minecraft.network.protocol.game.DebugPackets;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
@@ -25,6 +24,11 @@ public class SeaSerpentPathNavigator extends PathNavigation {
     protected @NotNull PathFinder createPathFinder(int p_179679_1_) {
         this.nodeEvaluator = new SwimNodeEvaluator(true);
         return new PathFinder(this.nodeEvaluator, p_179679_1_);
+    }
+
+    @Override
+    public boolean canNavigateGround() {
+        return false;
     }
 
     @Override
@@ -55,7 +59,7 @@ public class SeaSerpentPathNavigator extends PathNavigation {
                 }
             }
 
-            DebugPackets.sendPathFindingPacket(this.level, this.mob, this.path, this.maxDistanceToWaypoint);
+            // 26.1 dropped DebugPackets.sendPathFindingPacket; path is still followed below.
             if (!this.isDone()) {
                 lvt_1_2_ = this.path.getNextEntityPos(this.mob);
                 this.mob.getMoveControl().setWantedPosition(lvt_1_2_.x, lvt_1_2_.y, lvt_1_2_.z, this.speedModifier);
@@ -136,7 +140,7 @@ public class SeaSerpentPathNavigator extends PathNavigation {
 
     @Override
     public boolean isStableDestination(@NotNull BlockPos pos) {
-        return !this.level.getBlockState(pos).isSolidRender(this.level, pos);
+        return !this.level.getBlockState(pos).isSolidRender();
     }
 
     @Override

@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "SBS",
+    "BSB",
+    "SBS"
+  ],
+  "key": {
+    "B": "minecraft:stone_bricks",
+    "S": "#forge:storage_blocks/fire_dragon_scale"
+  },
+  "result": {
+    "count": 4,
+    "id": "iceandfire:dragonforge_fire_brick"
+  }
+}

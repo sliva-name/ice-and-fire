@@ -16,9 +16,9 @@ public class ItemAmbrosia extends ItemGenericFood {
 
     @Override
     public void onFoodEaten(ItemStack stack, Level worldIn, LivingEntity livingEntity) {
-        livingEntity.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 3600, 2));
+        livingEntity.addEffect(new MobEffectInstance(MobEffects.STRENGTH, 3600, 2));
         livingEntity.addEffect(new MobEffectInstance(MobEffects.ABSORPTION, 3600, 2));
-        livingEntity.addEffect(new MobEffectInstance(MobEffects.JUMP, 3600, 2));
+        livingEntity.addEffect(new MobEffectInstance(MobEffects.JUMP_BOOST, 3600, 2));
         livingEntity.addEffect(new MobEffectInstance(MobEffects.LUCK, 3600, 2));
     }
 

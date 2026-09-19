@@ -21,19 +21,17 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-@Mod.EventBusSubscriber(modid = IceAndFire.MODID, value = Dist.CLIENT)
 public class ClientProxy extends CommonProxy {
 
     public static Set<UUID> currentDragonRiders = new HashSet<UUID>();
+    /** 1.18 CameraSetup move(-getMaxZoom(scale*N)) argument, applied when a camera hook exists. */
+    public static float DRAGON_CAMERA_PULLBACK = 0.0F;
     private static MyrmexHive referedClientHive = null;
     private int previousViewType = 0;
     private int thirdPersonViewDragon = 0;
@@ -51,9 +49,9 @@ public class ClientProxy extends CommonProxy {
 
     @Override
     public void init() {
-        IafKeybindRegistry.init();
-        MinecraftForge.EVENT_BUS.register(new PlayerRenderEvents());
-        MinecraftForge.EVENT_BUS.register(new ClientEvents());
+        RegisterKeyMappingsEvent.BUS.addListener(IafKeybindRegistry::register);
+        PlayerRenderEvents.register();
+        ClientEvents.register();
     }
 
     @Override
@@ -67,7 +65,6 @@ public class ClientProxy extends CommonProxy {
         IafClientSetup.clientInit();
     }
 
-    @OnlyIn(Dist.CLIENT)
     @Override
     public void spawnDragonParticle(final EnumParticles name, double x, double y, double z, double motX, double motY, double motZ, EntityDragonBase entityDragonBase) {
         ClientLevel world = Minecraft.getInstance().level;
@@ -85,7 +82,6 @@ public class ClientProxy extends CommonProxy {
         }
     }
 
-    @OnlyIn(Dist.CLIENT)
     @Override
     public void spawnParticle(final EnumParticles name, double x, double y, double z, double motX, double motY, double motZ, float size) {
         ClientLevel world = Minecraft.getInstance().level;
@@ -135,25 +131,21 @@ public class ClientProxy extends CommonProxy {
         }
     }
 
-    @OnlyIn(Dist.CLIENT)
     @Override
     public void openBestiaryGui(ItemStack book) {
         Minecraft.getInstance().setScreen(new GuiBestiary(book));
     }
 
-    @OnlyIn(Dist.CLIENT)
     @Override
     public void openMyrmexStaffGui(ItemStack staff) {
         Minecraft.getInstance().setScreen(new GuiMyrmexStaff(staff));
     }
 
-    @OnlyIn(Dist.CLIENT)
     @Override
     public void openMyrmexAddRoomGui(ItemStack staff, BlockPos pos, Direction facing) {
         Minecraft.getInstance().setScreen(new GuiMyrmexAddRoom(staff, pos, facing));
     }
 
-    @OnlyIn(Dist.CLIENT)
     @Override
     public Object getFontRenderer() {
         return Minecraft.getInstance().font;
@@ -184,10 +176,9 @@ public class ClientProxy extends CommonProxy {
         LayerDragonArmor.clearCache(clear);
     }
 
-    @OnlyIn(Dist.CLIENT)
     @Override
     public boolean shouldSeeBestiaryContents() {
-        return InputConstants.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), 340) || InputConstants.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), 344);
+        return InputConstants.isKeyDown(Minecraft.getInstance().getWindow(), 340) || InputConstants.isKeyDown(Minecraft.getInstance().getWindow(), 344);
     }
 
     @Override
@@ -210,7 +201,6 @@ public class ClientProxy extends CommonProxy {
         referencedTE = tileEntity;
     }
 
-    @OnlyIn(Dist.CLIENT)
     @Override
     public Player getClientSidePlayer() {
         return Minecraft.getInstance().player;

@@ -1,71 +1,44 @@
 package com.github.alexthe666.iceandfire.client.render.entity.layer;
 
-import com.github.alexthe666.citadel.client.model.AdvancedEntityModel;
-import com.github.alexthe666.iceandfire.client.model.ModelMyrmexBase;
+import com.github.alexthe666.iceandfire.client.render.entity.MyrmexRenderState;
 import com.github.alexthe666.iceandfire.client.render.entity.RenderMyrmexBase;
-import com.github.alexthe666.iceandfire.entity.EntityMyrmexBase;
-import com.github.alexthe666.iceandfire.entity.EntityMyrmexWorker;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Quaternion;
-import com.mojang.math.Vector3f;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.block.model.ItemTransforms;
+import com.mojang.math.Axis;
+import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.HumanoidArm;
-import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.ItemStack;
-import org.jetbrains.annotations.NotNull;
 
-public class LayerMyrmexItem extends RenderLayer<EntityMyrmexBase, AdvancedEntityModel<EntityMyrmexBase>> {
+public class LayerMyrmexItem extends RenderLayer<MyrmexRenderState, EntityModel<MyrmexRenderState>> {
 
     protected final RenderMyrmexBase livingEntityRenderer;
 
-    public LayerMyrmexItem(RenderMyrmexBase livingEntityRendererIn) {
-        super(livingEntityRendererIn);
-        this.livingEntityRenderer = livingEntityRendererIn;
-    }
-
-    private void renderHeldItem(EntityMyrmexBase myrmex, ItemStack stack, ItemTransforms.TransformType transform, HumanoidArm handSide) {
-
-    }
-
-    protected void translateToHand(HumanoidArm side, PoseStack stack) {
-        ((ModelMyrmexBase) this.livingEntityRenderer.getModel()).postRenderArm(0, stack);
-    }
-
-    public boolean shouldCombineTextures() {
-        return false;
+    public LayerMyrmexItem(RenderMyrmexBase livingEntityRenderer) {
+        super(livingEntityRenderer);
+        this.livingEntityRenderer = livingEntityRenderer;
     }
 
     @Override
-    public void render(@NotNull PoseStack matrixStackIn, @NotNull MultiBufferSource bufferIn, int packedLightIn, @NotNull EntityMyrmexBase entitylivingbaseIn, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch) {
-        if (entitylivingbaseIn instanceof EntityMyrmexWorker) {
-            ItemStack itemstack = entitylivingbaseIn.getItemInHand(InteractionHand.MAIN_HAND);
-            if (!itemstack.isEmpty()) {
-                matrixStackIn.pushPose();
-                if (!itemstack.isEmpty()) {
-                    matrixStackIn.pushPose();
-
-                    if (entitylivingbaseIn.isShiftKeyDown()) {
-                        matrixStackIn.translate(0.0F, 0.2F, 0.0F);
-                    }
-                    this.translateToHand(HumanoidArm.RIGHT, matrixStackIn);
-                    matrixStackIn.translate(0F, 0.3F, -1.6F);
-                    if (itemstack.getItem() instanceof BlockItem) {
-                        matrixStackIn.translate(0F, 0, 0.2F);
-                    } else {
-                        matrixStackIn.translate(0F, 0.2F, 0.3F);
-                    }
-                    matrixStackIn.mulPose(new Quaternion(Vector3f.XP, 160, true));
-                    matrixStackIn.mulPose(new Quaternion(Vector3f.YP, 180, true));
-                    Minecraft.getInstance().getItemRenderer().renderStatic(itemstack, ItemTransforms.TransformType.FIXED, packedLightIn, OverlayTexture.NO_OVERLAY, matrixStackIn, bufferIn, 0);
-                    matrixStackIn.popPose();
-                }
-                matrixStackIn.popPose();
-            }
+    public void submit(PoseStack stack, SubmitNodeCollector collector, int lightCoords, MyrmexRenderState state, float yRot, float xRot) {
+        if (state.caste != MyrmexRenderState.Caste.WORKER || state.growthStage < 2 || state.mouthItem.isEmpty()) {
+            return;
         }
+        stack.pushPose();
+        if (state.shiftKeyDown) {
+            stack.translate(0.0F, 0.2F, 0.0F);
+        }
+        // LivingEntityRenderer poses the selected adapter before submitting layers.
+        // Use the adult Citadel head chain, never cast a native adapter or a juvenile model.
+        livingEntityRenderer.getAdultModel().postRenderArm(0.0F, stack);
+        stack.translate(0.0F, 0.3F, -1.6F);
+        if (state.mouthItemIsBlock) {
+            stack.translate(0.0F, 0.0F, 0.2F);
+        } else {
+            stack.translate(0.0F, 0.2F, 0.3F);
+        }
+        stack.mulPose(Axis.XP.rotationDegrees(160.0F));
+        stack.mulPose(Axis.YP.rotationDegrees(180.0F));
+        state.mouthItem.submit(stack, collector, lightCoords, OverlayTexture.NO_OVERLAY, state.outlineColor);
+        stack.popPose();
     }
 }

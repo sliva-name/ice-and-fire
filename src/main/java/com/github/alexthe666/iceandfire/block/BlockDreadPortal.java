@@ -14,7 +14,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.material.MapColor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
@@ -26,19 +26,24 @@ public class BlockDreadPortal extends BaseEntityBlock implements IDreadBlock {
 
     public BlockDreadPortal() {
         super(
-            Properties
-                .of(Material.PORTAL)
+            IafBlockRegistry.id(Properties
+                .of().mapColor(MapColor.COLOR_BLACK)
                 .dynamicShape()
                 .strength(-1, 100000)
                 .lightLevel((state) -> {
                     return 1;
                 })
-                .randomTicks()
+                .randomTicks())
 		);
     }
 
     @Override
-    public void entityInside(@NotNull BlockState state, @NotNull Level worldIn, @NotNull BlockPos pos, @NotNull Entity entity) {
+    protected com.mojang.serialization.MapCodec<? extends BaseEntityBlock> codec() {
+        return simpleCodec(properties -> new BlockDreadPortal());
+    }
+
+    @Override
+    protected void entityInside(@NotNull BlockState state, @NotNull Level worldIn, @NotNull BlockPos pos, @NotNull Entity entity, @NotNull net.minecraft.world.entity.InsideBlockEffectApplier applier, boolean unknown) {
      /* if(entity.dimension != IafConfig.dreadlandsDimensionId){
             MiscEntityProperties properties = EntityPropertiesHandler.INSTANCE.getProperties(entity, MiscEntityProperties.class);
             if (properties != null) {
@@ -91,7 +96,7 @@ public class BlockDreadPortal extends BaseEntityBlock implements IDreadBlock {
     }
 
     @Override
-    public void animateTick(@NotNull BlockState stateIn, Level worldIn, @NotNull BlockPos pos, @NotNull Random rand) {
+    public void animateTick(@NotNull BlockState stateIn, @NotNull Level worldIn, @NotNull BlockPos pos, @NotNull net.minecraft.util.RandomSource rand) {
         BlockEntity tileentity = worldIn.getBlockEntity(pos);
 
         if (tileentity instanceof TileEntityDreadPortal) {
@@ -120,7 +125,7 @@ public class BlockDreadPortal extends BaseEntityBlock implements IDreadBlock {
 
     @Override
     public @NotNull RenderShape getRenderShape(@NotNull BlockState state) {
-        return RenderShape.ENTITYBLOCK_ANIMATED;
+        return RenderShape.INVISIBLE;
     }
 
     @Nullable

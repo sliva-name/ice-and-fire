@@ -6,9 +6,9 @@ import com.github.alexthe666.iceandfire.entity.EntityStymphalianBird;
 import com.google.common.base.Predicate;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
-import net.minecraft.world.entity.animal.AbstractGolem;
+import net.minecraft.world.entity.animal.golem.AbstractGolem;
 import net.minecraft.world.entity.animal.Animal;
-import net.minecraft.world.entity.npc.AbstractVillager;
+import net.minecraft.world.entity.npc.villager.AbstractVillager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.NotNull;
@@ -19,12 +19,8 @@ public class StymphalianBirdAITarget extends NearestAttackableTargetGoal<LivingE
     private final EntityStymphalianBird bird;
 
     public StymphalianBirdAITarget(EntityStymphalianBird entityIn, Class<LivingEntity> classTarget, boolean checkSight) {
-        super(entityIn, classTarget, 0, checkSight, false, new Predicate<LivingEntity>() {
-            @Override
-            public boolean apply(@Nullable LivingEntity entity) {
-                return !EntityGorgon.isStoneMob(entity) && (entity instanceof Player && !((Player) entity).isCreative() || entity instanceof AbstractVillager || entity instanceof AbstractGolem || entity instanceof Animal && IafConfig.stympahlianBirdAttackAnimals);
-            }
-        });
+        super(entityIn, classTarget, 0, checkSight, false, (entity, serverLevel) ->
+            !EntityGorgon.isStoneMob(entity) && (entity instanceof Player && !((Player) entity).isCreative() || entity instanceof AbstractVillager || entity instanceof AbstractGolem || entity instanceof Animal && IafConfig.stympahlianBirdAttackAnimals));
         this.bird = entityIn;
     }
 

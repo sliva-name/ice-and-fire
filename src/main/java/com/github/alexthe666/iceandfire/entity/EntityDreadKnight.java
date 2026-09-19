@@ -1,5 +1,7 @@
 package com.github.alexthe666.iceandfire.entity;
 
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
 import com.github.alexthe666.citadel.animation.Animation;
 import com.github.alexthe666.citadel.animation.AnimationHandler;
 import com.github.alexthe666.citadel.animation.IAnimatedEntity;
@@ -46,7 +48,7 @@ import javax.annotation.Nullable;
 
 public class EntityDreadKnight extends EntityDreadMob implements IAnimatedEntity, IVillagerFear, IAnimalFear {
 
-    public static final ItemStack SHIELD = generateShield();
+    private static ItemStack SHIELD;
     private static final EntityDataAccessor<Integer> VARIANT = SynchedEntityData.defineId(EntityDreadKnight.class, EntityDataSerializers.INT);
     public static Animation ANIMATION_SPAWN = Animation.create(40);
     private int animationTick;
@@ -56,13 +58,23 @@ public class EntityDreadKnight extends EntityDreadMob implements IAnimatedEntity
         super(type, worldIn);
     }
 
+    private static ItemStack shield() {
+        if (SHIELD == null) {
+            SHIELD = generateShield();
+        }
+        return SHIELD;
+    }
+
     private static ItemStack generateShield() {
-        ItemStack itemstack = new ItemStack(Items.CYAN_BANNER);
-        CompoundTag compoundnbt = itemstack.getOrCreateTagElement("BlockEntityTag");
-        ListTag listnbt = (new BannerPattern.Builder()).addPattern(BannerPattern.BASE, DyeColor.CYAN).addPattern(IafItemRegistry.PATTERN_DREAD.get().getBannerPattern(), DyeColor.WHITE).toListTag();
-        compoundnbt.put("Patterns", listnbt);
         ItemStack shield = new ItemStack(Items.SHIELD, 1);
-        shield.setTag(itemstack.getTag());
+        shield.set(net.minecraft.core.component.DataComponents.BASE_COLOR, DyeColor.CYAN);
+        net.minecraft.world.level.block.entity.BannerPattern dread = new net.minecraft.world.level.block.entity.BannerPattern(
+            net.minecraft.resources.Identifier.fromNamespaceAndPath("iceandfire", "iceandfire_dread"),
+            "iceandfire.iceandfire_dread");
+        shield.set(net.minecraft.core.component.DataComponents.BANNER_PATTERNS,
+            new net.minecraft.world.level.block.entity.BannerPatternLayers.Builder()
+                .add(net.minecraft.core.Holder.direct(dread), DyeColor.WHITE)
+                .build());
         return shield;
     }
 
@@ -89,34 +101,24 @@ public class EntityDreadKnight extends EntityDreadMob implements IAnimatedEntity
         this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(7, new RandomLookAroundGoal(this));
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this, IDreadMob.class));
-        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false, new Predicate<LivingEntity>() {
-            @Override
-            public boolean apply(@Nullable LivingEntity entity) {
-                return DragonUtils.canHostilesTarget(entity);
-            }
-        }));
-        this.targetSelector.addGoal(3, new DreadAITargetNonDread(this, LivingEntity.class, false, new Predicate<LivingEntity>() {
-            @Override
-            public boolean apply(LivingEntity entity) {
-                return entity instanceof LivingEntity && DragonUtils.canHostilesTarget(entity);
-            }
-        }));
+        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false, (entity, serverLevel) -> DragonUtils.canHostilesTarget(entity)));
+        this.targetSelector.addGoal(3, new DreadAITargetNonDread(this, LivingEntity.class, false, (entity, serverLevel) -> DragonUtils.canHostilesTarget(entity)));
     }
 
     @Override
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(VARIANT, 0);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(VARIANT, 0);
     }
 
     @Override
     public void aiStep() {
         super.aiStep();
         if (this.getAnimation() == ANIMATION_SPAWN && this.getAnimationTick() < 30) {
-            BlockState belowBlock = level.getBlockState(this.blockPosition().below());
+            BlockState belowBlock = this.level().getBlockState(this.blockPosition().below());
             if (belowBlock.getBlock() != Blocks.AIR) {
                 for (int i = 0; i < 5; i++) {
-                    this.level.addParticle(new BlockParticleOption(ParticleTypes.BLOCK, belowBlock), this.getX() + (double) (this.random.nextFloat() * this.getBbWidth() * 2.0F) - (double) this.getBbWidth(), this.getBoundingBox().minY, this.getZ() + (double) (this.random.nextFloat() * this.getBbWidth() * 2.0F) - (double) this.getBbWidth(), this.random.nextGaussian() * 0.02D, this.random.nextGaussian() * 0.02D, this.random.nextGaussian() * 0.02D);
+                    this.level().addParticle(new BlockParticleOption(ParticleTypes.BLOCK, belowBlock), this.getX() + (double) (this.random.nextFloat() * this.getBbWidth() * 2.0F) - (double) this.getBbWidth(), this.getBoundingBox().minY, this.getZ() + (double) (this.random.nextFloat() * this.getBbWidth() * 2.0F) - (double) this.getBbWidth(), this.random.nextGaussian() * 0.02D, this.random.nextGaussian() * 0.02D, this.random.nextGaussian() * 0.02D);
                 }
             }
             this.setDeltaMovement(0, this.getDeltaMovement().y, this.getDeltaMovement().z);
@@ -125,21 +127,21 @@ public class EntityDreadKnight extends EntityDreadMob implements IAnimatedEntity
     }
 
     @Override
-    protected void populateDefaultEquipmentSlots(@NotNull DifficultyInstance difficulty) {
-        super.populateDefaultEquipmentSlots(difficulty);
+    protected void populateDefaultEquipmentSlots(@NotNull net.minecraft.util.RandomSource random, @NotNull DifficultyInstance difficulty) {
+        super.populateDefaultEquipmentSlots(random, difficulty);
         this.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(IafItemRegistry.DREAD_KNIGHT_SWORD.get()));
         if (random.nextBoolean()) {
-            this.setItemSlot(EquipmentSlot.OFFHAND, SHIELD.copy());
+            this.setItemSlot(EquipmentSlot.OFFHAND, shield().copy());
         }
         setArmorVariant(random.nextInt(3));
     }
 
     @Override
     @Nullable
-    public SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor worldIn, @NotNull DifficultyInstance difficultyIn, @NotNull MobSpawnType reason, @Nullable SpawnGroupData spawnDataIn, @Nullable CompoundTag dataTag) {
-        SpawnGroupData data = super.finalizeSpawn(worldIn, difficultyIn, reason, spawnDataIn, dataTag);
+    public SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor worldIn, @NotNull DifficultyInstance difficultyIn, @NotNull EntitySpawnReason reason, @Nullable SpawnGroupData spawnDataIn) {
+        SpawnGroupData data = super.finalizeSpawn(worldIn, difficultyIn, reason, spawnDataIn);
         this.setAnimation(ANIMATION_SPAWN);
-        this.populateDefaultEquipmentSlots(difficultyIn);
+        this.populateDefaultEquipmentSlots(this.random, difficultyIn);
         return data;
     }
 
@@ -154,15 +156,15 @@ public class EntityDreadKnight extends EntityDreadMob implements IAnimatedEntity
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag compound) {
+    public void addAdditionalSaveData(ValueOutput compound) {
         super.addAdditionalSaveData(compound);
         compound.putInt("ArmorVariant", getArmorVariant());
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag compound) {
+    public void readAdditionalSaveData(ValueInput compound) {
         super.readAdditionalSaveData(compound);
-        setArmorVariant(compound.getInt("ArmorVariant"));
+        setArmorVariant(compound.getIntOr("ArmorVariant", 0));
     }
 
     @Override
@@ -199,8 +201,8 @@ public class EntityDreadKnight extends EntityDreadMob implements IAnimatedEntity
     }
 
     @Override
-    public double getMyRidingOffset() {
-        return -0.6D;
+    public net.minecraft.world.phys.Vec3 getVehicleAttachmentPoint(@NotNull Entity vehicle) {
+        return super.getVehicleAttachmentPoint(vehicle).add(0.0D, -0.6D, 0.0D);
     }
 
     @Override

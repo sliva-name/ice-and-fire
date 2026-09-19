@@ -1,16 +1,21 @@
 package com.github.alexthe666.iceandfire.entity;
 
+import net.minecraft.server.level.ServerLevel;
+
+import com.github.alexthe666.iceandfire.entity.util.IafDrops;
+
 import com.github.alexthe666.citadel.animation.Animation;
 import com.github.alexthe666.iceandfire.IafConfig;
 import com.github.alexthe666.iceandfire.IceAndFire;
 import com.github.alexthe666.iceandfire.entity.ai.*;
 import com.github.alexthe666.iceandfire.entity.util.DragonUtils;
 import com.github.alexthe666.iceandfire.entity.util.MyrmexTrades;
+import com.github.alexthe666.iceandfire.item.IafItemData;
 import com.github.alexthe666.iceandfire.item.IafItemRegistry;
 import com.github.alexthe666.iceandfire.item.ItemMyrmexEgg;
 import com.google.common.base.Predicate;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
@@ -27,7 +32,7 @@ import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Enemy;
-import net.minecraft.world.entity.npc.VillagerTrades;
+import com.github.alexthe666.iceandfire.entity.util.IafItemListing;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -40,10 +45,10 @@ public class EntityMyrmexWorker extends EntityMyrmexBase {
 
     public static final Animation ANIMATION_BITE = Animation.create(15);
     public static final Animation ANIMATION_STING = Animation.create(15);
-    public static final ResourceLocation DESERT_LOOT = new ResourceLocation("iceandfire", "entities/myrmex_worker_desert");
-    public static final ResourceLocation JUNGLE_LOOT = new ResourceLocation("iceandfire", "entities/myrmex_worker_jungle");
-    private static final ResourceLocation TEXTURE_DESERT = new ResourceLocation("iceandfire:textures/models/myrmex/myrmex_desert_worker.png");
-    private static final ResourceLocation TEXTURE_JUNGLE = new ResourceLocation("iceandfire:textures/models/myrmex/myrmex_jungle_worker.png");
+    public static final Identifier DESERT_LOOT = Identifier.fromNamespaceAndPath("iceandfire", "entities/myrmex_worker_desert");
+    public static final Identifier JUNGLE_LOOT = Identifier.fromNamespaceAndPath("iceandfire", "entities/myrmex_worker_jungle");
+    private static final Identifier TEXTURE_DESERT = Identifier.parse("iceandfire:textures/models/myrmex/myrmex_desert_worker.png");
+    private static final Identifier TEXTURE_JUNGLE = Identifier.parse("iceandfire:textures/models/myrmex/myrmex_jungle_worker.png");
     public boolean keepSearching = true;
 
     public EntityMyrmexWorker(EntityType<EntityMyrmexWorker> t, Level worldIn) {
@@ -65,22 +70,21 @@ public class EntityMyrmexWorker extends EntityMyrmexBase {
     }
 
     @Override
-    @Nullable
-    protected ResourceLocation getDefaultLootTable() {
-        return isJungle() ? JUNGLE_LOOT : DESERT_LOOT;
+    protected void dropFromLootTable(@NotNull ServerLevel level, @NotNull DamageSource source, boolean causedByPlayer) {
+        this.dropFromLootTable(level, source, causedByPlayer, com.github.alexthe666.iceandfire.entity.util.IafLoot.table(isJungle() ? JUNGLE_LOOT : DESERT_LOOT));
     }
 
     @Override
     public void die(DamageSource cause) {
-        if (!this.level.isClientSide && !this.getItemInHand(InteractionHand.MAIN_HAND).isEmpty()) {
-            this.spawnAtLocation(this.getItemInHand(InteractionHand.MAIN_HAND), 0);
+        if (!this.level().isClientSide() && !this.getItemInHand(InteractionHand.MAIN_HAND).isEmpty()) {
+            IafDrops.spawn(this, this.getItemInHand(InteractionHand.MAIN_HAND), 0);
             this.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
         }
         super.die(cause);
     }
 
     @Override
-    protected int getExperienceReward(Player player) {
+    protected int getBaseExperienceReward(@NotNull ServerLevel level) {
         return 3;
     }
 
@@ -110,17 +114,15 @@ public class EntityMyrmexWorker extends EntityMyrmexBase {
         if (!this.getItemInHand(InteractionHand.MAIN_HAND).isEmpty()) {
             if (this.getItemInHand(InteractionHand.MAIN_HAND).getItem() instanceof ItemMyrmexEgg) {
                 boolean isJungle = this.getItemInHand(InteractionHand.MAIN_HAND).getItem() == IafItemRegistry.MYRMEX_JUNGLE_EGG.get();
-                CompoundTag tag = this.getItemInHand(InteractionHand.MAIN_HAND).getTag();
-                int metadata = 0;
-                if (tag != null) {
-                    metadata = tag.getInt("EggOrdinal");
-                }
-                EntityMyrmexEgg egg = new EntityMyrmexEgg(IafEntityRegistry.MYRMEX_EGG.get(), level);
+                int metadata = IafItemData.has(this.getItemInHand(InteractionHand.MAIN_HAND))
+                    ? IafItemData.copy(this.getItemInHand(InteractionHand.MAIN_HAND)).getIntOr("EggOrdinal", 0)
+                    : 0;
+                EntityMyrmexEgg egg = new EntityMyrmexEgg(IafEntityRegistry.MYRMEX_EGG.get(), this.level());
                 egg.copyPosition(this);
                 egg.setJungle(isJungle);
                 egg.setMyrmexCaste(metadata);
-                if (!level.isClientSide) {
-                    level.addFreshEntity(egg);
+                if (!this.level().isClientSide()) {
+                    this.level().addFreshEntity(egg);
                 }
                 egg.startRiding(this);
                 this.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
@@ -155,12 +157,7 @@ public class EntityMyrmexWorker extends EntityMyrmexBase {
         this.targetSelector.addGoal(3, new MyrmexAIPickupBabies(this));
         this.targetSelector.addGoal(4, new HurtByTargetGoal(this));
         this.targetSelector.addGoal(4, new MyrmexAIAttackPlayers(this));
-        this.targetSelector.addGoal(5, new NearestAttackableTargetGoal<>(this, LivingEntity.class, 10, true, true, new Predicate<LivingEntity>() {
-            @Override
-            public boolean apply(@Nullable LivingEntity entity) {
-                return EntityMyrmexWorker.this.getMainHandItem().isEmpty() && entity != null && !EntityMyrmexBase.haveSameHive(EntityMyrmexWorker.this, entity) && DragonUtils.isAlive(entity) && !(entity instanceof Enemy);
-            }
-        }));
+        this.targetSelector.addGoal(5, new NearestAttackableTargetGoal<>(this, LivingEntity.class, 10, true, true, (entity, serverLevel) -> EntityMyrmexWorker.this.getMainHandItem().isEmpty() && entity != null && !EntityMyrmexBase.haveSameHive(EntityMyrmexWorker.this, entity) && DragonUtils.isAlive(entity) && !(entity instanceof Enemy)));
 
 
     }
@@ -171,12 +168,12 @@ public class EntityMyrmexWorker extends EntityMyrmexBase {
     }
 
     @Override
-    protected VillagerTrades.ItemListing[] getLevel1Trades() {
+    protected IafItemListing[] getLevel1Trades() {
         return isJungle() ? MyrmexTrades.JUNGLE_WORKER.get(1) : MyrmexTrades.DESERT_WORKER.get(1);
     }
 
     @Override
-    protected VillagerTrades.ItemListing[] getLevel2Trades() {
+    protected IafItemListing[] getLevel2Trades() {
         return isJungle() ? MyrmexTrades.JUNGLE_WORKER.get(2) : MyrmexTrades.DESERT_WORKER.get(2);
     }
 
@@ -186,7 +183,7 @@ public class EntityMyrmexWorker extends EntityMyrmexBase {
     }
 
     @Override
-    public ResourceLocation getAdultTexture() {
+    public Identifier getAdultTexture() {
         return isJungle() ? TEXTURE_JUNGLE : TEXTURE_DESERT;
     }
 
@@ -202,7 +199,7 @@ public class EntityMyrmexWorker extends EntityMyrmexBase {
 
     @Override
     public boolean shouldEnterHive() {
-        return holdingSomething() || (!level.isDay() && !IafConfig.myrmexHiveIgnoreDaytime);
+        return holdingSomething() || (!this.level().isBrightOutside() && !IafConfig.myrmexHiveIgnoreDaytime);
     }
 
     @Override
@@ -211,7 +208,7 @@ public class EntityMyrmexWorker extends EntityMyrmexBase {
     }
 
     @Override
-    public boolean doHurtTarget(@NotNull Entity entityIn) {
+    public boolean doHurtTarget(@NotNull ServerLevel level, @NotNull Entity entityIn) {
         if (this.getGrowthStage() < 2) {
             return false;
         }
@@ -220,7 +217,7 @@ public class EntityMyrmexWorker extends EntityMyrmexBase {
             this.setAnimation(this.getRandom().nextBoolean() ? ANIMATION_STING : ANIMATION_BITE);
             float f = (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE);
             this.setLastHurtMob(entityIn);
-            boolean flag = entityIn.hurt(DamageSource.mobAttack(this), f);
+            boolean flag = entityIn instanceof LivingEntity living && living.hurtServer(level, this.damageSources().mobAttack(this), f);
             if (this.getAnimation() == ANIMATION_STING && flag) {
                 this.playStingSound();
                 if (entityIn instanceof LivingEntity) {
@@ -230,8 +227,8 @@ public class EntityMyrmexWorker extends EntityMyrmexBase {
             } else {
                 this.playBiteSound();
             }
-            if (!this.level.isClientSide && this.getRandom().nextInt(3) == 0 && this.getItemInHand(InteractionHand.MAIN_HAND) != ItemStack.EMPTY) {
-                this.spawnAtLocation(this.getItemInHand(InteractionHand.MAIN_HAND), 0);
+            if (!this.level().isClientSide() && this.getRandom().nextInt(3) == 0 && this.getItemInHand(InteractionHand.MAIN_HAND) != ItemStack.EMPTY) {
+                IafDrops.spawn(this, this.getItemInHand(InteractionHand.MAIN_HAND), 0);
                 this.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
             }
             if (!this.getPassengers().isEmpty()) {
@@ -264,22 +261,21 @@ public class EntityMyrmexWorker extends EntityMyrmexBase {
     }
 
     @Override
-    public void positionRider(@NotNull Entity passenger) {
-        super.positionRider(passenger);
+    public void positionRider(@NotNull Entity passenger, @NotNull MoveFunction callback) {
         if (this.hasPassenger(passenger)) {
             yBodyRot = getYRot();
             float radius = 1.05F;
             float angle = (0.01745329251F * this.yBodyRot);
             double extraX = radius * Mth.sin((float) (Math.PI + angle));
             double extraZ = radius * Mth.cos(angle);
-            passenger.setPos(this.getX() + extraX, this.getY() + 0.25F, this.getZ() + extraZ);
+            callback.accept(passenger, this.getX() + extraX, this.getY() + 0.25F, this.getZ() + extraZ);
         }
     }
 
     @Override
-    public boolean hurt(DamageSource source, float amount) {
-        if (amount >= 1.0D && !this.level.isClientSide && this.getRandom().nextInt(3) == 0 && this.getItemInHand(InteractionHand.MAIN_HAND) != ItemStack.EMPTY) {
-            this.spawnAtLocation(this.getItemInHand(InteractionHand.MAIN_HAND), 0);
+    public boolean hurtServer(@NotNull ServerLevel level, @NotNull DamageSource source, float amount) {
+        if (amount >= 1.0D && !this.level().isClientSide() && this.getRandom().nextInt(3) == 0 && this.getItemInHand(InteractionHand.MAIN_HAND) != ItemStack.EMPTY) {
+            IafDrops.spawn(this, this.getItemInHand(InteractionHand.MAIN_HAND), 0);
             this.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
         }
         if (amount >= 1.0D && !this.getPassengers().isEmpty()) {
@@ -287,7 +283,7 @@ public class EntityMyrmexWorker extends EntityMyrmexBase {
                 entity.stopRiding();
             }
         }
-        return super.hurt(source, amount);
+        return super.hurtServer(level, source, amount);
     }
 
     public Entity getHeldEntity() {
@@ -300,8 +296,8 @@ public class EntityMyrmexWorker extends EntityMyrmexBase {
 
             Player owner = null;
             try {
-                if (itemEntity.getThrower() != null) {
-                    owner = this.level.getPlayerByUUID(itemEntity.getThrower());
+                if (itemEntity.getOwner() instanceof Player playerOwner) {
+                    owner = playerOwner;
                 }
             } catch (Exception e) {
                 IceAndFire.LOGGER.warn("Myrmex picked up resin that wasn't thrown!");
@@ -309,8 +305,8 @@ public class EntityMyrmexWorker extends EntityMyrmexBase {
             if (owner != null && this.getHive() != null) {
                 this.getHive().modifyPlayerReputation(owner.getUUID(), 5);
                 this.playSound(SoundEvents.SLIME_SQUISH, 1, 1);
-                if (!level.isClientSide) {
-                    level.addFreshEntity(new ExperienceOrb(level, owner.getX(), owner.getY(), owner.getZ(), 1 + random.nextInt(3)));
+                if (!this.level().isClientSide()) {
+                    this.level().addFreshEntity(new ExperienceOrb(this.level(), owner.getX(), owner.getY(), owner.getZ(), 1 + random.nextInt(3)));
                 }
             }
         }
@@ -328,6 +324,6 @@ public class EntityMyrmexWorker extends EntityMyrmexBase {
 
     @Override
     public boolean isClientSide() {
-        return this.getLevel().isClientSide;
+        return this.getLevel().isClientSide();
     }
 }

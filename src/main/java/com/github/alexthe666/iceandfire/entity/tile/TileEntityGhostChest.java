@@ -1,12 +1,14 @@
 package com.github.alexthe666.iceandfire.entity.tile;
 
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
 import com.github.alexthe666.iceandfire.entity.EntityGhost;
 import com.github.alexthe666.iceandfire.entity.IafEntityRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Difficulty;
-import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
@@ -22,29 +24,36 @@ public class TileEntityGhostChest extends ChestBlockEntity {
     }
 
     @Override
-    public void load(@NotNull CompoundTag nbt) {
-        super.load(nbt);
+    public void loadAdditional(@NotNull ValueInput nbt) {
+        super.loadAdditional(nbt);
     }
 
     @Override
-    public void startOpen(@NotNull Player player) {
-        super.startOpen(player);
-        if (this.level.getDifficulty() != Difficulty.PEACEFUL) {
-            EntityGhost ghost = IafEntityRegistry.GHOST.get().create(level);
-            ghost.absMoveTo(this.worldPosition.getX() + 0.5F, this.worldPosition.getY() + 0.5F, this.worldPosition.getZ() + 0.5F,
-                ThreadLocalRandom.current().nextFloat() * 360F, 0);
-            if (!this.level.isClientSide) {
-                ghost.finalizeSpawn((ServerLevel) level, level.getCurrentDifficultyAt(this.worldPosition), MobSpawnType.SPAWNER, null, null);
-                if (!player.isCreative()) {
-                    ghost.setTarget(player);
-                }
-                ghost.setPersistenceRequired();
-                level.addFreshEntity(ghost);
-            }
-            ghost.setAnimation(EntityGhost.ANIMATION_SCARE);
-            ghost.restrictTo(this.worldPosition, 4);
-            ghost.setFromChest(true);
+    public void startOpen(@NotNull net.minecraft.world.entity.ContainerUser user) {
+        super.startOpen(user);
+        Level world = this.getLevel();
+        if (world == null || world.getDifficulty() == Difficulty.PEACEFUL) {
+            return;
         }
+        net.minecraft.world.entity.LivingEntity opener = user.getLivingEntity();
+        Player player = opener instanceof Player p ? p : null;
+        EntityGhost ghost = IafEntityRegistry.GHOST.get().create(world, EntitySpawnReason.SPAWNER);
+        if (ghost == null) {
+            return;
+        }
+        ghost.snapTo(this.worldPosition.getX() + 0.5F, this.worldPosition.getY() + 0.5F, this.worldPosition.getZ() + 0.5F,
+            ThreadLocalRandom.current().nextFloat() * 360F, 0);
+        if (world instanceof ServerLevel server) {
+            ghost.finalizeSpawn(server, server.getCurrentDifficultyAt(this.worldPosition), EntitySpawnReason.SPAWNER, null);
+            if (player != null && !player.isCreative()) {
+                ghost.setTarget(player);
+            }
+            ghost.setPersistenceRequired();
+            world.addFreshEntity(ghost);
+        }
+        ghost.setAnimation(EntityGhost.ANIMATION_SCARE);
+        ghost.setHomeTo(this.worldPosition, 4);
+        ghost.setFromChest(true);
     }
 
     @Override

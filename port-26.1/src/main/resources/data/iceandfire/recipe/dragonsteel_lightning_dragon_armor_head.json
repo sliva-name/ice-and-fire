@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "   ",
+    " DD",
+    "DDD"
+  ],
+  "key": {
+    "D": "#forge:storage_blocks/dragonsteel_lightning"
+  },
+  "result": {
+    "id": "iceandfire:dragonarmor_dragonsteel_lightning_head"
+  }
+}

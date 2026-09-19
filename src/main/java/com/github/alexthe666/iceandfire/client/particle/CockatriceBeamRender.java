@@ -1,46 +1,45 @@
 package com.github.alexthe666.iceandfire.client.particle;
 
-import com.github.alexthe666.iceandfire.entity.EntityCockatrice;
+import com.github.alexthe666.iceandfire.client.render.entity.CockatriceRenderState;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Matrix3f;
-import com.mojang.math.Matrix4f;
-import com.mojang.math.Vector3f;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
+import com.mojang.math.Axis;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
+import org.joml.Matrix4f;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.Entity;
+
 import net.minecraft.world.phys.Vec3;
 
 public class CockatriceBeamRender {
 
-    public static final RenderType TEXTURE_BEAM = RenderType.entityCutoutNoCull(new ResourceLocation("iceandfire:textures/models/cockatrice/beam.png"));
+    public static final RenderType TEXTURE_BEAM = RenderTypes.entityCutout(Identifier.fromNamespaceAndPath("iceandfire", "textures/models/cockatrice/beam.png"));
 
-    private static void vertex(VertexConsumer p_229108_0_, Matrix4f p_229108_1_, Matrix3f p_229108_2_, float p_229108_3_, float p_229108_4_, float p_229108_5_, int p_229108_6_, int p_229108_7_, int p_229108_8_, float p_229108_9_, float p_229108_10_) {
-        p_229108_0_.vertex(p_229108_1_, p_229108_3_, p_229108_4_, p_229108_5_).color(p_229108_6_, p_229108_7_, p_229108_8_, 255).uv(p_229108_9_, p_229108_10_).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(p_229108_2_, 0.0F, 1.0F, 0.0F).endVertex();
+    private static void vertex(VertexConsumer buffer, Matrix4f matrix, PoseStack.Pose pose, float x, float y, float z, int red, int green, int blue, float u, float v) {
+        buffer.addVertex(matrix, x, y, z).setColor(red, green, blue, 255).setUv(u, v)
+            .setOverlay(OverlayTexture.NO_OVERLAY).setLight(15728880).setNormal(pose, 0.0F, 1.0F, 0.0F);
     }
 
-    public static void render(Entity entityIn, Entity targetEntity, PoseStack matrixStackIn, MultiBufferSource bufferIn, float partialTicks) {
-        float f = 1;
-        if (entityIn instanceof EntityCockatrice)
-            f = (((EntityCockatrice) entityIn).getAttackAnimationScale(partialTicks));
-
-        float f1 = (float) entityIn.level.getGameTime() + partialTicks;
+    public static void render(CockatriceRenderState entityIn, EntityRenderState targetEntity, PoseStack matrixStackIn, SubmitNodeCollector collector) {
+        float f = entityIn.attackAnimationScale;
+        float f1 = entityIn.beamTime;
         float f2 = f1 * 0.5F % 1.0F;
-        float f3 = entityIn.getEyeHeight();
+        float f3 = entityIn.eyeHeight;
         matrixStackIn.pushPose();
         matrixStackIn.translate(0.0D, f3, 0.0D);
-        Vec3 Vector3d = getPosition(targetEntity, (double) targetEntity.getBbHeight() * 0.5D, partialTicks);
-        Vec3 Vector3d1 = getPosition(entityIn, f3, partialTicks);
+        Vec3 Vector3d = getPosition(targetEntity, (double) targetEntity.boundingBoxHeight * 0.5D);
+        Vec3 Vector3d1 = getPosition(entityIn, f3);
         Vec3 Vector3d2 = Vector3d.subtract(Vector3d1);
         float f4 = (float) (Vector3d2.length() + 1.0D);
         Vector3d2 = Vector3d2.normalize();
         float f5 = (float) Math.acos(Vector3d2.y);
         float f6 = (float) Math.atan2(Vector3d2.z, Vector3d2.x);
-        matrixStackIn.mulPose(Vector3f.YP.rotationDegrees((((float) Math.PI / 2F) - f6) * (180F / (float) Math.PI)));
-        matrixStackIn.mulPose(Vector3f.XP.rotationDegrees(f5 * (180F / (float) Math.PI)));
+        matrixStackIn.mulPose(Axis.YP.rotationDegrees((((float) Math.PI / 2F) - f6) * (180F / (float) Math.PI)));
+        matrixStackIn.mulPose(Axis.XP.rotationDegrees(f5 * (180F / (float) Math.PI)));
         int i = 1;
         float f7 = f1 * 0.05F * -1.5F;
         float f8 = f * f;
@@ -69,35 +68,57 @@ public class CockatriceBeamRender {
         float f28 = 0.4999F;
         float f29 = -1.0F + f2;
         float f30 = f4 * 2.5F + f29;
-        VertexConsumer ivertexbuilder = bufferIn.getBuffer(TEXTURE_BEAM);
-        PoseStack.Pose matrixstack$entry = matrixStackIn.last();
-        Matrix4f matrix4f = matrixstack$entry.pose();
-        Matrix3f matrix3f = matrixstack$entry.normal();
-        vertex(ivertexbuilder, matrix4f, matrix3f, f19, f4, f20, j, k, l, 0.4999F, f30);
-        vertex(ivertexbuilder, matrix4f, matrix3f, f19, 0.0F, f20, j, k, l, 0.4999F, f29);
-        vertex(ivertexbuilder, matrix4f, matrix3f, f21, 0.0F, f22, j, k, l, 0.0F, f29);
-        vertex(ivertexbuilder, matrix4f, matrix3f, f21, f4, f22, j, k, l, 0.0F, f30);
-        vertex(ivertexbuilder, matrix4f, matrix3f, f23, f4, f24, j, k, l, 0.4999F, f30);
-        vertex(ivertexbuilder, matrix4f, matrix3f, f23, 0.0F, f24, j, k, l, 0.4999F, f29);
-        vertex(ivertexbuilder, matrix4f, matrix3f, f25, 0.0F, f26, j, k, l, 0.0F, f29);
-        vertex(ivertexbuilder, matrix4f, matrix3f, f25, f4, f26, j, k, l, 0.0F, f30);
-        float f31 = 0.0F;
-        if (entityIn.tickCount % 2 == 0) {
-            f31 = 0.5F;
-        }
+        // Capture parity before deferred submission; the callback reads no mutable render state.
+        boolean evenTick = entityIn.tickCount % 2 == 0;
+        collector.submitCustomGeometry(matrixStackIn, TEXTURE_BEAM, (pose, ivertexbuilder) -> {
+            Matrix4f matrix4f = pose.pose();
+            vertex(ivertexbuilder, matrix4f, pose, f19, f4, f20, j, k, l, 0.4999F, f30);
+            vertex(ivertexbuilder, matrix4f, pose, f19, 0.0F, f20, j, k, l, 0.4999F, f29);
+            vertex(ivertexbuilder, matrix4f, pose, f21, 0.0F, f22, j, k, l, 0.0F, f29);
+            vertex(ivertexbuilder, matrix4f, pose, f21, f4, f22, j, k, l, 0.0F, f30);
+            vertex(ivertexbuilder, matrix4f, pose, f23, f4, f24, j, k, l, 0.4999F, f30);
+            vertex(ivertexbuilder, matrix4f, pose, f23, 0.0F, f24, j, k, l, 0.4999F, f29);
+            vertex(ivertexbuilder, matrix4f, pose, f25, 0.0F, f26, j, k, l, 0.0F, f29);
+            vertex(ivertexbuilder, matrix4f, pose, f25, f4, f26, j, k, l, 0.0F, f30);
+            float f31 = 0.0F;
+            if (evenTick) {
+                f31 = 0.5F;
+            }
 
-        vertex(ivertexbuilder, matrix4f, matrix3f, f11, f4, f12, j, k, l, 0.5F, f31 + 0.5F);
-        vertex(ivertexbuilder, matrix4f, matrix3f, f13, f4, f14, j, k, l, 1.0F, f31 + 0.5F);
-        vertex(ivertexbuilder, matrix4f, matrix3f, f17, f4, f18, j, k, l, 1.0F, f31);
-        vertex(ivertexbuilder, matrix4f, matrix3f, f15, f4, f16, j, k, l, 0.5F, f31);
+            vertex(ivertexbuilder, matrix4f, pose, f11, f4, f12, j, k, l, 0.5F, f31 + 0.5F);
+            vertex(ivertexbuilder, matrix4f, pose, f13, f4, f14, j, k, l, 1.0F, f31 + 0.5F);
+            vertex(ivertexbuilder, matrix4f, pose, f17, f4, f18, j, k, l, 1.0F, f31);
+            vertex(ivertexbuilder, matrix4f, pose, f15, f4, f16, j, k, l, 0.5F, f31);
+        });
         matrixStackIn.popPose();
     }
 
-    private static Vec3 getPosition(Entity LivingEntityIn, double p_177110_2_, float p_177110_4_) {
-        double d0 = LivingEntityIn.xOld + (LivingEntityIn.getX() - LivingEntityIn.xOld) * (double) p_177110_4_;
-        double d1 = p_177110_2_ + LivingEntityIn.yOld + (LivingEntityIn.getY() - LivingEntityIn.yOld) * (double) p_177110_4_;
-        double d2 = LivingEntityIn.zOld + (LivingEntityIn.getZ() - LivingEntityIn.zOld) * (double) p_177110_4_;
-        return new Vec3(d0, d1, d2);
+    private static Vec3 getPosition(EntityRenderState state, double yOffset) {
+        return new Vec3(state.x, state.y + yOffset, state.z);
+    }
+
+    /**
+     * Client overlay path for {@code MiscProperties.getTargetedBy}: same beam
+     * geometry as the cockatrice renderer, filled from the live caster/target.
+     */
+    public static void renderFromEntities(net.minecraft.world.entity.LivingEntity caster, net.minecraft.world.entity.LivingEntity target, PoseStack matrixStackIn, SubmitNodeCollector collector, float partialTick) {
+        CockatriceRenderState casterState = new CockatriceRenderState();
+        casterState.x = caster.getX();
+        casterState.y = caster.getY();
+        casterState.z = caster.getZ();
+        casterState.eyeHeight = caster.getEyeHeight();
+        casterState.boundingBoxHeight = caster.getBbHeight();
+        casterState.tickCount = caster.tickCount;
+        casterState.attackAnimationScale = caster instanceof com.github.alexthe666.iceandfire.entity.EntityCockatrice cockatrice
+            ? cockatrice.getAttackAnimationScale(partialTick)
+            : 1.0F;
+        casterState.beamTime = caster.tickCount + partialTick;
+        EntityRenderState targetState = new EntityRenderState();
+        targetState.x = target.getX();
+        targetState.y = target.getY();
+        targetState.z = target.getZ();
+        targetState.boundingBoxHeight = target.getBbHeight();
+        render(casterState, targetState, matrixStackIn, collector);
     }
 
 }

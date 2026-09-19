@@ -1,32 +1,38 @@
 package com.github.alexthe666.iceandfire.entity.util;
 
-import com.mojang.datafixers.util.Pair;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.item.FallingBlockEntity;
-import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import org.jspecify.annotations.Nullable;
 
-import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
-public class BlockLaunchExplosion extends Explosion {
+/**
+ * Death-worm / dragon breath: 1.18 vanilla explode sampling, then launch falling blocks.
+ */
+public class BlockLaunchExplosion implements Explosion {
     private final float size;
     private final Level world;
     private final double x;
     private final double y;
     private final double z;
     private final BlockInteraction mode;
+    private final Mob exploder;
+    private final List<BlockPos> affectedBlockPositions = Lists.newArrayList();
+    private final Map<Player, Vec3> playerKnockbackMap = Maps.newHashMap();
+    private final Vec3 position;
 
     public BlockLaunchExplosion(Level world, Mob entity, double x, double y, double z, float size) {
         this(world, entity, x, y, z, size, BlockInteraction.DESTROY);
@@ -37,83 +43,96 @@ public class BlockLaunchExplosion extends Explosion {
     }
 
     public BlockLaunchExplosion(Level world, Mob entity, DamageSource source, double x, double y, double z, float size, BlockInteraction mode) {
-        super(world, entity, source, null, x, y, z, size, false, mode);
         this.world = world;
         this.size = size;
         this.x = x;
         this.y = y;
         this.z = z;
-        this.mode = mode;
+        this.mode = mode == null ? BlockInteraction.DESTROY : mode;
+        this.exploder = entity;
+        this.position = new Vec3(x, y, z);
     }
 
-    private static void handleExplosionDrops(ObjectArrayList<Pair<ItemStack, BlockPos>> dropPositionArray, ItemStack stack, BlockPos pos) {
-        int i = dropPositionArray.size();
-
-        for (int j = 0; j < i; ++j) {
-            Pair<ItemStack, BlockPos> pair = dropPositionArray.get(j);
-            ItemStack itemstack = pair.getFirst();
-            if (ItemEntity.areMergable(itemstack, stack)) {
-                ItemStack itemstack1 = ItemEntity.merge(itemstack, stack, 16);
-                dropPositionArray.set(j, Pair.of(itemstack1, pair.getSecond()));
-                if (stack.isEmpty()) {
-                    return;
-                }
-            }
+    public void explode() {
+        if (!(world instanceof ServerLevel server)) {
+            return;
         }
-
-        dropPositionArray.add(Pair.of(stack, pos));
+        IafExplosion.collectBlocks(this, server, exploder, x, y, z, size, affectedBlockPositions);
+        IafExplosion.hurtAndKnockback(this, server, exploder, x, y, z, size, affectedBlockPositions, playerKnockbackMap, false);
     }
 
-    /**
-     * Does the second part of the explosion (sound, particles, drop spawn)
-     */
-    @Override
     public void finalizeExplosion(boolean spawnParticles) {
-        if (world.isClientSide) {
-            this.world.playLocalSound(this.x, this.y, this.z, SoundEvents.GENERIC_EXPLODE, SoundSource.BLOCKS, 4.0F, (1.0F + (this.world.random.nextFloat() - this.world.random.nextFloat()) * 0.2F) * 0.7F, false);
+        if (!(world instanceof ServerLevel server)) {
+            return;
         }
-
-        boolean flag = this.mode != Explosion.BlockInteraction.NONE;
-        if (spawnParticles) {
-            if (!(this.size < 2.0F) && flag) {
-                this.world.addParticle(ParticleTypes.EXPLOSION_EMITTER, this.x, this.y, this.z, 1.0D, 0.0D, 0.0D);
-            } else {
-                this.world.addParticle(ParticleTypes.EXPLOSION, this.x, this.y, this.z, 1.0D, 0.0D, 0.0D);
-            }
+        IafExplosion.playEffects(server, x, y, z, size, mode, spawnParticles);
+        if (mode == BlockInteraction.KEEP) {
+            return;
         }
-
-        if (flag) {
-            ObjectArrayList<Pair<ItemStack, BlockPos>> objectarraylist = new ObjectArrayList<>();
-            Collections.shuffle(this.getToBlow(), this.world.random);
-
-            for (BlockPos blockpos : this.getToBlow()) {
-                BlockState blockstate = this.world.getBlockState(blockpos);
-                Block block = blockstate.getBlock();
-                if (!blockstate.isAir()) {
-                    BlockPos blockpos1 = blockpos.immutable();
-                    this.world.getProfiler().push("explosion_blocks");
-
-                    Vec3 Vector3d = new Vec3(this.x, this.y, this.z);
-                    blockstate.onBlockExploded(this.world, blockpos, this);
-                    FallingBlockEntity fallingBlockEntity = new FallingBlockEntity(EntityType.FALLING_BLOCK, world);
-                    fallingBlockEntity.setStartPos(blockpos1);
-                    fallingBlockEntity.setPos(blockpos1.getX() + 0.5D, blockpos1.getY() + 0.5D, blockpos1.getZ() + 0.5D);
-                    double d5 = fallingBlockEntity.getX() - this.x;
-                    double d7 = fallingBlockEntity.getEyeY() - this.y;
-                    double d9 = fallingBlockEntity.getZ() - this.z;
-                    float f3 = this.size * 2.0F;
-                    double d12 = Math.sqrt(fallingBlockEntity.distanceToSqr(Vector3d)) / f3;
-                    double d14 = getSeenPercent(Vector3d, fallingBlockEntity);
-                    double d11 = (1.0D - d12) * d14;
-                    fallingBlockEntity.setDeltaMovement(fallingBlockEntity.getDeltaMovement().add(d5 * d11, d7 * d11, d9 * d11));
-                    this.world.getProfiler().pop();
-                }
+        IafExplosion.shuffle(affectedBlockPositions, server.getRandom());
+        Vec3 center = new Vec3(this.x, this.y, this.z);
+        for (BlockPos blockpos : affectedBlockPositions) {
+            BlockState blockstate = server.getBlockState(blockpos);
+            if (blockstate.isAir()) {
+                continue;
             }
-
-            for (Pair<ItemStack, BlockPos> pair : objectarraylist) {
-                Block.popResource(this.world, pair.getSecond(), pair.getFirst());
-            }
+            BlockPos start = blockpos.immutable();
+            net.minecraft.util.profiling.Profiler.get().push("explosion_blocks");
+            blockstate.onBlockExploded(server, blockpos, this);
+            FallingBlockEntity falling = FallingBlockEntity.fall(server, start, blockstate);
+            double d5 = falling.getX() - this.x;
+            double d7 = falling.getEyeY() - this.y;
+            double d9 = falling.getZ() - this.z;
+            float f3 = this.size * 2.0F;
+            double d12 = Math.sqrt(falling.distanceToSqr(center)) / f3;
+            double d14 = IafExplosion.getSeenPercent(center, falling);
+            double d11 = (1.0D - d12) * d14;
+            falling.setDeltaMovement(falling.getDeltaMovement().add(d5 * d11, d7 * d11, d9 * d11));
+            net.minecraft.util.profiling.Profiler.get().pop();
         }
     }
 
+    public List<BlockPos> getToBlow() {
+        return affectedBlockPositions;
+    }
+
+    @Override
+    public ServerLevel level() {
+        return world instanceof ServerLevel server ? server : null;
+    }
+
+    @Override
+    public BlockInteraction getBlockInteraction() {
+        return mode;
+    }
+
+    @Override
+    public @Nullable LivingEntity getIndirectSourceEntity() {
+        return exploder;
+    }
+
+    @Override
+    public @Nullable Entity getDirectSourceEntity() {
+        return exploder;
+    }
+
+    @Override
+    public float radius() {
+        return size;
+    }
+
+    @Override
+    public Vec3 center() {
+        return position;
+    }
+
+    @Override
+    public boolean canTriggerBlocks() {
+        return false;
+    }
+
+    @Override
+    public boolean shouldAffectBlocklikeEntities() {
+        return mode.shouldAffectBlocklikeEntities();
+    }
 }

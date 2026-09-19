@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "T T",
+    "TTT",
+    "TTT"
+  ],
+  "key": {
+    "T": "iceandfire:troll_leather_mountain"
+  },
+  "result": {
+    "id": "iceandfire:mountain_troll_leather_chestplate"
+  }
+}

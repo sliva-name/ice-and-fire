@@ -3,30 +3,31 @@ package com.github.alexthe666.iceandfire.loot;
 import com.github.alexthe666.iceandfire.entity.DragonType;
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.alexthe666.iceandfire.item.*;
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonSerializationContext;
+import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.functions.LootItemConditionalFunction;
-import net.minecraft.world.level.storage.loot.functions.LootItemFunctionType;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.Random;
 
 public class CustomizeToDragon extends LootItemConditionalFunction {
+    public static final MapCodec<CustomizeToDragon> CODEC = RecordCodecBuilder.mapCodec(instance ->
+        commonFields(instance).apply(instance, CustomizeToDragon::new));
 
-    public CustomizeToDragon(LootItemCondition[] conditionsIn) {
+    public CustomizeToDragon(List<LootItemCondition> conditionsIn) {
         super(conditionsIn);
     }
 
     @Override
     protected @NotNull ItemStack run(ItemStack stack, @NotNull LootContext context) {
-        if (!stack.isEmpty() && context.getParamOrNull(LootContextParams.THIS_ENTITY) instanceof EntityDragonBase) {
+        if (!stack.isEmpty() && context.getOptionalParameter(LootContextParams.THIS_ENTITY) instanceof EntityDragonBase) {
             Random random = new Random();
-            EntityDragonBase dragon = (EntityDragonBase) context.getParamOrNull(LootContextParams.THIS_ENTITY);
+            EntityDragonBase dragon = (EntityDragonBase) context.getOptionalParameter(LootContextParams.THIS_ENTITY);
             if (dragon == null) {
                 return stack;
             }
@@ -53,7 +54,7 @@ public class CustomizeToDragon extends LootItemConditionalFunction {
             }
             else if (stack.getItem() instanceof ItemDragonSkull) {
                 ItemStack stack1 = new ItemStack(dragon.dragonType == DragonType.FIRE ? IafItemRegistry.DRAGON_SKULL_FIRE.get() : IafItemRegistry.DRAGON_SKULL_ICE.get(), stack.getCount());
-                stack1.setTag(stack.getTag());
+                stack1.applyComponents(stack.getComponentsPatch());
                 return stack1;
             }
             if (stack.getItem() == IafItemRegistry.FIRE_DRAGON_BLOOD.get() || stack.getItem() == IafItemRegistry.ICE_DRAGON_BLOOD.get()) {
@@ -67,23 +68,7 @@ public class CustomizeToDragon extends LootItemConditionalFunction {
     }
 
     @Override
-    public @NotNull LootItemFunctionType getType() {
-        return IafLootRegistry.CUSTOMIZE_TO_DRAGON;
-    }
-
-
-    public static class Serializer extends LootItemConditionalFunction.Serializer<CustomizeToDragon> {
-        public Serializer() {
-            super();
-        }
-
-        @Override
-        public void serialize(@NotNull JsonObject object, @NotNull CustomizeToDragon functionClazz, @NotNull JsonSerializationContext serializationContext) {
-        }
-
-        @Override
-        public @NotNull CustomizeToDragon deserialize(@NotNull JsonObject object, @NotNull JsonDeserializationContext deserializationContext, LootItemCondition @NotNull [] conditionsIn) {
-            return new CustomizeToDragon(conditionsIn);
-        }
+    public @NotNull MapCodec<? extends LootItemConditionalFunction> codec() {
+        return CODEC;
     }
 }

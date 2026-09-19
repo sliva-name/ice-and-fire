@@ -1,17 +1,17 @@
 package com.github.alexthe666.iceandfire.client.model;
 
-import com.github.alexthe666.citadel.animation.IAnimatedEntity;
 import com.github.alexthe666.citadel.client.model.AdvancedModelBox;
 import com.github.alexthe666.citadel.client.model.ModelAnimator;
 import com.github.alexthe666.citadel.client.model.basic.BasicModelPart;
-import com.github.alexthe666.iceandfire.entity.EntityMyrmexBase;
+import com.github.alexthe666.iceandfire.client.render.entity.MyrmexRenderState;
+import com.github.alexthe666.iceandfire.client.render.entity.MyrmexRenderState.AnimationKind;
 import com.google.common.collect.ImmutableList;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.world.entity.Entity;
 
-public class ModelMyrmexPupa extends ModelDragonBase {
+public class ModelMyrmexPupa extends ModelMyrmexBase {
     public AdvancedModelBox Body2;
     public AdvancedModelBox Body3;
     public AdvancedModelBox Body1;
@@ -234,10 +234,10 @@ public class ModelMyrmexPupa extends ModelDragonBase {
                 HeadBase, EyeR, MandibleL, MandibleR, EyeL, legMidR1, legBottomR1, legMidR1_1, legBottomR1_1, legMidR2, legBottomR2, legMidR2_1, legBottomR2_1);
     }
 
-    public void animate(IAnimatedEntity entity, float f, float f1, float f2, float f3, float f4, float f5) {
+    public void animate(MyrmexRenderState state) {
         this.resetToDefaultPose();
-        animator.update(entity);
-        if (animator.setAnimation(EntityMyrmexBase.ANIMATION_PUPA_WIGGLE)) {
+        animator.update(state.animation.token(), state.animationTick, state.partialTick);
+        if (animator.setAnimation(AnimationKind.PUPA_WIGGLE.token())) {
             animator.startKeyframe(5);
             ModelUtils.rotate(animator, Body1, 0, -15, 0);
             ModelUtils.rotate(animator, Body2, 0, -15, 0);
@@ -264,8 +264,13 @@ public class ModelMyrmexPupa extends ModelDragonBase {
     }
 
     @Override
-    public void setupAnim(Entity entity, float f, float f1, float f2, float f3, float f4) {
-        animate((IAnimatedEntity) entity, f, f1, f2, f3, f4, 1);
+    public void setupAnim(MyrmexRenderState state) {
+        float f = state.walkAnimationPos;
+        float f1 = state.walkAnimationSpeed;
+        float f2 = state.ageInTicks;
+        float f3 = state.yRot;
+        float f4 = state.xRot;
+        animate(state);
         this.resetToDefaultPose();
         float speed_idle = 0.025F;
         float degree_idle = 0.25F;

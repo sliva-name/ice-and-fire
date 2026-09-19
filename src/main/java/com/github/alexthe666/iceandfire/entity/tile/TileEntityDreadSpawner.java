@@ -1,5 +1,7 @@
 package com.github.alexthe666.iceandfire.entity.tile;
 
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -46,15 +48,15 @@ public class TileEntityDreadSpawner extends SpawnerBlockEntity {
     }
 
     @Override
-    public void load(@NotNull CompoundTag p_155760_) {
-        super.load(p_155760_);
+    public void loadAdditional(@NotNull ValueInput p_155760_) {
+        super.loadAdditional(p_155760_);
         this.spawner.load(this.level, this.worldPosition, p_155760_);
     }
 
-    public CompoundTag save(CompoundTag p_59795_) {
-        super.saveAdditional(p_59795_);
-        this.spawner.save(p_59795_);
-        return p_59795_;
+    @Override
+    protected void saveAdditional(@NotNull ValueOutput output) {
+        super.saveAdditional(output);
+        this.spawner.save(output);
     }
 
     public static void clientTick(Level p_155755_, BlockPos p_155756_, BlockState p_155757_, TileEntityDreadSpawner p_155758_) {
@@ -72,8 +74,8 @@ public class TileEntityDreadSpawner extends SpawnerBlockEntity {
     }
 
     @Override
-    public @NotNull CompoundTag getUpdateTag() {
-        CompoundTag compoundtag = this.save(new CompoundTag());
+    public @NotNull CompoundTag getUpdateTag(net.minecraft.core.HolderLookup.Provider registries) {
+        CompoundTag compoundtag = this.saveWithFullMetadata(registries);
         compoundtag.remove("SpawnPotentials");
         return compoundtag;
     }
@@ -83,7 +85,6 @@ public class TileEntityDreadSpawner extends SpawnerBlockEntity {
         return this.spawner.onEventTriggered(this.level, p_59797_) || super.triggerEvent(p_59797_, p_59798_);
     }
 
-    @Override
     public boolean onlyOpCanSetNbt() {
         return true;
     }

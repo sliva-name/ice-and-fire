@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    "#forge:nuggets/silver",
+    "#forge:nuggets/silver",
+    "#forge:nuggets/silver",
+    "#forge:nuggets/silver",
+    "#forge:nuggets/silver",
+    "#forge:nuggets/silver",
+    "#forge:nuggets/silver",
+    "#forge:nuggets/silver",
+    "#forge:nuggets/silver"
+  ],
+  "result": {
+    "count": 1,
+    "id": "iceandfire:silver_ingot"
+  }
+}

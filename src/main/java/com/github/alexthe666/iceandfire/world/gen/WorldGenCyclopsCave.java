@@ -10,9 +10,9 @@ import com.github.alexthe666.iceandfire.world.IafWorldData;
 import com.mojang.serialization.Codec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.animal.Sheep;
+import net.minecraft.world.entity.animal.sheep.Sheep;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.ServerLevelAccessor;
@@ -28,7 +28,7 @@ import java.util.Random;
 import java.util.stream.Collectors;
 
 public class WorldGenCyclopsCave extends Feature<NoneFeatureConfiguration> implements TypedFeature {
-    public static final ResourceLocation CYCLOPS_CHEST = new ResourceLocation("iceandfire", "chest/cyclops_cave");
+    public static final Identifier CYCLOPS_CHEST = Identifier.fromNamespaceAndPath("iceandfire", "chest/cyclops_cave");
     private static final Direction[] HORIZONTALS = new Direction[]{Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
 
     public WorldGenCyclopsCave(final Codec<NoneFeatureConfiguration> configuration) {
@@ -92,7 +92,8 @@ public class WorldGenCyclopsCave extends Feature<NoneFeatureConfiguration> imple
                         BlockEntity blockEntity = context.level().getBlockEntity(position.above(2));
 
                         if (blockEntity instanceof ChestBlockEntity chestBlockEntity) {
-                            chestBlockEntity.setLootTable(CYCLOPS_CHEST, context.random().nextLong());
+                            chestBlockEntity.setLootTable(com.github.alexthe666.iceandfire.entity.util.IafLoot.table(CYCLOPS_CHEST));
+                            chestBlockEntity.setLootTableSeed(context.random().nextLong());
                         }
                     }
                 }
@@ -109,8 +110,8 @@ public class WorldGenCyclopsCave extends Feature<NoneFeatureConfiguration> imple
             }
         }
 
-        EntityCyclops cyclops = IafEntityRegistry.CYCLOPS.get().create(context.level().getLevel());
-        cyclops.absMoveTo(context.origin().getX() + 0.5, context.origin().getY() + 1.5, context.origin().getZ() + 0.5, context.random().nextFloat() * 360, 0);
+        EntityCyclops cyclops = IafEntityRegistry.CYCLOPS.get().create(context.level().getLevel(), net.minecraft.world.entity.EntitySpawnReason.STRUCTURE);
+        cyclops.snapTo(context.origin().getX() + 0.5, context.origin().getY() + 1.5, context.origin().getZ() + 0.5, context.random().nextFloat() * 360, 0);
         // TODO :: Finalize spawn?
         context.level().addFreshEntity(cyclops);
 
@@ -144,7 +145,7 @@ public class WorldGenCyclopsCave extends Feature<NoneFeatureConfiguration> imple
         }
     }
 
-    private void generateSheepPen(final ServerLevelAccessor level, final BlockPos position, final Random random, final BlockPos origin, float radius) {
+    private void generateSheepPen(final ServerLevelAccessor level, final BlockPos position, final net.minecraft.util.RandomSource random, final BlockPos origin, float radius) {
         int width = 5 + random.nextInt(3);
         int sheepAmount = 2 + random.nextInt(3);
         Direction direction = Direction.NORTH;
@@ -189,7 +190,7 @@ public class WorldGenCyclopsCave extends Feature<NoneFeatureConfiguration> imple
         }
     }
 
-    private void generateSkeleton(final LevelAccessor level, final BlockPos position, final Random random, final BlockPos origin, float radius) {
+    private void generateSkeleton(final LevelAccessor level, final BlockPos position, final net.minecraft.util.RandomSource random, final BlockPos origin, float radius) {
         Direction direction = HORIZONTALS[new Random().nextInt(3)];
         Direction.Axis oppositeAxis = direction.getAxis() == Direction.Axis.X ? Direction.Axis.Z : Direction.Axis.X;
         int maxRibHeight = random.nextInt(2);

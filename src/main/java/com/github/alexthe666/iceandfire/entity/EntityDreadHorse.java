@@ -1,5 +1,8 @@
 package com.github.alexthe666.iceandfire.entity;
 
+import net.minecraft.core.UUIDUtil;
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
 import com.github.alexthe666.iceandfire.entity.util.IDreadMob;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -10,7 +13,7 @@ import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.animal.horse.SkeletonHorse;
+import net.minecraft.world.entity.animal.equine.SkeletonHorse;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +24,7 @@ import java.util.UUID;
 
 public class EntityDreadHorse extends SkeletonHorse implements IDreadMob {
 
-    protected static final EntityDataAccessor<Optional<UUID>> COMMANDER_UNIQUE_ID = SynchedEntityData.defineId(EntityDreadHorse.class, EntityDataSerializers.OPTIONAL_UUID);
+    protected static final EntityDataAccessor<String> COMMANDER_UNIQUE_ID = SynchedEntityData.defineId(EntityDreadHorse.class, EntityDataSerializers.STRING);
 
     public EntityDreadHorse(EntityType type, Level worldIn) {
         super(type, worldIn);
@@ -40,28 +43,30 @@ public class EntityDreadHorse extends SkeletonHorse implements IDreadMob {
 
 
     @Override
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(COMMANDER_UNIQUE_ID, Optional.empty());
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(COMMANDER_UNIQUE_ID, "");
     }
 
     @Override
-    public void addAdditionalSaveData(@NotNull CompoundTag compound) {
+    public void addAdditionalSaveData(@NotNull ValueOutput compound) {
         super.addAdditionalSaveData(compound);
         if (this.getCommanderId() != null) {
-            compound.putUUID("CommanderUUID", this.getCommanderId());
+            compound.store("CommanderUUID", UUIDUtil.CODEC, this.getCommanderId());
         }
     }
 
     @Override
-    public void readAdditionalSaveData(@NotNull CompoundTag compound) {
+    public void readAdditionalSaveData(@NotNull ValueInput compound) {
         super.readAdditionalSaveData(compound);
         UUID uuid;
-        if (compound.hasUUID("CommanderUUID")) {
-            uuid = compound.getUUID("CommanderUUID");
+        if (compound.read("CommanderUUID", UUIDUtil.CODEC).isPresent()) {
+            uuid = compound.read("CommanderUUID", UUIDUtil.CODEC).orElseThrow();
         } else {
-            String s = compound.getString("CommanderUUID");
-            uuid = OldUsersConverter.convertMobOwnerIfNecessary(this.getServer(), s);
+            String s = compound.getStringOr("CommanderUUID", "");
+            uuid = this.level() instanceof net.minecraft.server.level.ServerLevel server
+                ? OldUsersConverter.convertMobOwnerIfNecessary(server.getServer(), s)
+                : null;
         }
 
         if (uuid != null) {
@@ -75,38 +80,40 @@ public class EntityDreadHorse extends SkeletonHorse implements IDreadMob {
 
     @Override
     @Nullable
-    public SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor worldIn, @NotNull DifficultyInstance difficultyIn, @NotNull MobSpawnType reason, @Nullable SpawnGroupData spawnDataIn, @Nullable CompoundTag dataTag) {
-        SpawnGroupData data = super.finalizeSpawn(worldIn, difficultyIn, reason, spawnDataIn, dataTag);
+    public SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor worldIn, @NotNull DifficultyInstance difficultyIn, @NotNull EntitySpawnReason reason, @Nullable SpawnGroupData spawnDataIn) {
+        SpawnGroupData data = super.finalizeSpawn(worldIn, difficultyIn, reason, spawnDataIn);
         this.setAge(24000);
         return data;
     }
 
-    @Override
-    public boolean isAlliedTo(@NotNull Entity entityIn) {
+    public boolean iafIsAlliedTo(@NotNull Entity entityIn) {
         return entityIn instanceof IDreadMob || super.isAlliedTo(entityIn);
     }
 
     @Nullable
     public UUID getCommanderId() {
-        return this.entityData.get(COMMANDER_UNIQUE_ID).orElse(null);
+        String stored = this.entityData.get(COMMANDER_UNIQUE_ID);
+        if (stored == null || stored.isEmpty()) {
+            return null;
+        }
+        try {
+            return UUID.fromString(stored);
+        } catch (IllegalArgumentException ignored) {
+            return null;
+        }
     }
 
     public void setCommanderId(@Nullable UUID uuid) {
-        this.entityData.set(COMMANDER_UNIQUE_ID, Optional.ofNullable(uuid));
+        this.entityData.set(COMMANDER_UNIQUE_ID, uuid == null ? "" : uuid.toString());
     }
 
     @Override
     public Entity getCommander() {
         try {
             UUID uuid = this.getCommanderId();
-            return uuid == null ? null : this.level.getPlayerByUUID(uuid);
+            return uuid == null ? null : this.level().getPlayerByUUID(uuid);
         } catch (IllegalArgumentException var2) {
             return null;
         }
-    }
-
-    @Override
-    public @NotNull MobType getMobType() {
-        return MobType.UNDEAD;
     }
 }

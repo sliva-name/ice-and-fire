@@ -3,46 +3,48 @@ package com.github.alexthe666.iceandfire.client.render.entity;
 import com.github.alexthe666.iceandfire.entity.EntityGhostSword;
 import com.github.alexthe666.iceandfire.item.IafItemRegistry;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Quaternion;
-import com.mojang.math.Vector3f;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.block.model.ItemTransforms;
+import com.mojang.math.Axis;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.item.ItemModelResolver;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.client.renderer.texture.TextureAtlas;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
+import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
-import org.jetbrains.annotations.NotNull;
 
-public class RenderGhostSword extends EntityRenderer<EntityGhostSword> {
+public class RenderGhostSword extends EntityRenderer<EntityGhostSword, GhostSwordRenderState> {
+    private final ItemModelResolver itemModelResolver;
 
     public RenderGhostSword(EntityRendererProvider.Context context) {
         super(context);
-    }
-
-
-    @Override
-    public @NotNull ResourceLocation getTextureLocation(@NotNull EntityGhostSword entity) {
-        return TextureAtlas.LOCATION_BLOCKS;
+        itemModelResolver = context.getItemModelResolver();
     }
 
     @Override
-    public void render(EntityGhostSword entityIn, float entityYaw, float partialTicks, PoseStack matrixStackIn, @NotNull MultiBufferSource bufferIn, int packedLightIn) {
-        matrixStackIn.pushPose();
-        matrixStackIn.mulPose(Vector3f.YP.rotationDegrees(Mth.lerp(partialTicks, entityIn.yRotO, entityIn.getYRot()) - 90.0F));
-        matrixStackIn.mulPose(Vector3f.ZP.rotationDegrees(Mth.lerp(partialTicks, entityIn.xRotO, entityIn.getXRot())));
-        matrixStackIn.translate(0, 0.5F, 0);
-        matrixStackIn.scale(2F, 2F, 2F);
-        matrixStackIn.mulPose(new Quaternion(Vector3f.YP, 0F, true));
-        matrixStackIn.mulPose(new Quaternion(Vector3f.ZN, (entityIn.tickCount + partialTicks) * 30F, true));
-        matrixStackIn.translate(0, -0.15F, 0);
-        Minecraft.getInstance().getItemRenderer().renderStatic(new ItemStack(IafItemRegistry.GHOST_SWORD.get()), ItemTransforms.TransformType.GROUND, 240, OverlayTexture.NO_OVERLAY, matrixStackIn, bufferIn, 0);
-        matrixStackIn.popPose();
-
-
+    public GhostSwordRenderState createRenderState() {
+        return new GhostSwordRenderState();
     }
 
+    @Override
+    public void extractRenderState(EntityGhostSword entity, GhostSwordRenderState state, float partialTick) {
+        super.extractRenderState(entity, state, partialTick);
+        state.yRot = Mth.lerp(partialTick, entity.yRotO, entity.getYRot());
+        state.xRot = Mth.lerp(partialTick, entity.xRotO, entity.getXRot());
+        itemModelResolver.updateForNonLiving(state.item, new ItemStack(IafItemRegistry.GHOST_SWORD.get()), ItemDisplayContext.GROUND, entity);
+    }
+
+    @Override
+    public void submit(GhostSwordRenderState state, PoseStack poses, SubmitNodeCollector collector, CameraRenderState camera) {
+        poses.pushPose();
+        poses.mulPose(Axis.YP.rotationDegrees(state.yRot - 90.0F));
+        poses.mulPose(Axis.ZP.rotationDegrees(state.xRot));
+        poses.translate(0, 0.5F, 0);
+        poses.scale(2F, 2F, 2F);
+        poses.mulPose(Axis.ZN.rotationDegrees(state.ageInTicks * 30F));
+        poses.translate(0, -0.15F, 0);
+        state.item.submit(poses, collector, 240, OverlayTexture.NO_OVERLAY, state.outlineColor);
+        poses.popPose();
+    }
 }

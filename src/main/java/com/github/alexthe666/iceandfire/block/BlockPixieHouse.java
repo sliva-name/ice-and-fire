@@ -1,5 +1,7 @@
 package com.github.alexthe666.iceandfire.block;
 
+import net.minecraft.world.level.block.state.properties.EnumProperty;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import com.github.alexthe666.iceandfire.entity.tile.TileEntityPixieHouse;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -14,30 +16,32 @@ import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
-import net.minecraft.world.level.block.state.properties.DirectionProperty;
-import net.minecraft.world.level.material.Material;
-import net.minecraftforge.client.IBlockRenderProperties;
+import net.minecraft.world.level.material.MapColor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 import java.util.Random;
-import java.util.function.Consumer;
 
 import static com.github.alexthe666.iceandfire.entity.tile.IafTileEntityRegistry.PIXIE_HOUSE;
 
 public class BlockPixieHouse extends BaseEntityBlock {
-    public static final DirectionProperty FACING = DirectionProperty.create("facing", Direction.Plane.HORIZONTAL);
+    public static final EnumProperty<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;
 
     public BlockPixieHouse() {
         super(
-            Properties
-                .of(Material.WOOD)
+            IafBlockRegistry.id(Properties
+                .of().mapColor(MapColor.WOOD)
                 .noOcclusion()
                 .dynamicShape()
                 .strength(2.0F, 5.0F)
-                .randomTicks()
+                .randomTicks())
 		);
         this.registerDefaultState(this.getStateDefinition().any().setValue(FACING, Direction.NORTH));
+    }
+
+    @Override
+    protected com.mojang.serialization.MapCodec<? extends BaseEntityBlock> codec() {
+        return simpleCodec(properties -> new BlockPixieHouse());
     }
 
     static String name(String type) {
@@ -55,10 +59,10 @@ public class BlockPixieHouse extends BaseEntityBlock {
     }
 
     @Override
-    public void onRemove(@NotNull BlockState state, @NotNull Level worldIn, @NotNull BlockPos pos, @NotNull BlockState newState, boolean isMoving) {
+    protected void affectNeighborsAfterRemoval(@NotNull BlockState state, @NotNull net.minecraft.server.level.ServerLevel worldIn, @NotNull BlockPos pos, boolean movedByPiston) {
         dropPixie(worldIn, pos);
         popResource(worldIn, pos, new ItemStack(this, 0));
-        super.onRemove(state, worldIn, pos, newState, isMoving);
+        super.affectNeighborsAfterRemoval(state, worldIn, pos, movedByPiston);
     }
 
     public void updateTick(Level worldIn, BlockPos pos, BlockState state, Random rand) {
@@ -73,11 +77,6 @@ public class BlockPixieHouse extends BaseEntityBlock {
         } else {
             return true;
         }
-    }
-
-    @Override
-    public void initializeClient(@NotNull Consumer<IBlockRenderProperties> consumer) {
-        super.initializeClient(consumer);
     }
 
     @Override
@@ -98,7 +97,7 @@ public class BlockPixieHouse extends BaseEntityBlock {
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, @NotNull BlockState state, @NotNull BlockEntityType<T> entityType) {
-        return level.isClientSide ? createTickerHelper(entityType, PIXIE_HOUSE.get(), TileEntityPixieHouse::tick) : null;
+        return level.isClientSide() ? createTickerHelper(entityType, PIXIE_HOUSE.get(), TileEntityPixieHouse::tick) : null;
     }
 
     @Nullable

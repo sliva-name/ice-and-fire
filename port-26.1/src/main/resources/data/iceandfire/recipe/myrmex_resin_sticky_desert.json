@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    "iceandfire:myrmex_desert_resin",
+    "iceandfire:myrmex_resin_desert"
+  ],
+  "result": {
+    "count": 1,
+    "id": "iceandfire:myrmex_resin_sticky_desert"
+  }
+}

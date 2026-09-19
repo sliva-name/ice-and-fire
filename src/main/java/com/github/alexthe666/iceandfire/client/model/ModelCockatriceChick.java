@@ -1,17 +1,18 @@
 package com.github.alexthe666.iceandfire.client.model;
 
-import com.github.alexthe666.citadel.animation.IAnimatedEntity;
+import com.github.alexthe666.citadel.client.model.AdvancedEntityModel;
 import com.github.alexthe666.citadel.client.model.AdvancedModelBox;
 import com.github.alexthe666.citadel.client.model.ModelAnimator;
 import com.github.alexthe666.citadel.client.model.basic.BasicModelPart;
-import com.github.alexthe666.iceandfire.entity.EntityCockatrice;
+import com.github.alexthe666.iceandfire.client.render.entity.CockatriceRenderState;
+import com.github.alexthe666.iceandfire.client.render.entity.CockatriceRenderState.AnimationKind;
 import com.google.common.collect.ImmutableList;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.world.entity.Entity;
 
-public class ModelCockatriceChick extends ModelDragonBase<EntityCockatrice> {
+public class ModelCockatriceChick extends AdvancedEntityModel<CockatriceRenderState> implements ICustomStatueModel {
     public AdvancedModelBox lowerBody;
     public AdvancedModelBox leftThigh;
     public AdvancedModelBox rightThigh;
@@ -159,10 +160,10 @@ public class ModelCockatriceChick extends ModelDragonBase<EntityCockatrice> {
             leftLeg, leftFoot, rightLeg, rightFoot);
     }
 
-    public void animate(IAnimatedEntity entity, float f, float f1, float f2, float f3, float f4) {
+    public void animate(CockatriceRenderState state) {
         this.resetToDefaultPose();
-        animator.update(entity);
-        if (animator.setAnimation(EntityCockatrice.ANIMATION_EAT)) {
+        animator.update(state.animation.token, state.animationTick, state.partialTick);
+        if (animator.setAnimation(AnimationKind.EAT.token)) {
             animator.startKeyframe(5);
             this.rotate(animator, neck2, 7, 0, 0);
             this.rotate(animator, head, 45, 0, 0);
@@ -182,7 +183,7 @@ public class ModelCockatriceChick extends ModelDragonBase<EntityCockatrice> {
             animator.endKeyframe();
             animator.resetKeyframe(5);
         }
-        if (animator.setAnimation(EntityCockatrice.ANIMATION_JUMPAT)) {
+        if (animator.setAnimation(AnimationKind.JUMPAT.token)) {
             animator.startKeyframe(10);
             this.rotate(animator, lowerBody, 18, 0, 0);
             this.rotate(animator, upperBody, 5, 0, 0);
@@ -223,7 +224,7 @@ public class ModelCockatriceChick extends ModelDragonBase<EntityCockatrice> {
             animator.endKeyframe();
             animator.resetKeyframe(5);
         }
-        if (animator.setAnimation(EntityCockatrice.ANIMATION_WATTLESHAKE)) {
+        if (animator.setAnimation(AnimationKind.WATTLESHAKE.token)) {
             animator.startKeyframe(3);
             this.rotate(animator, neck, 0, 0, -23);
             this.rotate(animator, neck2, 0, 0, -13);
@@ -256,7 +257,7 @@ public class ModelCockatriceChick extends ModelDragonBase<EntityCockatrice> {
             animator.endKeyframe();
             animator.resetKeyframe(5);
         }
-        if (animator.setAnimation(EntityCockatrice.ANIMATION_BITE)) {
+        if (animator.setAnimation(AnimationKind.BITE.token)) {
             animator.startKeyframe(5);
             this.rotate(animator, neck, -47, 0, 0);
             this.rotate(animator, neck2, 17, 0, 0);
@@ -272,7 +273,7 @@ public class ModelCockatriceChick extends ModelDragonBase<EntityCockatrice> {
             animator.endKeyframe();
             animator.resetKeyframe(5);
         }
-        if (animator.setAnimation(EntityCockatrice.ANIMATION_SPEAK)) {
+        if (animator.setAnimation(AnimationKind.SPEAK.token)) {
             animator.startKeyframe(5);
             this.rotate(animator, lowerJaw, 25, 0, 0);
             animator.resetKeyframe(5);
@@ -298,8 +299,13 @@ public class ModelCockatriceChick extends ModelDragonBase<EntityCockatrice> {
     }
 
     @Override
-    public void setupAnim(EntityCockatrice entity, float f, float f1, float f2, float f3, float f4) {
-        animate(entity, f, f1, f2, f3, f4);
+    public void setupAnim(CockatriceRenderState entity) {
+        animate(entity);
+        float f = entity.walkAnimationPos;
+        float f1 = entity.walkAnimationSpeed;
+        float f2 = entity.ageInTicks;
+        float f3 = entity.yRot;
+        float f4 = entity.xRot;
         float speed_walk = 0.6F;
         float speed_idle = 0.05F;
         float degree_walk = 0.5F;
@@ -344,8 +350,24 @@ public class ModelCockatriceChick extends ModelDragonBase<EntityCockatrice> {
         this.progressPosition(lowerBody, entity.sitProgress, 0.0F, 12.9F, -2.5F);
     }
 
+    // Preserve ModelDragonBase's degree-based keyframes and 20-tick progress divisor.
+    private void rotate(ModelAnimator animator, AdvancedModelBox part, float x, float y, float z) {
+        animator.rotate(part, (float) Math.toRadians(x), (float) Math.toRadians(y), (float) Math.toRadians(z));
+    }
+
+    @Override
+    public void faceTarget(float yaw, float pitch, float rotationDivisor, AdvancedModelBox... boxes) {
+        float actualRotationDivisor = rotationDivisor * (float) boxes.length;
+        float yawAmount = yaw * (float) Math.PI / 180F / actualRotationDivisor;
+        float pitchAmount = pitch * (float) Math.PI / 180F / actualRotationDivisor;
+        for (AdvancedModelBox box : boxes) {
+            box.rotateAngleY += yawAmount;
+            box.rotateAngleX += pitchAmount;
+        }
+    }
+
     @Override
     public void renderStatue(PoseStack matrixStackIn, VertexConsumer bufferIn, int packedLightIn, Entity living) {
-        this.renderToBuffer(matrixStackIn, bufferIn, packedLightIn, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
+        this.renderToBuffer(matrixStackIn, bufferIn, packedLightIn, OverlayTexture.NO_OVERLAY, -1);
     }
 }

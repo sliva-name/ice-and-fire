@@ -4,7 +4,7 @@ import com.github.alexthe666.iceandfire.IceAndFire;
 import com.github.alexthe666.iceandfire.config.biome.IafSpawnBiomeData;
 import com.github.alexthe666.iceandfire.config.biome.SpawnBiomeConfig;
 import net.minecraft.core.Holder;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.biome.Biome;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -71,7 +71,7 @@ public class BiomeConfig {
                 if (obj instanceof Pair) {
                     String id = (String) ((Pair) obj).getLeft();
                     IafSpawnBiomeData data = (IafSpawnBiomeData) ((Pair) obj).getRight();
-                    biomeConfigValues.put(id, SpawnBiomeConfig.create(new ResourceLocation(id), data));
+                    biomeConfigValues.put(id, SpawnBiomeConfig.create(Identifier.parse(id), data));
                 }
             }
         }catch (Exception e){
@@ -85,7 +85,7 @@ public class BiomeConfig {
         if (!init) {
             init();
         }
-        return biomeConfigValues.get(spawns.getKey()).matches(biome, biome.value().getRegistryName());
+        return biomeConfigValues.get(spawns.getKey()).matches(biome, biome.unwrapKey().map(key -> key.identifier()).orElse(Identifier.parse("minecraft:plains")));
     }
 
     @Deprecated(since = "1.19.2", forRemoval = true)

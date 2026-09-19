@@ -1,15 +1,14 @@
 package com.github.alexthe666.iceandfire.world;
 
-import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 import net.minecraft.world.level.levelgen.placement.PlacementContext;
 import net.minecraft.world.level.levelgen.placement.PlacementFilter;
 import net.minecraft.world.level.levelgen.placement.PlacementModifierType;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Random;
 
 /**
     Some worldgen mods / datapacks split biomes between cave and surface<br>
@@ -18,7 +17,7 @@ import java.util.Random;
 */
 public class CustomBiomeFilter extends PlacementFilter {
     private static final CustomBiomeFilter INSTANCE = new CustomBiomeFilter();
-    public static Codec<CustomBiomeFilter> CODEC = Codec.unit(() -> INSTANCE);
+    public static MapCodec<CustomBiomeFilter> CODEC = MapCodec.unit(() -> INSTANCE);
 
     private CustomBiomeFilter() { /* Nothing to do */ }
 
@@ -26,7 +25,7 @@ public class CustomBiomeFilter extends PlacementFilter {
         return INSTANCE;
     }
 
-    protected boolean shouldPlace(final PlacementContext context, @NotNull final Random random, @NotNull final BlockPos position) {
+    protected boolean shouldPlace(final PlacementContext context, @NotNull final RandomSource random, @NotNull final BlockPos position) {
         PlacedFeature placedfeature = context.topFeature().orElseThrow(() -> new IllegalStateException("Tried to biome check an unregistered feature, or a feature that should not restrict the biome"));
         boolean hasFeature = context.getLevel().getBiome(position).value().getGenerationSettings().hasFeature(placedfeature);
 

@@ -87,7 +87,7 @@ public class AmphithereAIAttackMelee extends Goal {
             return false;
         } else if (!this.longMemory) {
             return !this.attacker.getNavigation().isDone();
-        } else if (!this.attacker.isWithinRestriction(living.blockPosition())) {
+        } else if (!this.attacker.isWithinHome(living.blockPosition())) {
             return false;
         } else {
             return !(living instanceof Player) || !living.isSpectator() && !((Player) living).isCreative();
@@ -169,7 +169,9 @@ public class AmphithereAIAttackMelee extends Goal {
         if (distToEnemySqr <= d0) {
             this.attackTick = 20;
             this.attacker.swing(InteractionHand.MAIN_HAND);
-            this.attacker.doHurtTarget(enemy);
+            if (this.attacker.level() instanceof net.minecraft.server.level.ServerLevel _iafSl) {
+                this.attacker.doHurtTarget(_iafSl, enemy);
+            }
         }
     }
 

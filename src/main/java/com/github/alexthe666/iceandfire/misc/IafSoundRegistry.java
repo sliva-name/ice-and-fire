@@ -1,19 +1,17 @@
 package com.github.alexthe666.iceandfire.misc;
 
 import com.github.alexthe666.iceandfire.IceAndFire;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraftforge.event.RegistryEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-
-import java.lang.reflect.Field;
+import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import static com.github.alexthe666.iceandfire.IceAndFire.MODID;
 
 @SuppressWarnings("WeakerAccess")
-@Mod.EventBusSubscriber(modid = IceAndFire.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public final class IafSoundRegistry {
+
+    public static final DeferredRegister<SoundEvent> SOUNDS = DeferredRegister.create(ForgeRegistries.SOUND_EVENTS, IceAndFire.MODID);
 
     public static final SoundEvent BESTIARY_PAGE = createSoundEvent("bestiary_page");
 
@@ -268,25 +266,9 @@ public final class IafSoundRegistry {
     public static final SoundEvent GHOST_JUMPSCARE = createSoundEvent("ghost_jumpscare");
 
     private static SoundEvent createSoundEvent(final String soundName) {
-        final ResourceLocation soundID = new ResourceLocation(MODID, soundName);
-        return new SoundEvent(soundID).setRegistryName(soundID);
-    }
-
-    @SubscribeEvent
-    public static void registerSoundEvents(final RegistryEvent.Register<SoundEvent> event) {
-        try {
-            for (Field f : IafSoundRegistry.class.getFields()) {
-                Object obj = f.get(null);
-                if (obj instanceof SoundEvent) {
-                    event.getRegistry().register((SoundEvent) obj);
-                } else if (obj instanceof SoundEvent[]) {
-                    for (SoundEvent soundEvent : (SoundEvent[]) obj) {
-                        event.getRegistry().register(soundEvent);
-                    }
-                }
-            }
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        }
+        final Identifier soundID = Identifier.fromNamespaceAndPath(MODID, soundName);
+        SoundEvent event = SoundEvent.createVariableRangeEvent(soundID);
+        SOUNDS.register(soundName, () -> event);
+        return event;
     }
 }

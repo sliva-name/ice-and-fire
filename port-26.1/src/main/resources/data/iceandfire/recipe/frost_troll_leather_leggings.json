@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "TTT",
+    "T T",
+    "T T"
+  ],
+  "key": {
+    "T": "iceandfire:troll_leather_frost"
+  },
+  "result": {
+    "id": "iceandfire:frost_troll_leather_leggings"
+  }
+}

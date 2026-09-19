@@ -27,7 +27,7 @@ public class SirenProperties {
     }
 
     private static CompoundTag getOrCreateCharmData(CompoundTag entityData) {
-        if (entityData.contains(SIREN_DATA, 10)) {
+        if (entityData.contains(SIREN_DATA)) {
             return (CompoundTag) entityData.get(SIREN_DATA);
         } else return createDefaultData();
     }
@@ -56,8 +56,8 @@ public class SirenProperties {
 
     private static void updateData(LivingEntity entity, CompoundTag nbt) {
         CitadelEntityData.setCitadelTag(entity, nbt);
-        if (!entity.level.isClientSide()) {
-            Citadel.sendMSGToAll(new PropertiesMessage("CitadelPatreonConfig", nbt, entity.getId()));
+        if (!entity.level().isClientSide()) {
+            com.github.alexthe666.citadel.network.PropertiesNetwork.send(entity);
         }
     }
 
@@ -65,15 +65,15 @@ public class SirenProperties {
         CompoundTag entityData = CitadelEntityData.getOrCreateCitadelTag(entity);
         entityData.put(SIREN_DATA, nbt);
         CitadelEntityData.setCitadelTag(entity, entityData);
-        if (!entity.level.isClientSide()) {
-            Citadel.sendMSGToAll(new PropertiesMessage("CitadelPatreonConfig", entityData, entity.getId()));
+        if (!entity.level().isClientSide()) {
+            com.github.alexthe666.citadel.network.PropertiesNetwork.send(entity);
         }
     }
 
     private static int getSingTime(LivingEntity entity) {
         CompoundTag nbt = getOrCreateCharmData(entity);
         if (nbt.contains(SIREN_TIME)) {
-            return nbt.getInt(SIREN_TIME);
+            return nbt.getIntOr(SIREN_TIME, 0);
         }
         return 0;
     }
@@ -88,14 +88,14 @@ public class SirenProperties {
     private static int getCharmedBy(LivingEntity entity) {
         CompoundTag nbt = getOrCreateCharmData(entity);
         if (nbt.contains(SIREN_ID)) {
-            return nbt.getInt(SIREN_ID);
+            return nbt.getIntOr(SIREN_ID, 0);
         }
         return -1;
     }
 
     @Nullable
     public static EntitySiren getSiren(LivingEntity entity) {
-        Entity siren = entity.level.getEntity(getCharmedBy(entity));
+        Entity siren = entity.level().getEntity(getCharmedBy(entity));
         if (siren instanceof EntitySiren) {
             return (EntitySiren) siren;
         }
@@ -108,7 +108,7 @@ public class SirenProperties {
             nbt = createDefaultData();
             updateCharmData(entity, nbt);
         }
-        return nbt.getBoolean(SIREN_CHARMED);
+        return nbt.getBooleanOr(SIREN_CHARMED, false);
     }
 
     public static void tickCharmedEntity(LivingEntity entity) {
@@ -138,7 +138,7 @@ public class SirenProperties {
 
                 if (rand.nextInt(7) == 0) {
                     for (int i = 0; i < 5; i++) {
-                        entity.level.addParticle(ParticleTypes.HEART,
+                        entity.level().addParticle(ParticleTypes.HEART,
                             entity.getX() + ((rand.nextDouble() - 0.5D) * 3),
                             entity.getY() + ((rand.nextDouble() - 0.5D) * 3),
                             entity.getZ() + ((rand.nextDouble() - 0.5D) * 3),

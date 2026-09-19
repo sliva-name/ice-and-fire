@@ -1,6 +1,7 @@
 package com.github.alexthe666.iceandfire.item;
 
 import com.github.alexthe666.citadel.server.item.CustomArmorMaterial;
+import net.minecraft.core.Holder;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.EquipmentSlot;
 
@@ -14,9 +15,14 @@ public class IafArmorMaterial extends CustomArmorMaterial {
         this.maxDamageFactor = durability;
     }
 
+    public IafArmorMaterial(String name, int durability, int[] damageReduction, int encantability, Holder<SoundEvent> sound, float toughness) {
+        super(name, durability, damageReduction, encantability, sound, toughness, 0);
+        this.maxDamageFactor = durability;
+    }
+
     @Override
     public int getDurabilityForSlot(EquipmentSlot slotIn) {
-        return MAX_DAMAGE_ARRAY[slotIn.getIndex()] * this.maxDamageFactor;
+        return MAX_DAMAGE_ARRAY[humanoidArmorIndex(slotIn)] * this.maxDamageFactor;
     }
 
     @Override

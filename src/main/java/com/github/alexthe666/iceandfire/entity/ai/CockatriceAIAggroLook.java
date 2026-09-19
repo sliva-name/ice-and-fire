@@ -18,11 +18,9 @@ public class CockatriceAIAggroLook extends NearestAttackableTargetGoal<Player> {
     public CockatriceAIAggroLook(EntityCockatrice cockatriceIn) {
         super(cockatriceIn, Player.class, false);
         this.cockatrice = cockatriceIn;
-        Predicate<LivingEntity> LIVING_ENTITY_SELECTOR = (target) -> {
-            return EntityGorgon.isEntityLookingAt(target, this.cockatrice,
-                EntityCockatrice.VIEW_RADIUS) && cockatrice.distanceTo(target) < getFollowDistance();
-        };
-        this.predicate = TargetingConditions.forCombat().range(25.0D).selector(LIVING_ENTITY_SELECTOR);
+        this.predicate = TargetingConditions.forCombat().range(25.0D).selector((target, serverLevel) ->
+            EntityGorgon.isEntityLookingAt(target, this.cockatrice,
+                EntityCockatrice.VIEW_RADIUS) && cockatrice.distanceTo(target) < getFollowDistance());
     }
 
     /**
@@ -32,8 +30,9 @@ public class CockatriceAIAggroLook extends NearestAttackableTargetGoal<Player> {
     public boolean canUse() {
         if (cockatrice.isTame())
             return false;
-        this.player = this.cockatrice.level.getNearestPlayer(predicate, this.cockatrice.getX(),
-            this.cockatrice.getY(), this.cockatrice.getZ());
+        this.player = this.cockatrice.level() instanceof net.minecraft.server.level.ServerLevel server
+            ? server.getNearestPlayer(predicate, this.cockatrice)
+            : null;
         return this.player != null;
     }
 

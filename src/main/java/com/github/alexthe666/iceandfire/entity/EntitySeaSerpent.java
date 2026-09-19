@@ -1,5 +1,14 @@
 package com.github.alexthe666.iceandfire.entity;
 
+import net.minecraft.world.damagesource.DamageTypes;
+
+import net.minecraft.tags.DamageTypeTags;
+
+import com.github.alexthe666.iceandfire.entity.util.IafDrops;
+
+import com.github.alexthe666.iceandfire.block.IafMaterials;
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
 import com.github.alexthe666.citadel.animation.Animation;
 import com.github.alexthe666.citadel.animation.AnimationHandler;
 import com.github.alexthe666.citadel.animation.IAnimatedEntity;
@@ -34,19 +43,18 @@ import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.vehicle.Boat;
+import net.minecraft.world.entity.vehicle.boat.Boat;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.ClipContext;
-import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
-import net.minecraft.world.level.material.Material;
-import net.minecraft.world.level.pathfinder.BlockPathTypes;
+import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
@@ -75,7 +83,7 @@ public class EntitySeaSerpent extends Animal implements IAnimatedEntity, IMultip
     private static final Predicate<Entity> NOT_SEA_SERPENT_IN_WATER = new Predicate<Entity>() {
         @Override
         public boolean apply(@Nullable Entity entity) {
-            return entity instanceof LivingEntity && !(entity instanceof EntitySeaSerpent) && DragonUtils.isAlive((LivingEntity) entity) && entity.isInWaterOrBubble();
+            return entity instanceof LivingEntity && !(entity instanceof EntitySeaSerpent) && DragonUtils.isAlive((LivingEntity) entity) && entity.isInWater();
         }
     };
     public int swimCycle;
@@ -104,21 +112,21 @@ public class EntitySeaSerpent extends Animal implements IAnimatedEntity, IMultip
         super(t, worldIn);
         IHasCustomizableAttributes.applyAttributesForEntity(t, this);
         switchNavigator(false);
-        this.noCulling = true;
+        // 1.18 noCulling is renderer affectedByCulling() == false
         resetParts(1.0F);
-        this.setPathfindingMalus(BlockPathTypes.WATER, 0.0F);
+        this.setPathfindingMalus(PathType.WATER, 0.0F);
     }
 
     private static BlockPos clampBlockPosToWater(Entity entity, Level world, BlockPos pos) {
-        BlockPos topY = new BlockPos(pos.getX(), entity.getY(), pos.getZ());
-        BlockPos bottomY = new BlockPos(pos.getX(), entity.getY(), pos.getZ());
-        while (isWaterBlock(world, topY) && topY.getY() < world.getMaxBuildHeight()) {
+        BlockPos topY = BlockPos.containing(pos.getX(), entity.getY(), pos.getZ());
+        BlockPos bottomY = BlockPos.containing(pos.getX(), entity.getY(), pos.getZ());
+        while (isWaterBlock(world, topY) && topY.getY() < world.getMaxY() + 1) {
             topY = topY.above();
         }
         while (isWaterBlock(world, bottomY) && bottomY.getY() > 0) {
             bottomY = bottomY.below();
         }
-        return new BlockPos(pos.getX(), Mth.clamp(pos.getY(), bottomY.getY() + 1, topY.getY() - 1), pos.getZ());
+        return BlockPos.containing(pos.getX(), Mth.clamp(pos.getY(), bottomY.getY() + 1, topY.getY() - 1), pos.getZ());
     }
 
     public static boolean isWaterBlock(Level world, BlockPos pos) {
@@ -150,25 +158,25 @@ public class EntitySeaSerpent extends Animal implements IAnimatedEntity, IMultip
     }
 
     @Override
-    protected int getExperienceReward(@NotNull Player player) {
+    protected int getBaseExperienceReward(@NotNull ServerLevel level) {
         return this.isAncient() ? 30 : 15;
     }
 
     @Override
     public void pushEntities() {
-        List<Entity> entities = this.level.getEntities(this, this.getBoundingBox().expandTowards(0.20000000298023224D, 0.0D, 0.20000000298023224D));
+        List<Entity> entities = this.level().getEntities(this, this.getBoundingBox().expandTowards(0.20000000298023224D, 0.0D, 0.20000000298023224D));
         entities.stream().filter(entity -> !(entity instanceof EntityMutlipartPart) && entity.isPushable()).forEach(entity -> entity.push(this));
     }
 
     private void switchNavigator(boolean onLand) {
         if (onLand) {
             this.moveControl = new MoveControl(this);
-            this.navigation = new GroundPathNavigation(this, level);
+            this.navigation = new GroundPathNavigation(this, level());
             this.navigation.setCanFloat(true);
             this.isLandNavigator = true;
         } else {
             this.moveControl = new EntitySeaSerpent.SwimmingMoveHelper(this);
-            this.navigation = new SeaSerpentPathNavigator(this, level);
+            this.navigation = new SeaSerpentPathNavigator(this, level());
             this.isLandNavigator = false;
         }
     }
@@ -176,15 +184,9 @@ public class EntitySeaSerpent extends Animal implements IAnimatedEntity, IMultip
     public boolean isDirectPathBetweenPoints(BlockPos pos) {
         Vec3 vector3d = new Vec3(this.getX(), this.getEyeY(), this.getZ());
         Vec3 bector3d1 = new Vec3(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D);
-        return this.level.clip(new ClipContext(vector3d, bector3d1, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this)).getType() == HitResult.Type.MISS;
+        return this.level().clip(new ClipContext(vector3d, bector3d1, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this)).getType() == HitResult.Type.MISS;
 
     }
-
-    @Override
-    public @NotNull MobType getMobType() {
-        return MobType.WATER;
-    }
-
     public static AttributeSupplier.Builder bakeAttributes() {
         return Mob.createMobAttributes()
             //HEALTH
@@ -223,7 +225,7 @@ public class EntitySeaSerpent extends Animal implements IAnimatedEntity, IMultip
         for (EntityMutlipartPart entity : segments) {
             if (entity != null) {
                 if (!entity.shouldContinuePersisting()) {
-                    level.addFreshEntity(entity);
+                    this.level().addFreshEntity(entity);
                 }
             }
         }
@@ -244,13 +246,18 @@ public class EntitySeaSerpent extends Animal implements IAnimatedEntity, IMultip
     }
 
     @Override
-    public @NotNull EntityDimensions getDimensions(@NotNull Pose poseIn) {
-        return this.getType().getDimensions().scale(this.getScale());
+    protected EntityDimensions getDefaultDimensions(@NotNull Pose poseIn) {
+        return this.getType().getDimensions().scale(this.getAgeScale());
     }
 
     @Override
-    public float getScale() {
+    public float getAgeScale() {
         return this.getSeaSerpentScale();
+    }
+
+    @Override
+    public boolean isFood(@NotNull ItemStack stack) {
+        return false;
     }
 
     @Override
@@ -265,7 +272,7 @@ public class EntitySeaSerpent extends Animal implements IAnimatedEntity, IMultip
 
 
     @Override
-    public boolean doHurtTarget(@NotNull Entity entityIn) {
+    public boolean doHurtTarget(@NotNull ServerLevel level, @NotNull Entity entityIn) {
         if (this.getAnimation() != ANIMATION_BITE) {
             this.setAnimation(ANIMATION_BITE);
             return true;
@@ -285,7 +292,7 @@ public class EntitySeaSerpent extends Animal implements IAnimatedEntity, IMultip
             spawnParticlesAroundEntity(ParticleTypes.BUBBLE, this, (int) this.getSeaSerpentScale());
 
         }
-        if (!this.level.isClientSide && this.level.getDifficulty() == Difficulty.PEACEFUL) {
+        if (!this.level().isClientSide() && this.level().getDifficulty() == Difficulty.PEACEFUL) {
             this.remove(RemovalReason.DISCARDED);
         }
         if (this.getTarget() != null && !this.getTarget().isAlive()) {
@@ -328,8 +335,8 @@ public class EntitySeaSerpent extends Animal implements IAnimatedEntity, IMultip
             double x = entity.getX() + this.random.nextFloat() * entity.getBbWidth() * 2.0F - entity.getBbWidth();
             double y = entity.getY() + 0.5D + this.random.nextFloat() * entity.getBbHeight();
             double z = entity.getZ() + this.random.nextFloat() * entity.getBbWidth() * 2.0F - entity.getBbWidth();
-            if (this.level.getBlockState(new BlockPos(x, y, z)).getMaterial() == Material.WATER) {
-                this.level.addParticle(type, x, y, z, 0, 0, 0);
+            if (IafMaterials.isWater(this.level().getBlockState(BlockPos.containing(x, y, z)))) {
+                this.level().addParticle(type, x, y, z, 0, 0, 0);
             }
         }
     }
@@ -345,25 +352,25 @@ public class EntitySeaSerpent extends Animal implements IAnimatedEntity, IMultip
                 double extraX = radius * Mth.sin((float) (Math.PI + angle));
                 double extraY = 0.8F;
                 double extraZ = radius * Mth.cos(angle);
-                if (level.isClientSide) {
-                    level.addParticle(type, true, this.getX() + extraX, this.getY() + extraY, this.getZ() + extraZ, motionX, motionY, motionZ);
+                if (this.level().isClientSide()) {
+                    this.level().addParticle(type, true, true, this.getX() + extraX, this.getY() + extraY, this.getZ() + extraZ, motionX, motionY, motionZ);
                 }
             }
         }
     }
 
     @Override
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(VARIANT, 0);
-        this.entityData.define(SCALE, 0F);
-        this.entityData.define(JUMPING, false);
-        this.entityData.define(BREATHING, false);
-        this.entityData.define(ANCIENT, false);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(VARIANT, 0);
+        builder.define(SCALE, 0F);
+        builder.define(JUMPING, false);
+        builder.define(BREATHING, false);
+        builder.define(ANCIENT, false);
     }
 
     @Override
-    public void addAdditionalSaveData(@NotNull CompoundTag compound) {
+    public void addAdditionalSaveData(@NotNull ValueOutput compound) {
         super.addAdditionalSaveData(compound);
         compound.putInt("Variant", this.getVariant());
         compound.putInt("TicksSinceRoar", ticksSinceRoar);
@@ -376,16 +383,16 @@ public class EntitySeaSerpent extends Animal implements IAnimatedEntity, IMultip
     }
 
     @Override
-    public void readAdditionalSaveData(@NotNull CompoundTag compound) {
+    public void readAdditionalSaveData(@NotNull ValueInput compound) {
         super.readAdditionalSaveData(compound);
-        this.setVariant(compound.getInt("Variant"));
-        ticksSinceRoar = compound.getInt("TicksSinceRoar");
-        jumpCooldown = compound.getInt("JumpCooldown");
-        this.setSeaSerpentScale(compound.getFloat("Scale"));
-        this.setJumpingOutOfWater(compound.getBoolean("JumpingOutOfWater"));
-        attackDecision = compound.getBoolean("AttackDecision");
-        this.setBreathing(compound.getBoolean("Breathing"));
-        this.setAncient(compound.getBoolean("Ancient"));
+        this.setVariant(compound.getIntOr("Variant", 0));
+        ticksSinceRoar = compound.getIntOr("TicksSinceRoar", 0);
+        jumpCooldown = compound.getIntOr("JumpCooldown", 0);
+        this.setSeaSerpentScale(compound.getFloatOr("Scale", 0.0F));
+        this.setJumpingOutOfWater(compound.getBooleanOr("JumpingOutOfWater", false));
+        attackDecision = compound.getBooleanOr("AttackDecision", false);
+        this.setBreathing(compound.getBooleanOr("Breathing", false));
+        this.setAncient(compound.getBooleanOr("Ancient", false));
     }
 
     private void updateAttributes() {
@@ -433,7 +440,7 @@ public class EntitySeaSerpent extends Animal implements IAnimatedEntity, IMultip
     }
 
     public boolean isBreathing() {
-        if (level.isClientSide) {
+        if (this.level().isClientSide()) {
             boolean breathing = this.entityData.get(BREATHING).booleanValue();
             this.isBreathing = breathing;
             return breathing;
@@ -443,7 +450,7 @@ public class EntitySeaSerpent extends Animal implements IAnimatedEntity, IMultip
 
     public void setBreathing(boolean breathing) {
         this.entityData.set(BREATHING, breathing);
-        if (!level.isClientSide) {
+        if (!this.level().isClientSide()) {
             this.isBreathing = breathing;
         }
     }
@@ -455,15 +462,15 @@ public class EntitySeaSerpent extends Animal implements IAnimatedEntity, IMultip
     @Override
     public void aiStep() {
         super.aiStep();
-        if (!level.isClientSide) {
-            if (level.getDifficulty() == Difficulty.PEACEFUL && this.getTarget() instanceof Player) {
+        if (!this.level().isClientSide()) {
+            if (this.level().getDifficulty() == Difficulty.PEACEFUL && this.getTarget() instanceof Player) {
                 this.setTarget(null);
             }
         }
         boolean breathing = isBreathing() && this.getAnimation() != ANIMATION_BITE && this.getAnimation() != ANIMATION_ROAR;
-        boolean jumping = !this.isInWater() && !this.isOnGround() && this.getDeltaMovement().y >= 0;
+        boolean jumping = !this.isInWater() && !this.onGround() && this.getDeltaMovement().y >= 0;
         boolean wantJumping = false; //(ticksSinceJump > TIME_BETWEEN_JUMPS) && this.isInWater();
-        boolean ground = !isInWater() && this.onGround;
+        boolean ground = !isInWater() && this.onGround();
         boolean prevJumping = this.isJumpingOutOfWater();
         this.ticksSinceRoar++;
         this.jumpCooldown++;
@@ -478,7 +485,7 @@ public class EntitySeaSerpent extends Animal implements IAnimatedEntity, IMultip
         if (this.getAnimation() == ANIMATION_BITE && this.getAnimationTick() == 5) {
             this.playSound(IafSoundRegistry.SEA_SERPENT_BITE, this.getSoundVolume(), 1);
         }
-        if (isJumpingOutOfWater() && isWaterBlock(level, this.blockPosition().above(2))) {
+        if (isJumpingOutOfWater() && isWaterBlock(level(), this.blockPosition().above(2))) {
             setJumpingOutOfWater(false);
         }
         if (this.swimCycle < 38) {
@@ -521,7 +528,7 @@ public class EntitySeaSerpent extends Animal implements IAnimatedEntity, IMultip
         if (changedSwimBehavior) {
             changedSwimBehavior = false;
         }
-        if (!level.isClientSide) {
+        if (!this.level().isClientSide()) {
             if (attackDecision) {
                 this.setBreathing(false);
             }
@@ -546,7 +553,7 @@ public class EntitySeaSerpent extends Animal implements IAnimatedEntity, IMultip
             this.hurtMob(this.getTarget());
         }
         breakBlock();
-        if (!level.isClientSide && this.isPassenger() && this.getRootVehicle() instanceof Boat) {
+        if (!this.level().isClientSide() && this.isPassenger() && this.getRootVehicle() instanceof Boat) {
             Boat boat = (Boat) this.getRootVehicle();
             boat.remove(RemovalReason.KILLED);
             this.stopRiding();
@@ -555,15 +562,15 @@ public class EntitySeaSerpent extends Animal implements IAnimatedEntity, IMultip
 
     private boolean isAtSurface() {
         BlockPos pos = this.blockPosition();
-        return isWaterBlock(level, pos.below()) && !isWaterBlock(level, pos.above());
+        return isWaterBlock(level(), pos.below()) && !isWaterBlock(level(), pos.above());
     }
 
     private void doSplashDamage() {
         double getWidth = 2D * this.getSeaSerpentScale();
-        List<Entity> list = level.getEntities(this, this.getBoundingBox().inflate(getWidth, getWidth * 0.5D, getWidth), NOT_SEA_SERPENT);
+        List<Entity> list = this.level().getEntities(this, this.getBoundingBox().inflate(getWidth, getWidth * 0.5D, getWidth), NOT_SEA_SERPENT);
         for (Entity entity : list) {
             if (entity instanceof LivingEntity && DragonUtils.isAlive((LivingEntity) entity)) {
-                entity.hurt(DamageSource.mobAttack(this), ((int) this.getAttribute(Attributes.ATTACK_DAMAGE).getValue()));
+                entity.hurt(this.damageSources().mobAttack(this), ((int) this.getAttribute(Attributes.ATTACK_DAMAGE).getValue()));
                 destroyBoat(entity);
                 double xRatio = this.getX() - entity.getX();
                 double zRatio = this.getZ() - entity.getZ();
@@ -577,15 +584,18 @@ public class EntitySeaSerpent extends Animal implements IAnimatedEntity, IMultip
     }
 
     public void destroyBoat(Entity sailor) {
-        if (sailor.getVehicle() != null && sailor.getVehicle() instanceof Boat && !level.isClientSide) {
+        if (sailor.getVehicle() != null && sailor.getVehicle() instanceof Boat && !this.level().isClientSide()) {
             Boat boat = (Boat) sailor.getVehicle();
             boat.remove(RemovalReason.KILLED);
-            if (this.level.getGameRules().getBoolean(GameRules.RULE_DOENTITYDROPS)) {
+            if (this.level() instanceof ServerLevel server && server.getGameRules().get(net.minecraft.world.level.gamerules.GameRules.ENTITY_DROPS)) {
                 for (int i = 0; i < 3; ++i) {
-                    boat.spawnAtLocation(new ItemStack(boat.getBoatType().getPlanks().asItem()), 0.0F);
+                    ItemStack planks = boat.getPickResult();
+                    if (planks != null && !planks.isEmpty()) {
+                        IafDrops.spawn(boat, planks, 0.0F);
+                    }
                 }
                 for (int j = 0; j < 2; ++j) {
-                    boat.spawnAtLocation(new ItemStack(Items.STICK));
+                    IafDrops.spawn(boat, new ItemStack(Items.STICK));
                 }
             }
         }
@@ -594,14 +604,14 @@ public class EntitySeaSerpent extends Animal implements IAnimatedEntity, IMultip
     private boolean isPreyAtSurface() {
         if (this.getTarget() != null) {
             BlockPos pos = this.getTarget().blockPosition();
-            return !isWaterBlock(level, pos.above((int) Math.ceil(this.getTarget().getBbHeight())));
+            return !isWaterBlock(level(), pos.above((int) Math.ceil(this.getTarget().getBbHeight())));
         }
         return false;
     }
 
     private void hurtMob(LivingEntity entity) {
         if (this.getAnimation() == ANIMATION_BITE && entity != null && this.getAnimationTick() == 6) {
-            this.getTarget().hurt(DamageSource.mobAttack(this), ((int) this.getAttribute(Attributes.ATTACK_DAMAGE).getValue()));
+            this.getTarget().hurt(this.damageSources().mobAttack(this), ((int) this.getAttribute(Attributes.ATTACK_DAMAGE).getValue()));
             EntitySeaSerpent.this.attackDecision = this.getRandom().nextBoolean();
         }
     }
@@ -641,13 +651,13 @@ public class EntitySeaSerpent extends Animal implements IAnimatedEntity, IMultip
                 for (int b = (int) Math.round(this.getBoundingBox().minY) - 1; (b <= (int) Math.round(this.getBoundingBox().maxY) + 2) && (b <= 127); b++) {
                     for (int c = (int) Math.round(this.getBoundingBox().minZ) - 2; c <= (int) Math.round(this.getBoundingBox().maxZ) + 2; c++) {
                         BlockPos pos = new BlockPos(a, b, c);
-                        BlockState state = level.getBlockState(pos);
-                        FluidState fluidState = level.getFluidState(pos);
+                        BlockState state = this.level().getBlockState(pos);
+                        FluidState fluidState = this.level().getFluidState(pos);
                         Block block = state.getBlock();
-                        if (!state.isAir() && !state.getShape(level, pos).isEmpty() && (state.getMaterial() == Material.PLANT || state.getMaterial() == Material.LEAVES) && fluidState.isEmpty()) {
+                        if (!state.isAir() && !state.getShape(level(), pos).isEmpty() && (IafMaterials.isPlant(state) || IafMaterials.isLeaves(state)) && fluidState.isEmpty()) {
                             if (block != Blocks.AIR) {
-                                if (!level.isClientSide) {
-                                    level.destroyBlock(pos, true);
+                                if (!this.level().isClientSide()) {
+                                    this.level().destroyBlock(pos, true);
                                 }
                             }
                         }
@@ -659,8 +669,8 @@ public class EntitySeaSerpent extends Animal implements IAnimatedEntity, IMultip
 
     @Override
     @Nullable
-    public SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor worldIn, @NotNull DifficultyInstance difficultyIn, @NotNull MobSpawnType reason, @Nullable SpawnGroupData spawnDataIn, @Nullable CompoundTag dataTag) {
-        spawnDataIn = super.finalizeSpawn(worldIn, difficultyIn, reason, spawnDataIn, dataTag);
+    public SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor worldIn, @NotNull DifficultyInstance difficultyIn, @NotNull EntitySpawnReason reason, @Nullable SpawnGroupData spawnDataIn) {
+        spawnDataIn = super.finalizeSpawn(worldIn, difficultyIn, reason, spawnDataIn);
         this.setVariant(this.getRandom().nextInt(7));
         boolean ancient = this.getRandom().nextInt(16) == 1;
         if (ancient) {
@@ -674,7 +684,7 @@ public class EntitySeaSerpent extends Animal implements IAnimatedEntity, IMultip
         return spawnDataIn;
     }
 
-    public void onWorldSpawn(Random random) {
+    public void onWorldSpawn(net.minecraft.util.RandomSource random) {
         this.setVariant(random.nextInt(7));
         boolean ancient = random.nextInt(15) == 1;
         if (ancient) {
@@ -787,10 +797,10 @@ public class EntitySeaSerpent extends Animal implements IAnimatedEntity, IMultip
                     d3 = d3 + this.random.nextGaussian() * 0.007499999832361937D * inaccuracy;
                     d4 = d4 + this.random.nextGaussian() * 0.007499999832361937D * inaccuracy;
                     EntitySeaSerpentBubbles entitylargefireball = new EntitySeaSerpentBubbles(
-                        IafEntityRegistry.SEA_SERPENT_BUBBLES.get(), level, this, d2, d3, d4);
+                        IafEntityRegistry.SEA_SERPENT_BUBBLES.get(), level(), this, d2, d3, d4);
                     entitylargefireball.setPos(headPosX, headPosY, headPosZ);
-                    if (!level.isClientSide) {
-                        level.addFreshEntity(entitylargefireball);
+                    if (!this.level().isClientSide()) {
+                        this.level().addFreshEntity(entitylargefireball);
                     }
                     if (!entity.isAlive() || entity == null) {
                         this.setBreathing(false);
@@ -838,8 +848,9 @@ public class EntitySeaSerpent extends Animal implements IAnimatedEntity, IMultip
     }
 
     @Override
-    public void killed(@NotNull ServerLevel world, @NotNull LivingEntity entity) {
+    public boolean killedEntity(@NotNull ServerLevel world, @NotNull LivingEntity entity, @NotNull net.minecraft.world.damagesource.DamageSource source) {
         this.attackDecision = this.getRandom().nextBoolean();
+        return super.killedEntity(world, entity, source);
     }
 
     @Override
@@ -865,8 +876,8 @@ public class EntitySeaSerpent extends Animal implements IAnimatedEntity, IMultip
     }
 
     @Override
-    public boolean isInvulnerableTo(@NotNull DamageSource source) {
-        return source == DamageSource.FALL || source == DamageSource.DROWN || source == DamageSource.IN_WALL || source == DamageSource.FALLING_BLOCK || source == DamageSource.LAVA || source.isFire() || super.isInvulnerableTo(source);
+    public boolean isInvulnerableTo(@NotNull ServerLevel level, @NotNull DamageSource source) {
+        return source.is(DamageTypes.FALL) || source.is(DamageTypes.DROWN) || source.is(DamageTypes.IN_WALL) || source.is(DamageTypes.FALLING_BLOCK) || source.is(DamageTypes.LAVA) || source.is(DamageTypeTags.IS_FIRE) || super.isInvulnerableTo(level, source);
     }
 
     public class SwimmingMoveHelper extends MoveControl {

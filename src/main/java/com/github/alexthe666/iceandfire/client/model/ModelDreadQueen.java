@@ -3,10 +3,10 @@ package com.github.alexthe666.iceandfire.client.model;
 import com.github.alexthe666.citadel.animation.Animation;
 import com.github.alexthe666.citadel.client.model.ModelAnimator;
 import com.github.alexthe666.iceandfire.client.model.util.HideableModelRenderer;
-import com.github.alexthe666.iceandfire.entity.EntityDreadQueen;
+import com.github.alexthe666.iceandfire.client.render.entity.DreadHumanoidRenderState;
 import net.minecraft.client.model.HumanoidModel;
 
-public class ModelDreadQueen extends ModelDreadBase<EntityDreadQueen> {
+public class ModelDreadQueen extends ModelDreadBase {
     public HideableModelRenderer chestplate;
     public HideableModelRenderer cloak;
     public HideableModelRenderer necklace;
@@ -88,15 +88,8 @@ public class ModelDreadQueen extends ModelDreadBase<EntityDreadQueen> {
     }
 
     @Override
-    public void prepareMobModel(EntityDreadQueen LivingEntityIn, float limbSwing, float limbSwingAmount, float partialTickTime) {
-        this.rightArmPose = HumanoidModel.ArmPose.EMPTY;
-        this.leftArmPose = HumanoidModel.ArmPose.EMPTY;
-        super.prepareMobModel(LivingEntityIn, limbSwing, limbSwingAmount, partialTickTime);
-    }
-
-    @Override
     public Animation getSpawnAnimation() {
-        return EntityDreadQueen.ANIMATION_SPAWN;
+        return DreadHumanoidRenderState.SPAWN;
     }
 
 }

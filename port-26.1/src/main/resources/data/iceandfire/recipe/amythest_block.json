@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    "#forge:gems/amethyst",
+    "#forge:gems/amethyst",
+    "#forge:gems/amethyst",
+    "#forge:gems/amethyst",
+    "#forge:gems/amethyst",
+    "#forge:gems/amethyst",
+    "#forge:gems/amethyst",
+    "#forge:gems/amethyst",
+    "#forge:gems/amethyst"
+  ],
+  "result": {
+    "count": 1,
+    "id": "iceandfire:amythest_block"
+  }
+}

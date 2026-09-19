@@ -18,7 +18,7 @@ public class ItemMobSkull extends Item {
     private final EnumSkullType skull;
 
     public ItemMobSkull(EnumSkullType skull) {
-        super(new Item.Properties().tab(IceAndFire.TAB_ITEMS).stacksTo(1));
+        super(IafItemRegistry.defaultBuilder().stacksTo(1));
         this.skull = skull;
     }
 
@@ -28,17 +28,17 @@ public class ItemMobSkull extends Item {
         EntityMobSkull skull = new EntityMobSkull(IafEntityRegistry.MOB_SKULL.get(), context.getLevel());
         ItemStack stack = player.getItemInHand(context.getHand());
         BlockPos offset = context.getClickedPos().relative(context.getClickedFace(), 1);
-        skull.moveTo(offset.getX() + 0.5, offset.getY(), offset.getZ() + 0.5, 0, 0);
+        skull.snapTo(offset.getX() + 0.5, offset.getY(), offset.getZ() + 0.5, 0, 0);
         float yaw = player.getYRot();
         if (context.getClickedFace() != Direction.UP) {
             yaw = player.getDirection().toYRot();
         }
         skull.setYaw(yaw);
         skull.setSkullType(this.skull);
-        if (!context.getLevel().isClientSide) {
+        if (!context.getLevel().isClientSide()) {
             context.getLevel().addFreshEntity(skull);
         }
-        if (stack.hasCustomHoverName()) {
+        if (stack.has(net.minecraft.core.component.DataComponents.CUSTOM_NAME)) {
             skull.setCustomName(stack.getHoverName());
         }
         if (!player.isCreative()) {

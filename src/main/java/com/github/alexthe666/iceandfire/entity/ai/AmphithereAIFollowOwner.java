@@ -8,7 +8,7 @@ import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.pathfinder.BlockPathTypes;
+import net.minecraft.world.level.pathfinder.PathType;
 
 import java.util.EnumSet;
 
@@ -24,7 +24,7 @@ public class AmphithereAIFollowOwner extends Goal {
 
     public AmphithereAIFollowOwner(EntityAmphithere ampithereIn, double followSpeedIn, float minDistIn, float maxDistIn) {
         this.ampithere = ampithereIn;
-        this.world = ampithereIn.level;
+        this.world = ampithereIn.level();
         this.followSpeed = followSpeedIn;
         this.minDist = minDistIn;
         this.maxDist = maxDistIn;
@@ -68,15 +68,15 @@ public class AmphithereAIFollowOwner extends Goal {
     @Override
     public void start() {
         this.timeToRecalcPath = 0;
-        this.oldWaterCost = this.ampithere.getPathfindingMalus(BlockPathTypes.WATER);
-        this.ampithere.setPathfindingMalus(BlockPathTypes.WATER, 0.0F);
+        this.oldWaterCost = this.ampithere.getPathfindingMalus(PathType.WATER);
+        this.ampithere.setPathfindingMalus(PathType.WATER, 0.0F);
     }
 
     @Override
     public void stop() {
         this.owner = null;
         this.ampithere.getNavigation().stop();
-        this.ampithere.setPathfindingMalus(BlockPathTypes.WATER, this.oldWaterCost);
+        this.ampithere.setPathfindingMalus(PathType.WATER, this.oldWaterCost);
     }
 
     @Override
@@ -97,7 +97,7 @@ public class AmphithereAIFollowOwner extends Goal {
                         for (int l = 0; l <= 4; ++l) {
                             for (int i1 = 0; i1 <= 4; ++i1) {
                                 if ((l < 1 || i1 < 1 || l > 3 || i1 > 3) && this.canTeleportToBlock(new BlockPos(i, j, k))) {
-                                    this.ampithere.moveTo(i + l + 0.5F, k, j + i1 + 0.5F,
+                                    this.ampithere.snapTo(i + l + 0.5F, k, j + i1 + 0.5F,
                                         this.ampithere.getYRot(), this.ampithere.getXRot());
                                     ampithere.getNavigation().stop();
                                     return;

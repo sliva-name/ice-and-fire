@@ -1,17 +1,22 @@
 package com.github.alexthe666.iceandfire.client.model;
 
-import com.github.alexthe666.citadel.animation.IAnimatedEntity;
+import com.github.alexthe666.citadel.client.model.AdvancedEntityModel;
 import com.github.alexthe666.citadel.client.model.AdvancedModelBox;
 import com.github.alexthe666.citadel.client.model.ModelAnimator;
 import com.github.alexthe666.citadel.client.model.basic.BasicModelPart;
-import com.github.alexthe666.iceandfire.entity.EntityTroll;
+import com.github.alexthe666.iceandfire.client.render.entity.TrollRenderState;
 import com.google.common.collect.ImmutableList;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.world.entity.Entity;
 
-public class ModelTroll extends ModelDragonBase<EntityTroll> {
+/**
+ * Troll rig on the new render-state model contract. The state owns animation
+ * selection (via the state's {@link TrollRenderState.AnimationKind} token) so
+ * the model never reads a live entity.
+ */
+public class ModelTroll extends AdvancedEntityModel<TrollRenderState> implements ICustomStatueModel {
     private final ModelAnimator animator;
     public AdvancedModelBox body;
     public AdvancedModelBox upperBody;
@@ -217,7 +222,6 @@ public class ModelTroll extends ModelDragonBase<EntityTroll> {
         this.updateDefaultPose();
     }
 
-
     @Override
     public Iterable<BasicModelPart> parts() {
         return ImmutableList.of(body);
@@ -231,11 +235,11 @@ public class ModelTroll extends ModelDragonBase<EntityTroll> {
             bottom, top, leftarm2, rightleg2, leftleg2);
     }
 
-    public void animate(IAnimatedEntity entity, float f, float f1, float f2, float f3, float f4, float f5) {
-        this.log1.showModel = true;
+    public void animate(TrollRenderState troll) {
+        // Normal rendering keeps the whole rig visible; only the weapon layer is gated.
         this.resetToDefaultPose();
-        animator.update(entity);
-        if (animator.setAnimation(EntityTroll.ANIMATION_SPEAK)) {
+        animator.update(troll.animation.token, troll.animationTick, troll.partialTick);
+        if (animator.setAnimation(TrollRenderState.AnimationKind.SPEAK.token)) {
             animator.startKeyframe(5);
             this.rotate(animator, jaw, 25, 0, 0);
             animator.endKeyframe();
@@ -243,7 +247,7 @@ public class ModelTroll extends ModelDragonBase<EntityTroll> {
             this.rotate(animator, jaw, 0, 0, 0);
             animator.endKeyframe();
         }
-        if (animator.setAnimation(EntityTroll.ANIMATION_ROAR)) {
+        if (animator.setAnimation(TrollRenderState.AnimationKind.ROAR.token)) {
             animator.startKeyframe(5);
             this.rotateMinus(animator, leftleg, -31, -26, -5);
             this.rotateMinus(animator, rightleg, -31, 26, 5);
@@ -288,7 +292,7 @@ public class ModelTroll extends ModelDragonBase<EntityTroll> {
             animator.endKeyframe();
             animator.resetKeyframe(10);
         }
-        if (animator.setAnimation(EntityTroll.ANIMATION_STRIKE_HORIZONTAL)) {
+        if (animator.setAnimation(TrollRenderState.AnimationKind.STRIKE_HORIZONTAL.token)) {
             animator.startKeyframe(10);
             this.rotate(animator, body, 0, 31, 0);
             this.rotate(animator, upperBody, 18, 39, 0);
@@ -312,7 +316,7 @@ public class ModelTroll extends ModelDragonBase<EntityTroll> {
             animator.endKeyframe();
             animator.resetKeyframe(5);
         }
-        if (animator.setAnimation(EntityTroll.ANIMATION_STRIKE_VERTICAL)) {
+        if (animator.setAnimation(TrollRenderState.AnimationKind.STRIKE_VERTICAL.token)) {
             animator.startKeyframe(7);
             this.rotate(animator, upperBody, -30, 0, 0);
             this.rotate(animator, rightleg, -15, 57, 5);
@@ -345,60 +349,77 @@ public class ModelTroll extends ModelDragonBase<EntityTroll> {
     }
 
     @Override
-    public void setupAnim(EntityTroll entity, float limbSwing, float limbSwingAmount, float ageInTicks, float f3, float f4) {
-        this.resetToDefaultPose();
-        this.log1.showModel = true;
+    public void setupAnim(TrollRenderState troll) {
+        if (troll.statue) {
+            animateStatue();
+            return;
+        }
+        this.animate(troll);
 
-        animate(entity, limbSwing, limbSwingAmount, ageInTicks, f3, f4, 1);
-
-        this.progressRotation(head, entity.stoneProgress, (float) Math.toRadians(-31), 0.0F, 0.0F);
-        this.progressRotation(jaw, entity.stoneProgress, (float) Math.toRadians(54), 0.0F, 0.0F);
-        this.progressRotation(leftarm, entity.stoneProgress, (float) Math.toRadians(10), (float) Math.toRadians(-73), (float) Math.toRadians(-60));
-        this.progressRotation(leftarm2, entity.stoneProgress, (float) Math.toRadians(-80), 0.0F, 0.0F);
-        this.progressRotation(rightarm, entity.stoneProgress, (float) Math.toRadians(-101), (float) Math.toRadians(70), 0);
-        this.progressRotation(rightarm2, entity.stoneProgress, (float) Math.toRadians(-40), 0.0F, 0.0F);
+        this.progressRotation(head, troll.stoneProgress, (float) Math.toRadians(-31), 0.0F, 0.0F);
+        this.progressRotation(jaw, troll.stoneProgress, (float) Math.toRadians(54), 0.0F, 0.0F);
+        this.progressRotation(leftarm, troll.stoneProgress, (float) Math.toRadians(10), (float) Math.toRadians(-73), (float) Math.toRadians(-60));
+        this.progressRotation(leftarm2, troll.stoneProgress, (float) Math.toRadians(-80), 0.0F, 0.0F);
+        this.progressRotation(rightarm, troll.stoneProgress, (float) Math.toRadians(-101), (float) Math.toRadians(70), 0);
+        this.progressRotation(rightarm2, troll.stoneProgress, (float) Math.toRadians(-40), 0.0F, 0.0F);
 
         float speed_walk = 0.2F;
         float speed_idle = 0.05F;
         float degree_walk = 0.75F;
         float degree_idle = 0.5F;
-        this.walk(this.rightleg, speed_walk, degree_walk * -0.75F, true, 0, 0F, limbSwing, limbSwingAmount);
-        this.walk(this.leftleg, speed_walk, degree_walk * -0.75F, false, 0, 0F, limbSwing, limbSwingAmount);
-        this.walk(this.rightleg2, speed_walk, degree_walk * -0.5F, true, 1, -0.3F, limbSwing, limbSwingAmount);
-        this.walk(this.leftleg2, speed_walk, degree_walk * -0.5F, false, 1, 0.3F, limbSwing, limbSwingAmount);
-        this.walk(this.leftarm, speed_walk, degree_walk * -0.75F, true, 0, 0F, limbSwing, limbSwingAmount);
-        this.walk(this.leftarm2, speed_walk, degree_walk * -0.5F, true, 1, 0.3F, limbSwing, limbSwingAmount);
-        this.swing(this.body, speed_walk, degree_walk * -0.5F, false, 0, 0F, limbSwing, limbSwingAmount);
-        this.swing(this.upperBody, speed_walk, degree_walk * -0.25F, true, 0, 0F, limbSwing, limbSwingAmount);
-        this.walk(this.rightarm, speed_walk, degree_walk * -0.25F, false, 0, 0F, limbSwing, limbSwingAmount);
-        this.walk(this.rightarm2, speed_walk, degree_walk * -0.125F, false, 1, -0.3F, limbSwing, limbSwingAmount);
-        this.walk(this.body, speed_idle, degree_idle * -0.1F, true, 0F, -0.1F, ageInTicks, 1);
-        this.walk(this.rightleg, speed_idle, degree_idle * 0.1F, true, 0F, 0.1F, ageInTicks, 1);
-        this.walk(this.leftleg, speed_idle, degree_idle * 0.1F, true, 0F, 0.1F, ageInTicks, 1);
-
-        //this.flap(this.leftarm, speed_idle, degree_idle * -0.1F, true, 0, 0F, f2, 1);
-        //this.flap(this.rightarm, speed_idle, degree_idle * -0.1F, false, 0, 0F, f2, 1);
-        //this.flap(this.leftarm2, speed_idle, degree_idle * -0.1F, true, 0, -0.1F, f2, 1);
-        //this.flap(this.rightarm2, speed_idle, degree_idle * -0.1F, false, 0, -0.1F, f2, 1);
-        this.walk(this.jaw, speed_idle, degree_idle * -0.15F, true, 0F, -0.1F, ageInTicks, 1);
-        this.walk(this.mouth, speed_idle, degree_idle * -0.15F, false, 0F, -0.1F, ageInTicks, 1);
-        this.faceTarget(f3, f4, 1, this.head);
-
+        this.walk(this.rightleg, speed_walk, degree_walk * -0.75F, true, 0, 0F, troll.walkAnimationPos, troll.walkAnimationSpeed);
+        this.walk(this.leftleg, speed_walk, degree_walk * -0.75F, false, 0, 0F, troll.walkAnimationPos, troll.walkAnimationSpeed);
+        this.walk(this.rightleg2, speed_walk, degree_walk * -0.5F, true, 1, -0.3F, troll.walkAnimationPos, troll.walkAnimationSpeed);
+        this.walk(this.leftleg2, speed_walk, degree_walk * -0.5F, false, 1, 0.3F, troll.walkAnimationPos, troll.walkAnimationSpeed);
+        this.walk(this.leftarm, speed_walk, degree_walk * -0.75F, true, 0, 0F, troll.walkAnimationPos, troll.walkAnimationSpeed);
+        this.walk(this.leftarm2, speed_walk, degree_walk * -0.5F, true, 1, 0.3F, troll.walkAnimationPos, troll.walkAnimationSpeed);
+        this.swing(this.body, speed_walk, degree_walk * -0.5F, false, 0, 0F, troll.walkAnimationPos, troll.walkAnimationSpeed);
+        this.swing(this.upperBody, speed_walk, degree_walk * -0.25F, true, 0, 0F, troll.walkAnimationPos, troll.walkAnimationSpeed);
+        this.walk(this.rightarm, speed_walk, degree_walk * -0.25F, false, 0, 0F, troll.walkAnimationPos, troll.walkAnimationSpeed);
+        this.walk(this.rightarm2, speed_walk, degree_walk * -0.125F, false, 1, -0.3F, troll.walkAnimationPos, troll.walkAnimationSpeed);
+        this.walk(this.body, speed_idle, degree_idle * -0.1F, true, 0F, -0.1F, troll.ageInTicks, 1);
+        this.walk(this.rightleg, speed_idle, degree_idle * 0.1F, true, 0F, 0.1F, troll.ageInTicks, 1);
+        this.walk(this.leftleg, speed_idle, degree_idle * 0.1F, true, 0F, 0.1F, troll.ageInTicks, 1);
+        this.walk(this.jaw, speed_idle, degree_idle * -0.15F, true, 0F, -0.1F, troll.ageInTicks, 1);
+        this.walk(this.mouth, speed_idle, degree_idle * -0.15F, false, 0F, -0.1F, troll.ageInTicks, 1);
+        this.faceTarget(troll.yRot, troll.xRot, 1, this.head);
     }
 
-    public void animateStatue(EntityTroll troll) {
-        this.progressRotation(head, 20, (float) Math.toRadians(-31), 0.0F, 0.0F);
-        this.progressRotation(jaw, 20, (float) Math.toRadians(54), 0.0F, 0.0F);
-        this.progressRotation(leftarm, 20, (float) Math.toRadians(10), (float) Math.toRadians(-73), (float) Math.toRadians(-60));
-        this.progressRotation(leftarm2, 20, (float) Math.toRadians(-80), 0.0F, 0.0F);
-        this.progressRotation(rightarm, 20, (float) Math.toRadians(-101), (float) Math.toRadians(70), 0);
-        this.progressRotation(rightarm2, 20, (float) Math.toRadians(-40), 0.0F, 0.0F);
+    private void rotate(ModelAnimator animator, AdvancedModelBox part, float x, float y, float z) {
+        animator.rotate(part, (float) Math.toRadians(x), (float) Math.toRadians(y), (float) Math.toRadians(z));
+    }
+
+    private void rotateMinus(ModelAnimator animator, AdvancedModelBox part, float x, float y, float z) {
+        animator.rotate(part, (float) Math.toRadians(x) - part.defaultRotationX,
+            (float) Math.toRadians(y) - part.defaultRotationY, (float) Math.toRadians(z) - part.defaultRotationZ);
+    }
+
+    /** Absolute statue pose: no idle, head tracking, attack, or weapon, even after model reuse. */
+    public void animateStatue() {
+        resetToDefaultPose();
+        progressRotation(head, 20, (float) Math.toRadians(-31), 0, 0);
+        progressRotation(jaw, 20, (float) Math.toRadians(54), 0, 0);
+        progressRotation(leftarm, 20, (float) Math.toRadians(10), (float) Math.toRadians(-73), (float) Math.toRadians(-60));
+        progressRotation(leftarm2, 20, (float) Math.toRadians(-80), 0, 0);
+        progressRotation(rightarm, 20, (float) Math.toRadians(-101), (float) Math.toRadians(70), 0);
+        progressRotation(rightarm2, 20, (float) Math.toRadians(-40), 0, 0);
+        log1.showModel = false;
+    }
+
+    /** Immediate-mode entry point for the separate statue renderer's eventual adapter migration. */
+    public void renderStatue(PoseStack poses, VertexConsumer buffer, int light) {
+        animateStatue();
+        renderToBuffer(poses, buffer, light, OverlayTexture.NO_OVERLAY, -1);
     }
 
     @Override
-    public void renderStatue(PoseStack matrixStackIn, VertexConsumer bufferIn, int packedLightIn, Entity living) {
-        animateStatue((EntityTroll) living);
-        this.log1.showModel = false;
-        this.renderToBuffer(matrixStackIn, bufferIn, packedLightIn, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
+    public void renderStatue(PoseStack poses, VertexConsumer buffer, int light, Entity living) {
+        renderStatue(poses, buffer, light);
+    }
+
+    @Override
+    public void resetToDefaultPose() {
+        super.resetToDefaultPose();
+        this.log1.showModel = true;
     }
 }

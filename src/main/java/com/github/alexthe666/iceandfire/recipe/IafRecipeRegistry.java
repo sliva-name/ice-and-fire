@@ -6,16 +6,15 @@ import com.github.alexthe666.iceandfire.enums.EnumDragonArmor;
 import com.github.alexthe666.iceandfire.enums.EnumSeaSerpent;
 import com.github.alexthe666.iceandfire.enums.EnumTroll;
 import com.github.alexthe666.iceandfire.item.IafItemRegistry;
+import net.minecraft.core.Holder;
 import net.minecraft.core.Position;
-import net.minecraft.core.Registry;
-import net.minecraft.core.dispenser.AbstractProjectileDispenseBehavior;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.projectile.AbstractArrow;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.entity.projectile.arrow.AbstractArrow;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.alchemy.Potion;
-import net.minecraft.world.item.alchemy.PotionUtils;
+import net.minecraft.world.item.alchemy.PotionContents;
 import net.minecraft.world.item.alchemy.Potions;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeType;
@@ -24,20 +23,14 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.DispenserBlock;
 import net.minecraft.world.level.block.entity.BannerPattern;
-import net.minecraftforge.common.brewing.BrewingRecipeRegistry;
-import net.minecraftforge.event.RegistryEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.event.brewing.BrewingRecipeRegisterEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.RegistryObject;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
 public class IafRecipeRegistry {
 
     public static final BannerPattern PATTERN_FIRE = addBanner("iceandfire_fire", "iceandfire_fire");
@@ -61,10 +54,8 @@ public class IafRecipeRegistry {
     public static final BannerPattern PATTERN_DREAD = addBanner("iceandfire_dread", "iceandfire_dread");
 
     public static List<ItemStack> BANNER_ITEMS = new ArrayList<>();
-    public static final DeferredRegister<RecipeType<?>> RECIPE_TYPE = DeferredRegister.create(Registry.RECIPE_TYPE_REGISTRY, IceAndFire.MODID);
-    public static final RegistryObject<RecipeType<DragonForgeRecipe>> DRAGON_FORGE_TYPE = RECIPE_TYPE.register("dragonforge", () -> RecipeType.register("iceandfire:dragonforge"));
+    public static final RegistryObject<RecipeType<DragonForgeRecipe>> DRAGON_FORGE_TYPE = IafRecipeSerializers.DRAGON_FORGE_TYPE;
 
-    @SubscribeEvent
     public static void preInit(FMLCommonSetupEvent event) {
         event.enqueueWork(() -> {
             DispenserBlock.registerBehavior(IafItemRegistry.STYMPHALIAN_ARROW.get(), new AbstractProjectileDispenseBehavior() {
@@ -169,15 +160,24 @@ public class IafRecipeRegistry {
                 }
             });
 
-            BrewingRecipeRegistry.addRecipe(Ingredient.of(createPotion(Potions.WATER).getItem()), Ingredient.of(IafItemRegistry.SHINY_SCALES.get()), createPotion(Potions.WATER_BREATHING));
+            BrewingRecipeRegisterEvent.BUS.addListener(brewing -> brewing.addRecipe(
+                Ingredient.of(Items.POTION),
+                Ingredient.of(IafItemRegistry.SHINY_SCALES.get()),
+                createPotion(Potions.WATER_BREATHING)));
         });
     }
 
+    public static ItemStack createPotion(Holder<Potion> potion) {
+        return PotionContents.createItemStack(Items.POTION, potion);
+    }
+
     public static ItemStack createPotion(Potion potion) {
-        return PotionUtils.setPotion(new ItemStack(Items.POTION), potion);
+        ItemStack stack = new ItemStack(Items.POTION);
+        stack.set(DataComponents.POTION_CONTENTS, new PotionContents(Holder.direct(potion)));
+        return stack;
     }
 
     public static BannerPattern addBanner(String enumName, String fileName) {
-        return BannerPattern.create(enumName.toUpperCase(), fileName, "iceandfire." + fileName, true);
+        return new BannerPattern(net.minecraft.resources.Identifier.fromNamespaceAndPath("iceandfire", fileName), "block.minecraft.banner." + fileName);
     }
 }

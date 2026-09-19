@@ -7,6 +7,6 @@ import net.minecraft.world.item.Item;
 public class ItemTrollLeather extends Item {
 
     public ItemTrollLeather(EnumTroll troll) {
-        super(new Item.Properties().tab(IceAndFire.TAB_ITEMS));
+        super(IafItemRegistry.defaultBuilder());
     }
 }

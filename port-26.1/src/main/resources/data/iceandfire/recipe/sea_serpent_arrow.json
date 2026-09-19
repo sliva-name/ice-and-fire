@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "X",
+    "#",
+    "Y"
+  ],
+  "key": {
+    "#": "#forge:rods/wooden",
+    "X": "iceandfire:sea_serpent_fang",
+    "Y": "#forge:scales/sea_serpent"
+  },
+  "result": {
+    "count": 4,
+    "id": "iceandfire:sea_serpent_arrow"
+  }
+}

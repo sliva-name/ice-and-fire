@@ -6,7 +6,7 @@ import com.github.alexthe666.iceandfire.entity.IafEntityRegistry;
 import com.github.alexthe666.iceandfire.world.IafWorldRegistry;
 import com.mojang.serialization.Codec;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.feature.Feature;
@@ -24,15 +24,15 @@ public class SpawnDeathWorm extends Feature<NoneFeatureConfiguration> {
     @Override
     public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> context) {
         WorldGenLevel worldIn = context.level();
-        Random rand = context.random();
+        net.minecraft.util.RandomSource rand = context.random();
         BlockPos position = context.origin();
         position = worldIn.getHeightmapPos(Heightmap.Types.WORLD_SURFACE_WG, position.offset(8, 0, 8));
 
         if (IafConfig.spawnDeathWorm && IafWorldRegistry.isFarEnoughFromSpawn(worldIn, position)) {
             if (rand.nextInt(IafConfig.deathWormSpawnRate + 1) == 0) {
-                EntityDeathWorm deathWorm = IafEntityRegistry.DEATH_WORM.get().create(worldIn.getLevel());
+                EntityDeathWorm deathWorm = IafEntityRegistry.DEATH_WORM.get().create(worldIn.getLevel(), net.minecraft.world.entity.EntitySpawnReason.STRUCTURE);
                 deathWorm.setPos(position.getX() + 0.5F, position.getY() + 1, position.getZ() + 0.5F);
-                deathWorm.finalizeSpawn(worldIn, worldIn.getCurrentDifficultyAt(position), MobSpawnType.CHUNK_GENERATION, null, null);
+                deathWorm.finalizeSpawn(worldIn, worldIn.getCurrentDifficultyAt(position), EntitySpawnReason.CHUNK_GENERATION, null);
                 worldIn.addFreshEntity(deathWorm);
             }
         }

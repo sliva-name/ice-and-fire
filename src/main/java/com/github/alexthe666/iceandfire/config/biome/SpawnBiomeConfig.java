@@ -1,10 +1,10 @@
 package com.github.alexthe666.iceandfire.config.biome;
 
-import com.github.alexthe666.citadel.Citadel;
+import com.github.alexthe666.iceandfire.IceAndFire;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraftforge.fml.loading.FMLPaths;
 import org.apache.commons.io.FileUtils;
 
@@ -16,18 +16,18 @@ import java.nio.file.Paths;
 
 public class SpawnBiomeConfig {
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().registerTypeAdapter(IafSpawnBiomeData.class, new IafSpawnBiomeData.Deserializer()).create();
-    private final ResourceLocation fileName;
+    private final Identifier fileName;
 
-    private SpawnBiomeConfig(ResourceLocation fileName) {
+    private SpawnBiomeConfig(Identifier fileName) {
         if (!fileName.getNamespace().endsWith(".json")) {
-            this.fileName = new ResourceLocation(fileName.getNamespace(), fileName.getPath() + ".json");
+            this.fileName = Identifier.fromNamespaceAndPath(fileName.getNamespace(), fileName.getPath() + ".json");
         } else {
             this.fileName = fileName;
         }
 
     }
 
-    public static IafSpawnBiomeData create(ResourceLocation fileName, IafSpawnBiomeData dataDefault) {
+    public static IafSpawnBiomeData create(Identifier fileName, IafSpawnBiomeData dataDefault) {
         SpawnBiomeConfig config = new SpawnBiomeConfig(fileName);
         IafSpawnBiomeData data = config.getConfigData(dataDefault);
         return data;
@@ -39,18 +39,18 @@ public class SpawnBiomeConfig {
             try {
                 FileUtils.write(configFile, GSON.toJson(defaults));
             } catch (IOException e) {
-                Citadel.LOGGER.error("Spawn Biome Config: Could not write " + configFile, e);
+                IceAndFire.LOGGER.error("Spawn Biome Config: Could not write " + configFile, e);
             }
         }
         try {
             return GSON.fromJson(FileUtils.readFileToString(configFile), type);
         } catch (IafSpawnBiomeData.InvalidCitadelFormatException ex) {
-            Citadel.LOGGER.error("Spawn Biome Config: %s didn't contain the correct citadel_format version, proceeding with defaults".formatted(configFile), ex.getMessage());
+            IceAndFire.LOGGER.error("Spawn Biome Config: %s didn't contain the correct citadel_format version, proceeding with defaults".formatted(configFile), ex.getMessage());
             if (defaults instanceof IafSpawnBiomeData iafSpawnBiomeData) {
                 iafSpawnBiomeData.setCitadelFormat(-1);
             }
         } catch (Exception e) {
-            Citadel.LOGGER.error("Spawn Biome Config: Could not load " + configFile, e);
+            IceAndFire.LOGGER.error("Spawn Biome Config: Could not load " + configFile, e);
         }
 
         return defaults;

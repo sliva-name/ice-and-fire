@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "WLW",
+    "W W"
+  ],
+  "key": {
+    "L": "minecraft:leather_boots",
+    "W": "minecraft:white_wool"
+  },
+  "result": {
+    "id": "iceandfire:sheep_boots"
+  }
+}

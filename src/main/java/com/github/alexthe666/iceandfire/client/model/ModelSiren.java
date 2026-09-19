@@ -1,17 +1,17 @@
 package com.github.alexthe666.iceandfire.client.model;
 
-import com.github.alexthe666.citadel.animation.IAnimatedEntity;
+import com.github.alexthe666.citadel.client.model.AdvancedEntityModel;
 import com.github.alexthe666.citadel.client.model.AdvancedModelBox;
 import com.github.alexthe666.citadel.client.model.ModelAnimator;
 import com.github.alexthe666.citadel.client.model.basic.BasicModelPart;
-import com.github.alexthe666.iceandfire.entity.EntitySiren;
+import com.github.alexthe666.iceandfire.client.render.entity.SirenRenderState;
 import com.google.common.collect.ImmutableList;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.world.entity.Entity;
 
-public class ModelSiren extends ModelDragonBase<EntitySiren> {
+public class ModelSiren extends AdvancedEntityModel<SirenRenderState> implements ICustomStatueModel {
     public AdvancedModelBox Tail_1;
     public AdvancedModelBox Tail_2;
     public AdvancedModelBox Body;
@@ -142,10 +142,26 @@ public class ModelSiren extends ModelDragonBase<EntitySiren> {
             Left_Arm, Head, Right_Arm, Neck, Hair1, HairR, HairL, Mouth, Jaw, Hair2);
     }
 
-    public void animate(IAnimatedEntity entity, float f, float f1, float f2, float f3, float f4, float f5) {
+    @Override
+    public void faceTarget(float yaw, float pitch, float rotationDivisor, AdvancedModelBox... boxes) {
+        // Preserve ModelDragonBase's floating-point operation order.
+        float actualRotationDivisor = rotationDivisor * (float) boxes.length;
+        float yawAmount = yaw * (float) Math.PI / 180F / actualRotationDivisor;
+        float pitchAmount = pitch * (float) Math.PI / 180F / actualRotationDivisor;
+        for (AdvancedModelBox box : boxes) {
+            box.rotateAngleY += yawAmount;
+            box.rotateAngleX += pitchAmount;
+        }
+    }
+
+    private void rotate(ModelAnimator animator, AdvancedModelBox part, float x, float y, float z) {
+        animator.rotate(part, (float) Math.toRadians(x), (float) Math.toRadians(y), (float) Math.toRadians(z));
+    }
+
+    public void animate(SirenRenderState state) {
         this.resetToDefaultPose();
-        animator.update(entity);
-        if (animator.setAnimation(EntitySiren.ANIMATION_BITE)) {
+        animator.update(state.animation, state.animationTick, state.partialTick);
+        if (animator.setAnimation(SirenRenderState.BITE)) {
             animator.startKeyframe(5);
             this.rotate(animator, Mouth, -28, 0, 0);
             this.rotate(animator, Jaw, 7, 0, 0);
@@ -153,7 +169,7 @@ public class ModelSiren extends ModelDragonBase<EntitySiren> {
             animator.resetKeyframe(5);
             animator.endKeyframe();
         }
-        if (animator.setAnimation(EntitySiren.ANIMATION_PULL)) {
+        if (animator.setAnimation(SirenRenderState.PULL)) {
             animator.startKeyframe(5);
             this.rotate(animator, Left_Arm, -103, 5, 0);
             this.rotate(animator, Right_Arm, -103, -5, 0);
@@ -168,8 +184,13 @@ public class ModelSiren extends ModelDragonBase<EntitySiren> {
     }
 
     @Override
-    public void setupAnim(EntitySiren entity, float f, float f1, float f2, float f3, float f4) {
-        animate(entity, f, f1, f2, f3, f4, 1);
+    public void setupAnim(SirenRenderState entity) {
+        float f = entity.walkAnimationPos;
+        float f1 = entity.walkAnimationSpeed;
+        float f2 = entity.ageInTicks;
+        float f3 = entity.yRot;
+        float f4 = entity.xRot;
+        animate(entity);
         float speed_walk = 0.6F;
         float speed_idle = 0.05F;
         float degree_walk = 1F;
@@ -187,7 +208,7 @@ public class ModelSiren extends ModelDragonBase<EntitySiren> {
         this.progressRotation(Head, entity.swimProgress, (float) Math.toRadians(-70), 0.0F, 0.0F);
         this.progressRotation(Left_Arm, entity.swimProgress, (float) Math.toRadians(-15), 0.0F, 0.0F);
         this.progressRotation(Right_Arm, entity.swimProgress, (float) Math.toRadians(-15), 0.0F, 0.0F);
-        if (entity.isSwimming()) {
+        if (entity.swimming) {
             this.flap(Right_Arm, speed_walk, degree_walk * 1.2F, false, 0, 1.2F, f, f1);
             this.flap(Left_Arm, speed_walk, degree_walk * 1.2F, true, 0, 1.2F, f, f1);
             this.chainWave(TAIL_NO_BASE, speed_walk, degree_walk * 0.4F, 0, f, f1);
@@ -198,8 +219,8 @@ public class ModelSiren extends ModelDragonBase<EntitySiren> {
             this.chainFlap(TAIL_NO_BASE, speed_walk, degree_walk * 0.6F, 1, f, f1);
             this.swing(Tail_1, speed_walk, degree_walk * 0.2F, true, 0, 0F, f, f1);
         }
-        if (entity.isSinging()) {
-            switch (entity.getSingingPose()) {
+        if (entity.singing) {
+            switch (entity.singingPose) {
                 case 2:
                     this.progressRotation(Body, entity.singProgress, (float) Math.toRadians(-46F), 0.0F, 0.0F);
                     this.progressRotation(Tail_1, entity.singProgress, (float) Math.toRadians(90F), 0.0F, (float) Math.toRadians(20F));
@@ -211,7 +232,7 @@ public class ModelSiren extends ModelDragonBase<EntitySiren> {
                     this.progressPosition(Head, entity.singProgress, 0, -12.0F, -0.5F);
                     this.walk(Right_Arm, speed_idle * 1.5F, degree_idle * 0.6F, false, 2, 0F, f2, 1);
                     this.flap(Right_Arm, speed_idle * 1.5F, degree_idle * 0.6F, false, 2, 0F, f2, 1);
-                    if (entity.isOnGround()) {
+                    if (entity.onGround) {
                         this.chainFlap(TAIL_NO_BASE, speed_idle, degree_idle, 0, f2, 1);
                         this.swing(Tail_2, speed_idle, degree_idle * 0.4F, false, 0F, -0.4F, f2, 1);
                         this.swing(Tail_3, speed_idle, degree_idle * 0.4F, false, 0F, 0.6F, f2, 1);
@@ -228,7 +249,7 @@ public class ModelSiren extends ModelDragonBase<EntitySiren> {
                     this.progressPosition(Tail_1, entity.singProgress, 0.0F, 18.9F, -0.2F);
                     this.walk(Right_Arm, speed_idle * 1.5F, degree_idle * 0.6F, false, 2, 0F, f2, 1);
                     this.walk(Left_Arm, speed_idle * 1.5F, degree_idle * 0.6F, true, 2, 0F, f2, 1);
-                    if (entity.isOnGround()) {
+                    if (entity.onGround) {
                         this.chainFlap(TAIL_NO_BASE, speed_idle, degree_idle, 0, f2, 1);
                     }
                     break;
@@ -245,7 +266,7 @@ public class ModelSiren extends ModelDragonBase<EntitySiren> {
                     this.walk(Left_Arm, speed_idle * 1.5F, degree_idle * 0.6F, true, 2, 0F, f2, 1);
                     this.flap(Right_Arm, speed_idle * 1.5F, degree_idle * 0.6F, false, 2, 0F, f2, 1);
                     this.flap(Left_Arm, speed_idle * 1.5F, degree_idle * 0.6F, true, 2, 0F, f2, 1);
-                    if (entity.isOnGround()) {
+                    if (entity.onGround) {
                         this.chainFlap(TAIL_NO_BASE, speed_idle, degree_idle * 0.5F, -1, f2, 1);
                     }
                     break;
@@ -253,8 +274,8 @@ public class ModelSiren extends ModelDragonBase<EntitySiren> {
         }else{
             this.faceTarget(f3, f4, 2, Neck, Head);
         }
-        if(entity.tail_buffer != null){
-            entity.tail_buffer.applyChainSwingBuffer(TAIL_NO_BASE);
+        for (AdvancedModelBox part : TAIL_NO_BASE) {
+            part.rotateAngleY += entity.tailYaw / TAIL_NO_BASE.length;
         }
     }
 

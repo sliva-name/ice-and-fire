@@ -1,22 +1,52 @@
 package com.github.alexthe666.iceandfire.world;
 
 import com.github.alexthe666.iceandfire.IceAndFire;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
+import net.minecraft.core.UUIDUtil;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.saveddata.SavedData;
-import net.minecraft.world.level.storage.DimensionDataStorage;
-import org.jetbrains.annotations.NotNull;
+import net.minecraft.world.level.saveddata.SavedDataType;
+import net.minecraft.world.level.storage.SavedDataStorage;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 public class DragonPosWorldData extends SavedData {
 
-    private static final String IDENTIFIER = "iceandfire_dragonPositions";
+    private static final Codec<Map<UUID, BlockPos>> DRAGON_MAP_CODEC = RecordCodecBuilder.<Map.Entry<UUID, BlockPos>>create(instance -> instance.group(
+        UUIDUtil.CODEC.fieldOf("DragonUUID").forGetter(Map.Entry::getKey),
+        Codec.INT.fieldOf("DragonPosX").forGetter(entry -> entry.getValue().getX()),
+        Codec.INT.fieldOf("DragonPosY").forGetter(entry -> entry.getValue().getY()),
+        Codec.INT.fieldOf("DragonPosZ").forGetter(entry -> entry.getValue().getZ())
+    ).apply(instance, (uuid, x, y, z) -> Map.entry(uuid, new BlockPos(x, y, z)))).listOf().xmap(
+        list -> {
+            Map<UUID, BlockPos> map = new HashMap<>();
+            list.forEach(entry -> map.put(entry.getKey(), entry.getValue()));
+            return map;
+        },
+        map -> List.copyOf(map.entrySet())
+    );
+
+    public static final Codec<DragonPosWorldData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+        Codec.INT.fieldOf("Tick").forGetter(data -> data.tickCounter),
+        DRAGON_MAP_CODEC.fieldOf("DragonMap").forGetter(data -> data.lastDragonPositions)
+    ).apply(instance, DragonPosWorldData::new));
+
+    public static final SavedDataType<DragonPosWorldData> TYPE = new SavedDataType<>(
+        Identifier.fromNamespaceAndPath(IceAndFire.MODID, "dragon_positions"),
+        DragonPosWorldData::new,
+        CODEC,
+        DataFixTypes.LEVEL
+    );
+
     protected final Map<UUID, BlockPos> lastDragonPositions = new HashMap<>();
     private Level world;
     private int tickCounter;
@@ -29,16 +59,18 @@ public class DragonPosWorldData extends SavedData {
         this.setDirty();
     }
 
-    public DragonPosWorldData(CompoundTag compoundTag) {
-        this.load(compoundTag);
+    private DragonPosWorldData(int tickCounter, Map<UUID, BlockPos> positions) {
+        this.tickCounter = tickCounter;
+        this.lastDragonPositions.putAll(positions);
     }
 
+    @Nullable
     public static DragonPosWorldData get(Level world) {
         if (world instanceof ServerLevel) {
             ServerLevel overworld = world.getServer().getLevel(world.dimension());
 
-            DimensionDataStorage storage = overworld.getDataStorage();
-            DragonPosWorldData data = storage.computeIfAbsent(DragonPosWorldData::new, DragonPosWorldData::new, IDENTIFIER);
+            SavedDataStorage storage = overworld.getDataStorage();
+            DragonPosWorldData data = storage.computeIfAbsent(TYPE);
             if (data != null) {
                 data.world = world;
                 data.setDirty();
@@ -69,34 +101,5 @@ public class DragonPosWorldData extends SavedData {
 
     public void tick() {
         ++this.tickCounter;
-    }
-
-    public DragonPosWorldData load(CompoundTag nbt) {
-        this.tickCounter = nbt.getInt("Tick");
-        ListTag nbttaglist = nbt.getList("DragonMap", 10);
-        this.lastDragonPositions.clear();
-        for (int i = 0; i < nbttaglist.size(); ++i) {
-            CompoundTag CompoundNBT = nbttaglist.getCompound(i);
-            UUID uuid = CompoundNBT.getUUID("DragonUUID");
-            BlockPos pos = new BlockPos(CompoundNBT.getInt("DragonPosX"), CompoundNBT.getInt("DragonPosY"), CompoundNBT.getInt("DragonPosZ"));
-            this.lastDragonPositions.put(uuid, pos);
-        }
-        return this;
-    }
-
-    @Override
-    public @NotNull CompoundTag save(CompoundTag compound) {
-        compound.putInt("Tick", this.tickCounter);
-        ListTag nbttaglist = new ListTag();
-        for (Map.Entry<UUID, BlockPos> pair : lastDragonPositions.entrySet()) {
-            CompoundTag CompoundNBT = new CompoundTag();
-            CompoundNBT.putUUID("DragonUUID", pair.getKey());
-            CompoundNBT.putInt("DragonPosX", pair.getValue().getX());
-            CompoundNBT.putInt("DragonPosY", pair.getValue().getY());
-            CompoundNBT.putInt("DragonPosZ", pair.getValue().getZ());
-            nbttaglist.add(CompoundNBT);
-        }
-        compound.put("DragonMap", nbttaglist);
-        return compound;
     }
 }

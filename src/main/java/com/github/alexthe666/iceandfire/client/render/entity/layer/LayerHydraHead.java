@@ -1,22 +1,28 @@
 package com.github.alexthe666.iceandfire.client.render.entity.layer;
 
-import com.github.alexthe666.citadel.client.model.AdvancedModelBox;
+
 import com.github.alexthe666.iceandfire.client.model.ModelHydraBody;
 import com.github.alexthe666.iceandfire.client.model.ModelHydraHead;
+import com.github.alexthe666.iceandfire.client.render.entity.HydraRenderState;
 import com.github.alexthe666.iceandfire.client.render.entity.RenderHydra;
 import com.github.alexthe666.iceandfire.entity.EntityHydra;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Quaternion;
-import com.mojang.math.Vector3f;
+import com.mojang.math.Axis;
+import java.util.ArrayList;
+import java.util.List;
+import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
-import net.minecraft.resources.ResourceLocation;
-import org.jetbrains.annotations.NotNull;
 
-public class LayerHydraHead extends RenderLayer<EntityHydra, ModelHydraBody> {
-    public static final ResourceLocation TEXTURE_STONE = new ResourceLocation("iceandfire:textures/models/hydra/stone.png");
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.Mth;
+
+public class LayerHydraHead extends RenderLayer<HydraRenderState, EntityModel<HydraRenderState>> {
+    public static final Identifier TEXTURE_STONE = Identifier.fromNamespaceAndPath("iceandfire", "textures/models/hydra/stone.png");
     private static final float[][] TRANSLATE = new float[][]{
         {0F, 0F, 0F, 0F, 0F, 0F, 0F, 0F, 0F},// 1 total heads
         {-0.15F, 0.15F, 0F, 0F, 0F, 0F, 0F, 0F, 0F},// 2 total heads
@@ -39,92 +45,149 @@ public class LayerHydraHead extends RenderLayer<EntityHydra, ModelHydraBody> {
             {45F, 30F, 20F, 5F, -5F, -20F, -30F, -45F, 0F},
             {50F, 37F, 25F, 15F, 0, -15F, -25F, -37F, -50F},
     };
-    private final RenderHydra renderer;
-    private static final ModelHydraHead[] modelArr = new ModelHydraHead[EntityHydra.HEADS];
-
-    static{
-        for (int i = 0; i < modelArr.length; i++) {
-            modelArr[i] = new ModelHydraHead(i);
-        }
-    }
+    private final ModelHydraBody body;
+    private final List<EntityModel<HydraRenderState>> headModels = new ArrayList<>();
 
     public LayerHydraHead(RenderHydra renderer) {
         super(renderer);
-        this.renderer = renderer;
-
+        this.body = renderer.getHydraModel();
+        for (int i = 0; i < HydraRenderState.MAX_HEADS; i++) {
+            // Each deferred submission must keep its own head index; never mutate one shared index.
+            headModels.add(new ModelHydraHead(i).asEntityModel());
+        }
     }
 
     @Override
-    public void render(@NotNull PoseStack matrixStackIn, @NotNull MultiBufferSource bufferIn, int packedLightIn, EntityHydra entity, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch) {
-        if (entity.isInvisible()) {
+    public void submit(PoseStack poseStack, SubmitNodeCollector collector, int lightCoords, HydraRenderState state, float yRot, float xRot) {
+        if (state.isInvisible) {
             return;
         }
-        renderHydraHeads(renderer.getModel(), false, matrixStackIn, bufferIn, packedLightIn, entity, limbSwing, limbSwingAmount, partialTicks, ageInTicks, netHeadYaw, headPitch);
-    }
+        int heads = Mth.clamp(state.headCount, 1, HydraRenderState.MAX_HEADS);
+        RenderType type = RenderTypes.entityCutout(getHeadTexture(state));
+        // Evaluate explicitly: attachments must not depend on when queued body geometry is drawn.
+        body.setupAnim(state);
+        poseStack.pushPose();
+        try {
+            translateToBody(body, poseStack);
+            for (int head = 0; head < heads; head++) {
+                poseStack.pushPose();
+                try {
+                    translateHead(poseStack, heads, head);
+                    EntityModel<HydraRenderState> model = headModels.get(head);
+                    collector.submitModel(model, state, poseStack, type, lightCoords,
+                        LivingEntityRenderer.getOverlayCoords(state, 0.0F), state.outlineColor, null);
 
-    public static void renderHydraHeads(ModelHydraBody model, boolean stone, PoseStack matrixStackIn, MultiBufferSource bufferIn, int packedLightIn, EntityHydra hydra, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch) {
-        matrixStackIn.pushPose();
-        int heads = hydra.getHeadCount();
-        translateToBody(model, matrixStackIn);
-        RenderType type = RenderType.entityCutout(stone ? TEXTURE_STONE : getHeadTexture(hydra));
-        for (int head = 1; head <= heads; head++) {
-            matrixStackIn.pushPose();
-            float bodyWidth = 0.5F;
-            matrixStackIn.translate(TRANSLATE[heads - 1][head - 1] * bodyWidth, 0, 0);
-            matrixStackIn.mulPose(new Quaternion(Vector3f.YP, ROTATE[heads - 1][head - 1], true));
-            modelArr[head - 1].setupAnim(hydra, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch);
-            modelArr[head - 1].renderToBuffer(matrixStackIn, bufferIn.getBuffer(type), packedLightIn, LivingEntityRenderer.getOverlayCoords(hydra, 0.0F), 1.0F, 1.0F, 1.0F, 1.0F);
-            matrixStackIn.popPose();
-        }
-        matrixStackIn.popPose();
-    }
-
-
-    public static ResourceLocation getHeadTexture(EntityHydra gorgon) {
-        switch (gorgon.getVariant()) {
-            default:
-                return RenderHydra.TEXUTURE_0;
-            case 1:
-                return RenderHydra.TEXUTURE_1;
-            case 2:
-                return RenderHydra.TEXUTURE_2;
+                } finally {
+                    poseStack.popPose();
+                }
+            }
+        } finally {
+            poseStack.popPose();
         }
     }
 
-    @Override
-    public @NotNull ResourceLocation getTextureLocation(EntityHydra gorgon) {
-        switch (gorgon.getVariant()) {
-            default:
-                return RenderHydra.TEXUTURE_0;
-            case 1:
-                return RenderHydra.TEXUTURE_1;
-            case 2:
-                return RenderHydra.TEXUTURE_2;
+    /**
+     * Statue overlay: pose the supplied body for neck attachments, then submit isolated head trees.
+     * The body mesh itself is drawn separately at rest, matching the 1.18 two-step statue call.
+     */
+    public static void submitStatueHeads(ModelHydraBody body, HydraRenderState state, PoseStack poses,
+                                         SubmitNodeCollector collector, int lightCoords, int outlineColor) {
+        state.stone = true;
+        body.setupAnim(state);
+        RenderType type = RenderTypes.entityCutout(getHeadTexture(state));
+        int heads = Mth.clamp(state.headCount, 1, HydraRenderState.MAX_HEADS);
+        poses.pushPose();
+        try {
+            translateToBody(body, poses);
+            for (int head = 0; head < heads; head++) {
+                poses.pushPose();
+                try {
+                    translateHead(poses, heads, head);
+                    ModelHydraHead headModel = ImmediateModels.HEADS[head];
+                    headModel.setupAnim(state);
+                    collector.submitModelPart(headModel.asEntityModel().root(), poses, type, lightCoords,
+                        LivingEntityRenderer.getOverlayCoords(state, 0.0F), null, false, false, -1, null, outlineColor);
+                } finally {
+                    poses.popPose();
+                }
+            }
+        } finally {
+            poses.popPose();
         }
+    }
+
+    /**
+     * Immediate-mode compatibility for the unported statue caller. This draws real geometry using
+     * 26.1 buffers; it does not make RenderStoneStatue's native-model casts adapter-aware.
+     */
+    @Deprecated
+    public static void renderHydraHeads(ModelHydraBody model, boolean stone, PoseStack poseStack, MultiBufferSource buffers, int lightCoords, EntityHydra hydra, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch) {
+        HydraRenderState state = new HydraRenderState();
+        RenderHydra.extractHydraState(hydra, state, partialTicks);
+        state.stone |= stone;
+        state.walkAnimationPos = limbSwing;
+        state.walkAnimationSpeed = limbSwingAmount;
+        state.ageInTicks = ageInTicks;
+        state.yRot = netHeadYaw;
+        state.xRot = headPitch;
+        state.hasRedOverlay = !state.stone && (hydra.hurtTime > 0 || hydra.deathTime > 0);
+        model.setupAnim(state);
+        RenderType type = RenderTypes.entityCutout(getHeadTexture(state));
+        poseStack.pushPose();
+        try {
+            translateToBody(model, poseStack);
+            for (int head = 0; head < state.headCount; head++) {
+                poseStack.pushPose();
+                try {
+                    translateHead(poseStack, state.headCount, head);
+                    ModelHydraHead headModel = ImmediateModels.HEADS[head];
+                    headModel.setupAnim(state);
+                    headModel.renderToBuffer(poseStack, buffers.getBuffer(type), lightCoords,
+                        LivingEntityRenderer.getOverlayCoords(state, 0.0F), -1);
+
+                } finally {
+                    poseStack.popPose();
+                }
+            }
+        } finally {
+            poseStack.popPose();
+        }
+    }
+
+    // Kept separate from deferred models, so the legacy path cannot overwrite their poses.
+    private static class ImmediateModels {
+        private static final ModelHydraHead[] HEADS = new ModelHydraHead[HydraRenderState.MAX_HEADS];
+
+        static {
+            for (int i = 0; i < HEADS.length; i++) {
+                HEADS[i] = new ModelHydraHead(i);
+            }
+        }
+    }
+
+    public static Identifier getHeadTexture(HydraRenderState state) {
+        if (state.stone) {
+            return TEXTURE_STONE;
+        }
+        return switch (state.variant) {
+            case 1 -> RenderHydra.TEXUTURE_1;
+            case 2 -> RenderHydra.TEXUTURE_2;
+            default -> RenderHydra.TEXUTURE_0;
+        };
+    }
+
+    private static void translateHead(PoseStack stack, int heads, int head) {
+        stack.translate(TRANSLATE[heads - 1][head] * 0.5F, 0, 0);
+        stack.mulPose(Axis.YP.rotationDegrees(ROTATE[heads - 1][head]));
     }
 
     protected static void translateToBody(ModelHydraBody model, PoseStack stack) {
-        postRender(model.BodyUpper, stack, 0.0625F);
-    }
-
-    protected static void postRender(AdvancedModelBox renderer, PoseStack matrixStackIn, float scale) {
-        if (renderer.rotateAngleX == 0.0F && renderer.rotateAngleY == 0.0F && renderer.rotateAngleZ == 0.0F) {
-            if (renderer.rotationPointX != 0.0F || renderer.rotationPointY != 0.0F || renderer.rotateAngleZ != 0.0F) {
-                matrixStackIn.translate(renderer.rotationPointX * scale, renderer.rotationPointY * scale, renderer.rotateAngleZ * scale);
-            }
-        } else {
-            matrixStackIn.translate(renderer.rotationPointX * scale, renderer.rotationPointY * scale, renderer.rotateAngleZ * scale);
-            if (renderer.rotateAngleZ != 0.0F) {
-                matrixStackIn.mulPose(Vector3f.ZP.rotation(renderer.rotateAngleZ));
-            }
-
-            if (renderer.rotateAngleY != 0.0F) {
-                matrixStackIn.mulPose(Vector3f.YP.rotation(renderer.rotateAngleY));
-            }
-
-            if (renderer.rotateAngleX != 0.0F) {
-                matrixStackIn.mulPose(Vector3f.XP.rotation(renderer.rotateAngleX));
-            }
-        }
+        // Preserve the authored head placement: the legacy renderer used rotation Z here,
+        // not the body's pivot Z. Changing it moves every neck relative to the body.
+        var part = model.BodyUpper;
+        stack.translate(part.rotationPointX / 16F, part.rotationPointY / 16F, part.rotateAngleZ / 16F);
+        if (part.rotateAngleZ != 0) stack.mulPose(Axis.ZP.rotation(part.rotateAngleZ));
+        if (part.rotateAngleY != 0) stack.mulPose(Axis.YP.rotation(part.rotateAngleY));
+        if (part.rotateAngleX != 0) stack.mulPose(Axis.XP.rotation(part.rotateAngleX));
     }
 }

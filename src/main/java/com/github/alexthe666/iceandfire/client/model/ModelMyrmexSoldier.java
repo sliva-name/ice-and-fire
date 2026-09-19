@@ -1,10 +1,10 @@
 package com.github.alexthe666.iceandfire.client.model;
 
-import com.github.alexthe666.citadel.animation.IAnimatedEntity;
 import com.github.alexthe666.citadel.client.model.AdvancedModelBox;
 import com.github.alexthe666.citadel.client.model.ModelAnimator;
 import com.github.alexthe666.citadel.client.model.basic.BasicModelPart;
-import com.github.alexthe666.iceandfire.entity.EntityMyrmexSoldier;
+import com.github.alexthe666.iceandfire.client.render.entity.MyrmexRenderState;
+import com.github.alexthe666.iceandfire.client.render.entity.MyrmexRenderState.AnimationKind;
 import com.google.common.collect.ImmutableList;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -235,10 +235,10 @@ public class ModelMyrmexSoldier extends ModelMyrmexBase {
             legMidR2, legBottomR2, legMidR2_1, legBottomR2_1);
     }
 
-    public void animate(IAnimatedEntity entity, float f, float f1, float f2, float f3, float f4, float f5) {
+    public void animate(MyrmexRenderState state) {
         this.resetToDefaultPose();
-        animator.update(entity);
-        if (animator.setAnimation(EntityMyrmexSoldier.ANIMATION_BITE)) {
+        animator.update(state.animation.token(), state.animationTick, state.partialTick);
+        if (animator.setAnimation(AnimationKind.BITE.token())) {
             animator.startKeyframe(5);
             ModelUtils.rotate(animator, Neck1, -50, 0, 0);
             ModelUtils.rotate(animator, HeadBase, 50, 0, 0);
@@ -253,7 +253,7 @@ public class ModelMyrmexSoldier extends ModelMyrmexBase {
             animator.endKeyframe();
             animator.resetKeyframe(5);
         }
-        if (animator.setAnimation(EntityMyrmexSoldier.ANIMATION_STING)) {
+        if (animator.setAnimation(AnimationKind.STING.token())) {
             animator.startKeyframe(5);
             animator.move(Body2, 0, -4, 0);
             ModelUtils.rotate(animator, Body3, -35, 0, 0);
@@ -277,8 +277,13 @@ public class ModelMyrmexSoldier extends ModelMyrmexBase {
     }
 
     @Override
-    public void setupAnim(Entity entity, float f, float f1, float f2, float f3, float f4) {
-        animate((IAnimatedEntity) entity, f, f1, f2, f3, f4, 1);
+    public void setupAnim(MyrmexRenderState state) {
+        float f = state.walkAnimationPos;
+        float f1 = state.walkAnimationSpeed;
+        float f2 = state.ageInTicks;
+        float f3 = state.yRot;
+        float f4 = state.xRot;
+        animate(state);
         AdvancedModelBox[] GASTER = new AdvancedModelBox[]{Body4, Body5, Tail1, Tail2, Stinger};
         AdvancedModelBox[] NECK = new AdvancedModelBox[]{Neck1, HeadBase};
         AdvancedModelBox[] LEGR1 = new AdvancedModelBox[]{legTopR1, legMidR1, legBottomR1};
@@ -291,7 +296,7 @@ public class ModelMyrmexSoldier extends ModelMyrmexBase {
         float speed_idle = 0.05F;
         float degree_walk = 0.3F;
         float degree_idle = 0.25F;
-        if (entity.getPassengers().isEmpty()) {
+        if (!state.hasPassengers) {
             this.faceTarget(f3, f4, 2, NECK);
         }
         this.chainWave(GASTER, speed_idle, degree_idle * 0.25F, 0, f2, 1);

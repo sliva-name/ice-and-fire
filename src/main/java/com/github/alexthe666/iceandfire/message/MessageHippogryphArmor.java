@@ -5,9 +5,8 @@ import com.github.alexthe666.iceandfire.entity.EntityHippogryph;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
-import java.util.function.Supplier;
 
 public class MessageHippogryphArmor {
 
@@ -38,12 +37,12 @@ public class MessageHippogryphArmor {
         public Handler() {
         }
 
-        public static void handle(MessageHippogryphArmor message, Supplier<NetworkEvent.Context> context) {
-            context.get().setPacketHandled(true);
-            Player player = context.get().getSender();
+        public static void handle(MessageHippogryphArmor message, CustomPayloadEvent.Context context) {
+            context.setPacketHandled(true);
+            Player player = context.getSender();
             if (player != null) {
-                if (player.level != null) {
-                    Entity entity = player.level.getEntity(message.dragonId);
+                if (player.level() != null) {
+                    Entity entity = player.level().getEntity(message.dragonId);
                     if (entity != null && entity instanceof EntityHippogryph) {
                         EntityHippogryph hippo = (EntityHippogryph) entity;
                         if (message.slot_index == 0) {

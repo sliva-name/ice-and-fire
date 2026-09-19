@@ -3,6 +3,7 @@ package com.github.alexthe666.iceandfire.entity.props;
 import com.github.alexthe666.citadel.Citadel;
 import com.github.alexthe666.citadel.server.entity.CitadelEntityData;
 import com.github.alexthe666.citadel.server.message.PropertiesMessage;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.server.level.ServerLevel;
@@ -27,7 +28,7 @@ public class ChainProperties {
         CompoundTag entityData = CitadelEntityData.getOrCreateCitadelTag(chained);
         ListTag chainData = getOrCreateChainData(entityData);
         CompoundTag currentChainData = new CompoundTag();
-        currentChainData.putUUID(CHAIN_TO_TAG, chainedTo.getUUID());
+        currentChainData.store(CHAIN_TO_TAG, UUIDUtil.CODEC, chainedTo.getUUID());
         currentChainData.putInt(CHAIN_TO_ENTITY_ID_TAG, chainedTo.getId());
 
         chainData.add(currentChainData);
@@ -45,8 +46,8 @@ public class ChainProperties {
     @Nullable
     public static CompoundTag getConnectedEntityChainData(ListTag chainData, Entity entity) {
         for (int i = 0; i < chainData.size(); i++) {
-            CompoundTag nbt = (CompoundTag) chainData.get(i);
-            if (nbt.contains(CHAIN_TO_TAG) && nbt.getUUID(CHAIN_TO_TAG).equals(entity.getUUID()))
+            CompoundTag nbt = chainData.getCompoundOrEmpty(i);
+            if (nbt.read(CHAIN_TO_TAG, UUIDUtil.CODEC).map(uuid -> uuid.equals(entity.getUUID())).orElse(false))
                 return nbt;
         }
         return null;
@@ -66,8 +67,8 @@ public class ChainProperties {
 
     private static ListTag getOrCreateChainData(CompoundTag entityData) {
         //TODO: Look at type
-        if (entityData.contains(CHAIN_DATA, 9)) {
-            return entityData.getList(CHAIN_DATA, 10);
+        if (entityData.contains(CHAIN_DATA)) {
+            return entityData.getListOrEmpty(CHAIN_DATA);
         }
         return new ListTag();
     }
@@ -78,8 +79,8 @@ public class ChainProperties {
 
     private static void updateData(LivingEntity entity, CompoundTag nbt) {
         CitadelEntityData.setCitadelTag(entity, nbt);
-        if (!entity.level.isClientSide()) {
-            Citadel.sendMSGToAll(new PropertiesMessage("CitadelPatreonConfig", nbt, entity.getId()));
+        if (!entity.level().isClientSide()) {
+            com.github.alexthe666.citadel.network.PropertiesNetwork.send(entity);
         }
     }
 
@@ -88,8 +89,8 @@ public class ChainProperties {
         ListTag chainData = getOrCreateChainData(entityData);
         int dataIndex = -1;
         for (int i = 0; i < chainData.size(); i++) {
-            CompoundTag nbt = (CompoundTag) chainData.get(i);
-            if (nbt.contains(CHAIN_TO_TAG) && nbt.getUUID(CHAIN_TO_TAG).equals(connectedTo.getUUID())) {
+            CompoundTag nbt = chainData.getCompoundOrEmpty(i);
+            if (nbt.read(CHAIN_TO_TAG, UUIDUtil.CODEC).map(uuid -> uuid.equals(connectedTo.getUUID())).orElse(false)) {
                 //TODO: might be able to remove in loop
                 dataIndex = i;
                 break;
@@ -109,25 +110,25 @@ public class ChainProperties {
             return chainedTo;
         }
         for (int i = 0; i < chainData.size(); i++) {
-            CompoundTag lassoedTag = (CompoundTag) chainData.get(i);
-            if (chained.level.isClientSide() && lassoedTag.contains(CHAIN_TO_ENTITY_ID_TAG)) {
-                int id = lassoedTag.getInt(CHAIN_TO_ENTITY_ID_TAG);
+            CompoundTag lassoedTag = chainData.getCompoundOrEmpty(i);
+            if (chained.level().isClientSide() && lassoedTag.contains(CHAIN_TO_ENTITY_ID_TAG)) {
+                int id = lassoedTag.getIntOr(CHAIN_TO_ENTITY_ID_TAG, 0);
                 if (id != -1) {
-                    Entity found = chained.level.getEntity(id);
+                    Entity found = chained.level().getEntity(id);
                     if (found != null) {
                         chainedTo.add(found);
                     } else {
-                        UUID uuid = lassoedTag.getUUID(CHAIN_TO_TAG);
+                        UUID uuid = lassoedTag.read(CHAIN_TO_TAG, UUIDUtil.CODEC).orElse(null);
                         if (uuid != null) {
-                            if (chained.level.getPlayerByUUID(uuid) != null)
-                                chainedTo.add(chained.level.getPlayerByUUID(uuid));
+                            if (chained.level().getPlayerByUUID(uuid) != null)
+                                chainedTo.add(chained.level().getPlayerByUUID(uuid));
                         }
                     }
                 }
-            } else if (chained.level instanceof ServerLevel) {
-                UUID uuid = lassoedTag.getUUID(CHAIN_TO_TAG);
+            } else if (chained.level() instanceof ServerLevel) {
+                UUID uuid = lassoedTag.read(CHAIN_TO_TAG, UUIDUtil.CODEC).orElse(null);
                 if (uuid != null) {
-                    Entity found = ((ServerLevel) chained.level).getEntity(uuid);
+                    Entity found = ((ServerLevel) chained.level()).getEntity(uuid);
                     if (found != null) {
                         lassoedTag.putInt(CHAIN_TO_ENTITY_ID_TAG, found.getId());
                         chainedTo.add(found);

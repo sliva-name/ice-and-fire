@@ -7,9 +7,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.projectile.Fireball;
+import net.minecraft.world.entity.projectile.hurtingprojectile.Fireball;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.network.PlayMessages;
+import net.minecraftforge.network.packets.SpawnEntity;
 
 import javax.annotation.Nullable;
 
@@ -20,7 +20,7 @@ public class EntityDragonLightningCharge extends EntityDragonCharge implements I
         super(type, worldIn);
     }
 
-    public EntityDragonLightningCharge(PlayMessages.SpawnEntity spawnEntity, Level worldIn) {
+    public EntityDragonLightningCharge(SpawnEntity spawnEntity, Level worldIn) {
         this(IafEntityRegistry.LIGHTNING_DRAGON_CHARGE.get(), worldIn);
     }
 

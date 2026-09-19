@@ -20,36 +20,36 @@ public class DragonAIReturnToRoost extends Goal {
     public boolean canUse() {
         return this.dragon.canMove() && this.dragon.lookingForRoostAIFlag
             && (dragon.getTarget() == null || !dragon.getTarget().isAlive())
-            && dragon.getRestrictCenter() != null
+            && dragon.getHomePosition() != null
             && DragonUtils.isInHomeDimension(dragon)
-            && dragon.getDistanceSquared(Vec3.atCenterOf(dragon.getRestrictCenter())) > dragon.getBbWidth()
+            && dragon.getDistanceSquared(Vec3.atCenterOf(dragon.getHomePosition())) > dragon.getBbWidth()
             * dragon.getBbWidth();
     }
 
     @Override
     public void tick() {
-        if (this.dragon.getRestrictCenter() != null) {
-            final double dist = Math.sqrt(dragon.getDistanceSquared(Vec3.atCenterOf(dragon.getRestrictCenter())));
-            final double xDist = Math.abs(dragon.getX() - dragon.getRestrictCenter().getX() - 0.5F);
-            final double zDist = Math.abs(dragon.getZ() - dragon.getRestrictCenter().getZ() - 0.5F);
+        if (this.dragon.getHomePosition() != null) {
+            final double dist = Math.sqrt(dragon.getDistanceSquared(Vec3.atCenterOf(dragon.getHomePosition())));
+            final double xDist = Math.abs(dragon.getX() - dragon.getHomePosition().getX() - 0.5F);
+            final double zDist = Math.abs(dragon.getZ() - dragon.getHomePosition().getZ() - 0.5F);
             final double xzDist = Math.sqrt(xDist * xDist + zDist * zDist);
 
             if (dist < this.dragon.getBbWidth()) {
                 this.dragon.setFlying(false);
                 this.dragon.setHovering(false);
-                this.dragon.getNavigation().moveTo(this.dragon.getRestrictCenter().getX(),
-                    this.dragon.getRestrictCenter().getY(), this.dragon.getRestrictCenter().getZ(), 1.0F);
+                this.dragon.getNavigation().moveTo(this.dragon.getHomePosition().getX(),
+                    this.dragon.getHomePosition().getY(), this.dragon.getHomePosition().getZ(), 1.0F);
             } else {
                 double yAddition = 15 + dragon.getRandom().nextInt(3);
                 if (xzDist < 40) {
                     yAddition = 0;
-                    if (this.dragon.isOnGround()) {
+                    if (this.dragon.onGround()) {
                         this.dragon.setFlying(false);
                         this.dragon.setHovering(false);
                         this.dragon.flightManager.setFlightTarget(
-                            Vec3.upFromBottomCenterOf(this.dragon.getRestrictCenter(), yAddition));
-                        this.dragon.getNavigation().moveTo(this.dragon.getRestrictCenter().getX(),
-                            this.dragon.getRestrictCenter().getY(), this.dragon.getRestrictCenter().getZ(), 1.0F);
+                            Vec3.upFromBottomCenterOf(this.dragon.getHomePosition(), yAddition));
+                        this.dragon.getNavigation().moveTo(this.dragon.getHomePosition().getX(),
+                            this.dragon.getHomePosition().getY(), this.dragon.getHomePosition().getZ(), 1.0F);
                         return;
                     }
                 }
@@ -58,9 +58,9 @@ public class DragonAIReturnToRoost extends Goal {
                 }
                 if (this.dragon.isFlying()) {
                     this.dragon.flightManager.setFlightTarget(
-                        Vec3.upFromBottomCenterOf(this.dragon.getRestrictCenter(), yAddition));
-                    this.dragon.getNavigation().moveTo(this.dragon.getRestrictCenter().getX(),
-                        yAddition + this.dragon.getRestrictCenter().getY(), this.dragon.getRestrictCenter().getZ(), 1F);
+                        Vec3.upFromBottomCenterOf(this.dragon.getHomePosition(), yAddition));
+                    this.dragon.getNavigation().moveTo(this.dragon.getHomePosition().getX(),
+                        yAddition + this.dragon.getHomePosition().getY(), this.dragon.getHomePosition().getZ(), 1F);
                 }
                 this.dragon.flyTicks = 0;
             }

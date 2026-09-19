@@ -1,5 +1,13 @@
 package com.github.alexthe666.iceandfire.entity;
 
+import net.minecraft.world.damagesource.DamageTypes;
+
+import com.github.alexthe666.iceandfire.entity.util.IafDrops;
+
+import com.github.alexthe666.iceandfire.entity.util.IafOwners;
+
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
 import com.github.alexthe666.iceandfire.IceAndFire;
 import com.github.alexthe666.iceandfire.block.IafBlockRegistry;
 import com.github.alexthe666.iceandfire.entity.ai.*;
@@ -42,7 +50,8 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
-import java.util.Random;
+import net.minecraft.core.Holder;
+import net.minecraft.util.RandomSource;
 
 public class EntityPixie extends TamableAnimal {
 
@@ -52,8 +61,8 @@ public class EntityPixie extends TamableAnimal {
 
     public static final int STEAL_COOLDOWN = 3000;
 
-    public MobEffect[] positivePotions = new MobEffect[]{MobEffects.DAMAGE_BOOST, MobEffects.JUMP, MobEffects.MOVEMENT_SPEED, MobEffects.LUCK, MobEffects.DIG_SPEED};
-    public MobEffect[] negativePotions = new MobEffect[]{MobEffects.WEAKNESS, MobEffects.CONFUSION, MobEffects.MOVEMENT_SLOWDOWN, MobEffects.UNLUCK, MobEffects.DIG_SLOWDOWN};
+    public Holder<MobEffect>[] positivePotions = new Holder[]{MobEffects.STRENGTH, MobEffects.JUMP_BOOST, MobEffects.SPEED, MobEffects.LUCK, MobEffects.HASTE};
+    public Holder<MobEffect>[] negativePotions = new Holder[]{MobEffects.WEAKNESS, MobEffects.NAUSEA, MobEffects.SLOWNESS, MobEffects.UNLUCK, MobEffects.MINING_FATIGUE};
     public boolean slowSpeed = false;
     public int ticksUntilHouseAI;
     public int ticksHeldItemFor;
@@ -68,8 +77,8 @@ public class EntityPixie extends TamableAnimal {
         this.setDropChance(EquipmentSlot.MAINHAND, 0F);
     }
 
-    public static BlockPos getPositionRelativetoGround(Entity entity, Level world, double x, double z, Random rand) {
-        BlockPos pos = new BlockPos(x, entity.getY(), z);
+    public static BlockPos getPositionRelativetoGround(Entity entity, Level world, double x, double z, RandomSource rand) {
+        BlockPos pos = BlockPos.containing(x, entity.getY(), z);
         for (int yDown = 0; yDown < 3; yDown++) {
             if (!world.isEmptyBlock(pos.below(yDown))) {
                 return pos.above(yDown);
@@ -95,7 +104,7 @@ public class EntityPixie extends TamableAnimal {
     }
 
     public boolean isPixieSitting() {
-        if (level.isClientSide) {
+        if (this.level().isClientSide()) {
             boolean isSitting = (this.entityData.get(DATA_FLAGS_ID).byteValue() & 1) != 0;
             this.isSitting = isSitting;
             this.setOrderedToSit(isSitting);
@@ -105,7 +114,7 @@ public class EntityPixie extends TamableAnimal {
     }
 
     public void setPixieSitting(boolean sitting) {
-        if (!level.isClientSide) {
+        if (!this.level().isClientSide()) {
             this.isSitting = sitting;
             this.setInSittingPose(sitting);
         }
@@ -123,8 +132,13 @@ public class EntityPixie extends TamableAnimal {
     }
 
     @Override
-    protected int getExperienceReward(@NotNull Player player) {
+    protected int getBaseExperienceReward(@NotNull ServerLevel level) {
         return 3;
+    }
+
+    @Override
+    public boolean isFood(@NotNull ItemStack stack) {
+        return stack.is(Items.SUGAR);
     }
 
     public static AttributeSupplier.Builder bakeAttributes() {
@@ -136,22 +150,22 @@ public class EntityPixie extends TamableAnimal {
     }
 
     @Override
-    public boolean hurt(@NotNull DamageSource source, float amount) {
-        if (!this.level.isClientSide && this.getRandom().nextInt(3) == 0 && !this.getItemInHand(InteractionHand.MAIN_HAND).isEmpty()) {
-            this.spawnAtLocation(this.getItemInHand(InteractionHand.MAIN_HAND), 0);
+    public boolean hurtServer(@NotNull ServerLevel level, @NotNull DamageSource source, float amount) {
+        if (!this.level().isClientSide() && this.getRandom().nextInt(3) == 0 && !this.getItemInHand(InteractionHand.MAIN_HAND).isEmpty()) {
+            IafDrops.spawn(this, this.getItemInHand(InteractionHand.MAIN_HAND), 0);
             this.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
             this.stealCooldown = STEAL_COOLDOWN;
             return true;
         }
-        if (this.isOwnerClose() && (source == DamageSource.FALLING_BLOCK || source == DamageSource.IN_WALL || this.getOwner() != null && source.getEntity() == this.getOwner())) {
+        if (this.isOwnerClose() && (source.is(DamageTypes.FALLING_BLOCK) || source.is(DamageTypes.IN_WALL) || this.getOwner() != null && source.getEntity() == this.getOwner())) {
             return false;
         }
-        return super.hurt(source, amount);
+        return super.hurtServer(level, source, amount);
     }
 
     @Override
-    public boolean isInvulnerableTo(@NotNull DamageSource source) {
-        boolean invulnerable = super.isInvulnerableTo(source);
+    public boolean isInvulnerableTo(@NotNull ServerLevel level, @NotNull DamageSource source) {
+        boolean invulnerable = super.isInvulnerableTo(level, source);
         if (!invulnerable) {
             Entity owner = this.getOwner();
             if (owner != null && source.getEntity() == owner) {
@@ -163,8 +177,8 @@ public class EntityPixie extends TamableAnimal {
 
     @Override
     public void die(@NotNull DamageSource cause) {
-        if (!this.level.isClientSide && !this.getItemInHand(InteractionHand.MAIN_HAND).isEmpty()) {
-            this.spawnAtLocation(this.getItemInHand(InteractionHand.MAIN_HAND), 0);
+        if (!this.level().isClientSide() && !this.getItemInHand(InteractionHand.MAIN_HAND).isEmpty()) {
+            IafDrops.spawn(this, this.getItemInHand(InteractionHand.MAIN_HAND), 0);
             this.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
         }
         super.die(cause);
@@ -174,10 +188,10 @@ public class EntityPixie extends TamableAnimal {
     }
 
     @Override
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(COLOR, 0);
-        this.entityData.define(COMMAND, 0);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(COLOR, 0);
+        builder.define(COMMAND, 0);
     }
 
     @Override
@@ -233,13 +247,13 @@ public class EntityPixie extends TamableAnimal {
                     break;
             }
             ItemStack stack = new ItemStack(jar, 1);
-            if (!level.isClientSide) {
+            if (!this.level().isClientSide()) {
                 if (!this.getItemInHand(InteractionHand.MAIN_HAND).isEmpty()) {
-                    this.spawnAtLocation(this.getItemInHand(InteractionHand.MAIN_HAND), 0.0F);
+                    IafDrops.spawn(this, this.getItemInHand(InteractionHand.MAIN_HAND), 0.0F);
                     this.stealCooldown = STEAL_COOLDOWN;
                 }
 
-                this.spawnAtLocation(stack, 0.0F);
+                IafDrops.spawn(this, stack, 0.0F);
             }
             //player.addStat(ModAchievements.jarPixie);
             this.remove(RemovalReason.DISCARDED);
@@ -273,23 +287,18 @@ public class EntityPixie extends TamableAnimal {
 
     @Override
     @Nullable
-    public SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor worldIn, @NotNull DifficultyInstance difficultyIn, @NotNull MobSpawnType reason, @Nullable SpawnGroupData spawnDataIn, @Nullable CompoundTag dataTag) {
-        spawnDataIn = super.finalizeSpawn(worldIn, difficultyIn, reason, spawnDataIn, dataTag);
+    public SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor worldIn, @NotNull DifficultyInstance difficultyIn, @NotNull EntitySpawnReason reason, @Nullable SpawnGroupData spawnDataIn) {
+        spawnDataIn = super.finalizeSpawn(worldIn, difficultyIn, reason, spawnDataIn);
         this.setColor(this.random.nextInt(5));
         this.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
-
-        if (dataTag != null) {
-            System.out.println("EntityPixie spawned with dataTag: " + dataTag);
-        }
-
         return spawnDataIn;
     }
 
     private boolean isBeyondHeight() {
-        if (this.getY() > this.level.getMaxBuildHeight()) {
+        if (this.getY() > this.level().getMaxY() + 1) {
             return true;
         }
-        BlockPos height = this.level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, this.blockPosition());
+        BlockPos height = this.level().getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, this.blockPosition());
         int maxY = 20 + height.getY();
         return this.getY() > maxY;
     }
@@ -308,7 +317,7 @@ public class EntityPixie extends TamableAnimal {
     public void aiStep() {
         super.aiStep();
 
-        if (!this.level.isClientSide) {
+        if (!this.level().isClientSide()) {
 
             // NOTE: This code was taken from EntityHippogryph basically same idea
             if (this.isPixieSitting() && this.getCommand() != 1) {
@@ -335,15 +344,15 @@ public class EntityPixie extends TamableAnimal {
         if (!this.isPixieSitting() && !this.isBeyondHeight()) {
             this.setDeltaMovement(this.getDeltaMovement().add(0, 0.08, 0));
         }
-        if (level.isClientSide) {
+        if (this.level().isClientSide()) {
             IceAndFire.PROXY.spawnParticle(EnumParticles.If_Pixie, this.getX() + (double) (this.random.nextFloat() * this.getBbWidth() * 2F) - (double) this.getBbWidth(), this.getY() + (double) (this.random.nextFloat() * this.getBbHeight()), this.getZ() + (double) (this.random.nextFloat() * this.getBbWidth() * 2F) - (double) this.getBbWidth(), PARTICLE_RGB[this.getColor()][0], PARTICLE_RGB[this.getColor()][1], PARTICLE_RGB[this.getColor()][2]);
         }
         if (ticksUntilHouseAI > 0) {
             ticksUntilHouseAI--;
         }
-        if (!level.isClientSide) {
-            if (housePos != null && this.distanceToSqr(Vec3.atCenterOf(housePos)) < 1.5F && level.getBlockEntity(housePos) != null && level.getBlockEntity(housePos) instanceof TileEntityPixieHouse) {
-                TileEntityPixieHouse house = (TileEntityPixieHouse) level.getBlockEntity(housePos);
+        if (!this.level().isClientSide()) {
+            if (housePos != null && this.distanceToSqr(Vec3.atCenterOf(housePos)) < 1.5F && this.level().getBlockEntity(housePos) != null && this.level().getBlockEntity(housePos) instanceof TileEntityPixieHouse) {
+                TileEntityPixieHouse house = (TileEntityPixieHouse) this.level().getBlockEntity(housePos);
                 if (house.hasPixie) {
                     this.housePos = null;
                 } else {
@@ -351,7 +360,7 @@ public class EntityPixie extends TamableAnimal {
                     house.pixieType = this.getColor();
                     house.pixieItems.set(0, this.getItemInHand(InteractionHand.MAIN_HAND));
                     house.tamedPixie = this.isTame();
-                    house.pixieOwnerUUID = this.getOwnerUUID();
+                    house.pixieOwnerUUID = IafOwners.getUUID(this);
                     IceAndFire.sendMSGToAll(new MessageUpdatePixieHouse(housePos.asLong(), true, this.getColor()));
                     this.remove(RemovalReason.DISCARDED);
                 }
@@ -376,20 +385,20 @@ public class EntityPixie extends TamableAnimal {
 
 
     @Override
-    public void readAdditionalSaveData(CompoundTag compound) {
-        this.setColor(compound.getInt("Color"));
+    public void readAdditionalSaveData(ValueInput compound) {
+        this.setColor(compound.getIntOr("Color", 0));
 
-        this.stealCooldown = compound.getInt("StealCooldown");
-        this.ticksHeldItemFor = compound.getInt("HoldingTicks");
+        this.stealCooldown = compound.getIntOr("StealCooldown", 0);
+        this.ticksHeldItemFor = compound.getIntOr("HoldingTicks", 0);
 
-        this.setPixieSitting(compound.getBoolean("PixieSitting"));
-        this.setCommand(compound.getInt("Command"));
+        this.setPixieSitting(compound.getBooleanOr("PixieSitting", false));
+        this.setCommand(compound.getIntOr("Command", 0));
 
         super.readAdditionalSaveData(compound);
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag compound) {
+    public void addAdditionalSaveData(ValueOutput compound) {
         compound.putInt("Color", this.getColor());
         compound.putInt("Command", this.getCommand());
         compound.putInt("StealCooldown", this.stealCooldown);
@@ -434,8 +443,7 @@ public class EntityPixie extends TamableAnimal {
         return IafSoundRegistry.PIXIE_DIE;
     }
 
-    @Override
-    public boolean isAlliedTo(@NotNull Entity entityIn) {
+    public boolean iafIsAlliedTo(@NotNull Entity entityIn) {
         if (this.isTame()) {
             LivingEntity livingentity = this.getOwner();
             if (entityIn == livingentity) {
@@ -467,7 +475,7 @@ public class EntityPixie extends TamableAnimal {
                 if (EntityPixie.this.horizontalCollision) {
                     EntityPixie.this.setYRot(this.mob.getYRot() + 180.0F);
                     speedMod = 0.1F;
-                    BlockPos target = EntityPixie.getPositionRelativetoGround(EntityPixie.this, EntityPixie.this.level, EntityPixie.this.getX() + EntityPixie.this.random.nextInt(15) - 7, EntityPixie.this.getZ() + EntityPixie.this.random.nextInt(15) - 7, EntityPixie.this.random);
+                    BlockPos target = EntityPixie.getPositionRelativetoGround(EntityPixie.this, EntityPixie.this.level(), EntityPixie.this.getX() + EntityPixie.this.random.nextInt(15) - 7, EntityPixie.this.getZ() + EntityPixie.this.random.nextInt(15) - 7, EntityPixie.this.random);
                     this.wantedX = target.getX();
                     this.wantedY = target.getY();
                     this.wantedZ = target.getZ();

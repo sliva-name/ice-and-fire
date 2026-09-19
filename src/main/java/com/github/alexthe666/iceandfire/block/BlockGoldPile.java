@@ -18,7 +18,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
-import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
@@ -35,28 +35,19 @@ public class BlockGoldPile extends Block {
 
     public BlockGoldPile() {
         super(
-            Properties
-                .of(Material.DIRT)
+            IafBlockRegistry.id(Properties
+                .of().mapColor(MapColor.DIRT)
                 .strength(0.3F, 1)
                 .randomTicks()
-                .sound(IafBlockRegistry.SOUND_TYPE_GOLD)
+                .sound(IafBlockRegistry.SOUND_TYPE_GOLD))
         );
 
         this.registerDefaultState(this.stateDefinition.any().setValue(LAYERS, 1));
     }
 
     @Override
-    public boolean isPathfindable(@NotNull BlockState state, @NotNull BlockGetter worldIn, @NotNull BlockPos pos, PathComputationType type) {
-        switch (type) {
-            case LAND:
-                return state.getValue(LAYERS) < 5;
-            case WATER:
-                return false;
-            case AIR:
-                return false;
-            default:
-                return false;
-        }
+    protected boolean isPathfindable(@NotNull BlockState state, @NotNull PathComputationType type) {
+        return type == PathComputationType.LAND && state.getValue(LAYERS) < 5;
     }
 
     @Override
@@ -95,8 +86,8 @@ public class BlockGoldPile extends Block {
     }
 
     @Override
-    public @NotNull BlockState updateShape(BlockState stateIn, @NotNull Direction facing, @NotNull BlockState facingState, @NotNull LevelAccessor worldIn, @NotNull BlockPos currentPos, @NotNull BlockPos facingPos) {
-        return !stateIn.canSurvive(worldIn, currentPos) ? Blocks.AIR.defaultBlockState() : super.updateShape(stateIn, facing, facingState, worldIn, currentPos, facingPos);
+    protected @NotNull BlockState updateShape(@NotNull BlockState stateIn, @NotNull LevelReader worldIn, net.minecraft.world.level.ScheduledTickAccess ticks, @NotNull BlockPos currentPos, @NotNull Direction facing, @NotNull BlockPos facingPos, @NotNull BlockState facingState, @NotNull net.minecraft.util.RandomSource random) {
+        return !stateIn.canSurvive(worldIn, currentPos) ? Blocks.AIR.defaultBlockState() : super.updateShape(stateIn, worldIn, ticks, currentPos, facing, facingPos, facingState, random);
     }
 
 
@@ -118,29 +109,20 @@ public class BlockGoldPile extends Block {
     }
 
     @Override
-    public @NotNull InteractionResult use(@NotNull BlockState state, @NotNull Level worldIn, @NotNull BlockPos pos, Player playerIn, @NotNull InteractionHand handIn, @NotNull BlockHitResult resultIn) {
-        ItemStack item = playerIn.getInventory().getSelected();
+    protected @NotNull InteractionResult useItemOn(@NotNull ItemStack stack, @NotNull BlockState state, @NotNull Level worldIn, @NotNull BlockPos pos, @NotNull Player playerIn, @NotNull InteractionHand handIn, @NotNull BlockHitResult resultIn) {
+        ItemStack item = playerIn.getInventory().getSelectedItem();
 
-        if (!item.isEmpty()) {
-            if (item.getItem() != null) {
-                if (item.getItem() == this.asItem()) {
-                    if (!item.isEmpty()) {
-                        if (state.getValue(LAYERS) < 8) {
-                            worldIn.setBlock(pos, state.setValue(LAYERS, state.getValue(LAYERS) + 1), 3);
-                            if (!playerIn.isCreative()) {
-                                item.shrink(1);
-
-                                if (item.isEmpty()) {
-                                    playerIn.getInventory().setItem(playerIn.getInventory().selected, ItemStack.EMPTY);
-                                } else {
-                                    playerIn.getInventory().setItem(playerIn.getInventory().selected, item);
-                                }
-                            }
-                            return InteractionResult.SUCCESS;
-                        }
-                    }
+        if (!item.isEmpty() && item.getItem() == this.asItem() && state.getValue(LAYERS) < 8) {
+            worldIn.setBlock(pos, state.setValue(LAYERS, state.getValue(LAYERS) + 1), 3);
+            if (!playerIn.isCreative()) {
+                item.shrink(1);
+                if (item.isEmpty()) {
+                    playerIn.getInventory().setItem(playerIn.getInventory().getSelectedSlot(), ItemStack.EMPTY);
+                } else {
+                    playerIn.getInventory().setItem(playerIn.getInventory().getSelectedSlot(), item);
                 }
             }
+            return InteractionResult.SUCCESS;
         }
         return InteractionResult.PASS;
     }

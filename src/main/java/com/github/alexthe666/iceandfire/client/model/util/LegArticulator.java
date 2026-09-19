@@ -1,12 +1,12 @@
 package com.github.alexthe666.iceandfire.client.model.util;
 
 import com.github.alexthe666.citadel.client.model.AdvancedModelBox;
-import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
+import com.github.alexthe666.iceandfire.client.render.entity.DragonRenderState;
 import net.minecraft.util.Mth;
 
 public final class LegArticulator {
     public static void articulateQuadruped(
-            EntityDragonBase entity, LegSolverQuadruped legs, AdvancedModelBox body, AdvancedModelBox lowerBody, AdvancedModelBox neck,
+            DragonRenderState entity, AdvancedModelBox body, AdvancedModelBox lowerBody, AdvancedModelBox neck,
             AdvancedModelBox backLeftThigh, AdvancedModelBox backLeftCalf, AdvancedModelBox[] backLeftFoot,
             AdvancedModelBox backRightThigh, AdvancedModelBox backRightCalf, AdvancedModelBox[] backRightFoot,
 
@@ -15,15 +15,15 @@ public final class LegArticulator {
             float rotBackThigh, float rotBackCalf, float rotBackFoot,
             float rotFrontThigh, float rotFrontCalf, float rotFrontFoot,
             float delta) {
-        final float heightBackLeft = legs.backLeft.getHeight(delta);
-        final float heightBackRight = legs.backRight.getHeight(delta);
-        final float heightFrontLeft = legs.frontLeft.getHeight(delta);
-        final float heightFrontRight = legs.frontRight.getHeight(delta);
+        final float heightBackLeft = entity.backLeftHeight;
+        final float heightBackRight = entity.backRightHeight;
+        final float heightFrontLeft = entity.frontLeftHeight;
+        final float heightFrontRight = entity.frontRightHeight;
         if (heightBackLeft > 0 || heightBackRight > 0 || heightFrontLeft > 0 || heightFrontRight > 0) {
             final float sc = LegArticulator.getScale(entity);
             final float backAvg = LegArticulator.avg(heightBackLeft, heightBackRight);
             final float frontAvg = LegArticulator.avg(heightFrontLeft, heightFrontRight);
-            final float bodyLength = Math.abs(avg(legs.backLeft.forward, legs.backRight.forward) - avg(legs.frontLeft.forward, legs.frontRight.forward));
+            final float bodyLength = entity.legBodyLength;
             final float tilt = (float) (Mth.atan2(bodyLength * sc, backAvg - frontAvg) - Math.PI / 2);
             body.rotationPointY += 16 / sc * backAvg;
             body.rotateAngleX += tilt;
@@ -60,8 +60,8 @@ public final class LegArticulator {
         return (a + b) / 2;
     }
 
-    private static float getScale(EntityDragonBase entity) {
-        return entity.getRenderSize() * 0.33F;
+    private static float getScale(DragonRenderState entity) {
+        return entity.renderSize * 0.33F;
     }
 
 }

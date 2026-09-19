@@ -6,37 +6,28 @@ import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.item.ArmorItem;
-import net.minecraft.world.item.ArmorMaterial;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
 import javax.annotation.Nullable;
 
-public class ItemDeathwormArmor extends ArmorItem {
+public class ItemDeathwormArmor extends Item implements IafArmorIdentity {
 
-    public ItemDeathwormArmor(ArmorMaterial material, EquipmentSlot slot) {
-        super(material, slot, new Item.Properties().tab(IceAndFire.TAB_ITEMS));
+    private final com.github.alexthe666.citadel.server.item.CustomArmorMaterial iafMaterial;
+    public ItemDeathwormArmor(com.github.alexthe666.citadel.server.item.CustomArmorMaterial material, EquipmentSlot slot) {
+        super(IafArmors.properties(material, slot));
+        this.iafMaterial = material;
     }
 
-
     @Override
-    public void initializeClient(java.util.function.Consumer<net.minecraftforge.client.IItemRenderProperties> consumer) {
-        consumer.accept(new net.minecraftforge.client.IItemRenderProperties() {
-            @Override
-            @Nullable
-            public HumanoidModel<?> getArmorModel(LivingEntity LivingEntity, ItemStack itemStack, EquipmentSlot armorSlot, HumanoidModel<?> _default) {
-                return new ModelDeathWormArmor(ModelDeathWormArmor.getBakedModel(armorSlot == EquipmentSlot.LEGS || armorSlot == EquipmentSlot.HEAD));
-            }
-        });
+    public com.github.alexthe666.citadel.server.item.CustomArmorMaterial iafMaterial() {
+        return iafMaterial;
     }
 
-
-    @Override
     public String getArmorTexture(ItemStack stack, Entity entity, EquipmentSlot slot, String type) {
-        if (this.getMaterial() == IafItemRegistry.DEATHWORM_2_ARMOR_MATERIAL) {
+        if (this.iafMaterial() == IafItemRegistry.DEATHWORM_2_ARMOR_MATERIAL) {
             return "iceandfire:textures/models/armor/armor_deathworm_red" + (slot == EquipmentSlot.LEGS ? "_legs.png" : ".png");
-        } else if (this.getMaterial() == IafItemRegistry.DEATHWORM_1_ARMOR_MATERIAL) {
+        } else if (this.iafMaterial() == IafItemRegistry.DEATHWORM_1_ARMOR_MATERIAL) {
             return "iceandfire:textures/models/armor/armor_deathworm_white" + (slot == EquipmentSlot.LEGS ? "_legs.png" : ".png");
         } else {
             return "iceandfire:textures/models/armor/armor_deathworm_yellow" + (slot == EquipmentSlot.LEGS ? "_legs.png" : ".png");

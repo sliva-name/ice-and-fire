@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    "iceandfire:myrmex_jungle_resin",
+    "iceandfire:myrmex_resin_jungle"
+  ],
+  "result": {
+    "count": 1,
+    "id": "iceandfire:myrmex_resin_sticky_jungle"
+  }
+}

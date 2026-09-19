@@ -1,5 +1,8 @@
 package com.github.alexthe666.iceandfire.entity.tile;
 
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
 import com.github.alexthe666.iceandfire.IceAndFire;
 import com.github.alexthe666.iceandfire.enums.EnumBestiaryPages;
 import com.github.alexthe666.iceandfire.inventory.ContainerLectern;
@@ -12,7 +15,7 @@ import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
+
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.util.Mth;
 import net.minecraft.world.ContainerHelper;
@@ -139,7 +142,7 @@ public class TileEntityLectern extends BaseContainerBlockEntity implements World
 
     @Override
     public void setItem(int index, ItemStack stack) {
-        boolean flag = !stack.isEmpty() && stack.sameItem(this.stacks.get(index)) && ItemStack.tagMatches(stack, this.stacks.get(index));
+        boolean flag = !stack.isEmpty() && ItemStack.isSameItemSameComponents(stack, this.stacks.get(index));
         this.stacks.set(index, stack);
 
         if (!stack.isEmpty() && stack.getCount() > this.getMaxStackSize()) {
@@ -152,7 +155,7 @@ public class TileEntityLectern extends BaseContainerBlockEntity implements World
     }
 
     public EnumBestiaryPages[] randomizePages(ItemStack bestiary, ItemStack manuscript) {
-        if (!level.isClientSide) {
+        if (!level.isClientSide()) {
             if (bestiary.getItem() == IafItemRegistry.BESTIARY.get()) {
                 List<EnumBestiaryPages> possibleList = getPossiblePages();
                 localRand.setSeed(this.level.getGameTime());
@@ -182,23 +185,21 @@ public class TileEntityLectern extends BaseContainerBlockEntity implements World
     }
 
     @Override
-    public void load(@NotNull CompoundTag compound) {
-        super.load(compound);
+    public void loadAdditional(@NotNull ValueInput compound) {
+        super.loadAdditional(compound);
         this.stacks = NonNullList.withSize(this.getContainerSize(), ItemStack.EMPTY);
         ContainerHelper.loadAllItems(compound, this.stacks);
 
     }
 
     @Override
-    public void saveAdditional(@NotNull CompoundTag compound) {
+    public void saveAdditional(@NotNull ValueOutput compound) {
         ContainerHelper.saveAllItems(compound, this.stacks);
     }
 
-    @Override
     public void startOpen(@NotNull Player player) {
     }
 
-    @Override
     public void stopOpen(@NotNull Player player) {
     }
 
@@ -230,7 +231,7 @@ public class TileEntityLectern extends BaseContainerBlockEntity implements World
 
     @Override
     public @NotNull Component getName() {
-        return new TranslatableComponent("block.iceandfire.lectern");
+        return Component.translatable("block.iceandfire.lectern");
     }
 
     @Override
@@ -263,14 +264,25 @@ public class TileEntityLectern extends BaseContainerBlockEntity implements World
         return ClientboundBlockEntityDataPacket.create(this);
     }
 
-    @Override
-    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
-        load(packet.getTag());
+    public void onDataPacket(Connection connection, ClientboundBlockEntityDataPacket packet) {
+        if (packet.getTag() != null && getLevel() != null) {
+            this.loadWithComponents(net.minecraft.world.level.storage.TagValueInput.create(net.minecraft.util.ProblemReporter.DISCARDING, getLevel().registryAccess(), packet.getTag()));
+        }
     }
 
     @Override
-    public @NotNull CompoundTag getUpdateTag() {
-        return this.saveWithFullMetadata();
+    protected @NotNull NonNullList<ItemStack> getItems() {
+        return this.stacks;
+    }
+
+    @Override
+    protected void setItems(@NotNull NonNullList<ItemStack> items) {
+        this.stacks = items;
+    }
+
+    @Override
+    public @NotNull CompoundTag getUpdateTag(net.minecraft.core.HolderLookup.Provider registries) {
+        return this.saveWithFullMetadata(registries);
     }
 
     @Override
@@ -295,7 +307,7 @@ public class TileEntityLectern extends BaseContainerBlockEntity implements World
 
     @Override
     public <T> net.minecraftforge.common.util.@NotNull LazyOptional<T> getCapability(net.minecraftforge.common.capabilities.@NotNull Capability<T> capability, @Nullable Direction facing) {
-        if (!this.remove && facing != null && capability == net.minecraftforge.items.CapabilityItemHandler.ITEM_HANDLER_CAPABILITY) {
+        if (!this.remove && facing != null && capability == net.minecraftforge.common.capabilities.ForgeCapabilities.ITEM_HANDLER) {
             if (facing == Direction.DOWN)
                 return handlers[1].cast();
             else

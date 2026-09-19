@@ -1,0 +1,36 @@
+modLoader = "javafml"
+loaderVersion = "[62,)"
+license = "GNU LESSER GENERAL PUBLIC LICENSE"
+issueTrackerURL = "https://github.com/Alex-the-666/ice-and-fire/issues"
+
+[[mods]]
+modId = "iceandfire"
+version = "2.1.13-26.1-port-dev"
+displayName = "Ice and Fire"
+displayURL = "https://www.curseforge.com/minecraft/mc-mods/ice-and-fire-dragons"
+authors = "Alexthe666, TheBv"
+description = '''Dragons and other mythological creatures in minecraft.'''
+
+[[mixins]]
+config = "iceandfire.mixins.json"
+
+[[dependencies.iceandfire]]
+modId = "citadel"
+mandatory = true
+versionRange = "[1.11,)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[dependencies.iceandfire]]
+modId = "forge"
+mandatory = true
+versionRange = "[62.0.9,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.iceandfire]]
+modId = "minecraft"
+mandatory = true
+versionRange = "[26.1,26.2)"
+ordering = "NONE"
+side = "BOTH"

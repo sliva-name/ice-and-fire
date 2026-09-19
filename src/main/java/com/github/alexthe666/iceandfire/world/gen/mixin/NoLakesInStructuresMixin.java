@@ -26,7 +26,11 @@ public class NoLakesInStructuresMixin {
             return;
 
         for (var structure : List.of(IafWorldRegistry.MAUSOLEUM_CF, IafWorldRegistry.GORGON_TEMPLE_CF, IafWorldRegistry.GRAVEYARD_CF)) {
-            var structureStart = context.level().getChunk(context.origin()).getStartForFeature(structure.value());
+            var holder = context.level().registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.STRUCTURE).get(structure);
+            if (holder.isEmpty()) {
+                continue;
+            }
+            var structureStart = context.level().getChunk(context.origin()).getStartForStructure(holder.get().value());
             if (structureStart != null && structureStart.isValid())
                 cir.setReturnValue(false);
         }

@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "GPG",
+    "G G",
+    "GGG"
+  ],
+  "key": {
+    "G": "#forge:glass/colorless",
+    "P": "#minecraft:planks"
+  },
+  "result": {
+    "id": "iceandfire:pixie_jar_empty"
+  }
+}

@@ -10,37 +10,23 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.material.MapColor;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.util.RandomSource;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Random;
 
 public class BlockFallingReturningState extends FallingBlock {
     public static final BooleanProperty REVERTS = BooleanProperty.create("revert");
     public Item itemBlock;
     private final BlockState returnState;
 
-    public BlockFallingReturningState(Material materialIn, float hardness, float resistance, SoundType sound, BlockState revertState) {
+    public BlockFallingReturningState(MapColor color, float hardness, float resistance, SoundType sound, BlockState revertState) {
         super(
-            BlockBehaviour.Properties
-                .of(materialIn)
+            IafBlockRegistry.id(BlockBehaviour.Properties
+                .of().mapColor(color)
                 .sound(sound)
                 .strength(hardness, resistance)
-                .randomTicks()
-        );
-
-        this.returnState = revertState;
-        this.registerDefaultState(this.stateDefinition.any().setValue(REVERTS, Boolean.FALSE));
-    }
-
-    @SuppressWarnings("deprecation")
-    public BlockFallingReturningState(Material materialIn, float hardness, float resistance, SoundType sound, boolean slippery, BlockState revertState) {
-        super(
-            BlockBehaviour.Properties
-                .of(materialIn)
-                .sound(sound)
-                .strength(hardness, resistance)
-                .randomTicks()
+                .randomTicks())
         );
 
         this.returnState = revertState;
@@ -48,9 +34,28 @@ public class BlockFallingReturningState extends FallingBlock {
     }
 
     @Override
-    public void tick(@NotNull BlockState state, @NotNull ServerLevel worldIn, @NotNull BlockPos pos, @NotNull Random rand) {
+    protected com.mojang.serialization.MapCodec<? extends FallingBlock> codec() {
+        return simpleCodec(properties -> new BlockFallingReturningState(MapColor.SAND, 0.5F, 0.5F, SoundType.SAND, this.returnState));
+    }
+
+    @SuppressWarnings("deprecation")
+    public BlockFallingReturningState(MapColor color, float hardness, float resistance, SoundType sound, boolean slippery, BlockState revertState) {
+        super(
+            IafBlockRegistry.id(BlockBehaviour.Properties
+                .of().mapColor(color)
+                .sound(sound)
+                .strength(hardness, resistance)
+                .randomTicks())
+        );
+
+        this.returnState = revertState;
+        this.registerDefaultState(this.stateDefinition.any().setValue(REVERTS, Boolean.FALSE));
+    }
+
+    @Override
+    public void tick(@NotNull BlockState state, @NotNull ServerLevel worldIn, @NotNull BlockPos pos, @NotNull RandomSource rand) {
         super.tick(state, worldIn, pos, rand);
-        if (!worldIn.isClientSide) {
+        if (!worldIn.isClientSide()) {
             if (!worldIn.isAreaLoaded(pos, 3))
                 return;
             if (state.getValue(REVERTS) && rand.nextInt(3) == 0) {
@@ -60,7 +65,8 @@ public class BlockFallingReturningState extends FallingBlock {
     }
 
 
-    public int getDustColor(BlockState blkst) {
+    @Override
+    public int getDustColor(BlockState blkst, BlockGetter level, BlockPos pos) {
         return -8356741;
     }
 

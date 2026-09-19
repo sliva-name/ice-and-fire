@@ -1,23 +1,21 @@
 package com.github.alexthe666.iceandfire.loot;
 
-import net.minecraft.core.Registry;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.storage.loot.Serializer;
+import com.github.alexthe666.iceandfire.IceAndFire;
+import com.mojang.serialization.MapCodec;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.storage.loot.functions.LootItemFunction;
-import net.minecraft.world.level.storage.loot.functions.LootItemFunctionType;
+import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.RegistryObject;
 
 public class IafLootRegistry {
+    public static final DeferredRegister<MapCodec<? extends LootItemFunction>> FUNCTIONS =
+        DeferredRegister.create(Registries.LOOT_FUNCTION_TYPE, IceAndFire.MODID);
 
-    public static LootItemFunctionType CUSTOMIZE_TO_DRAGON;
-    public static LootItemFunctionType CUSTOMIZE_TO_SERPENT;
+    public static final MapCodec<CustomizeToDragon> CUSTOMIZE_TO_DRAGON = CustomizeToDragon.CODEC;
+    public static final MapCodec<CustomizeToSeaSerpent> CUSTOMIZE_TO_SERPENT = CustomizeToSeaSerpent.CODEC;
 
-    private static LootItemFunctionType register(String p_237451_0_, Serializer<? extends LootItemFunction> p_237451_1_) {
-        return Registry.register(Registry.LOOT_FUNCTION_TYPE, new ResourceLocation(p_237451_0_), new LootItemFunctionType(p_237451_1_));
-    }
-
-    public static void init() {
-        CUSTOMIZE_TO_DRAGON = register("iceandfire:customize_to_dragon", new CustomizeToDragon.Serializer());
-        CUSTOMIZE_TO_SERPENT = register("iceandfire:customize_to_sea_serpent", new CustomizeToSeaSerpent.Serializer());
-    }
-
+    public static final RegistryObject<MapCodec<? extends LootItemFunction>> CUSTOMIZE_TO_DRAGON_TYPE =
+        FUNCTIONS.register("customize_to_dragon", () -> CUSTOMIZE_TO_DRAGON);
+    public static final RegistryObject<MapCodec<? extends LootItemFunction>> CUSTOMIZE_TO_SERPENT_TYPE =
+        FUNCTIONS.register("customize_to_sea_serpent", () -> CUSTOMIZE_TO_SERPENT);
 }

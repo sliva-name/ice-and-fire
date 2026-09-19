@@ -1,17 +1,18 @@
 package com.github.alexthe666.iceandfire.client.model;
 
-import com.github.alexthe666.citadel.animation.IAnimatedEntity;
+import com.github.alexthe666.citadel.client.model.AdvancedEntityModel;
 import com.github.alexthe666.citadel.client.model.AdvancedModelBox;
 import com.github.alexthe666.citadel.client.model.ModelAnimator;
 import com.github.alexthe666.citadel.client.model.basic.BasicModelPart;
-import com.github.alexthe666.iceandfire.entity.EntityAmphithere;
+import com.github.alexthe666.iceandfire.client.render.entity.AmphithereRenderState;
+import com.github.alexthe666.iceandfire.client.render.entity.AmphithereRenderState.AnimationKind;
 import com.google.common.collect.ImmutableList;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.world.entity.Entity;
 
-public class ModelAmphithere extends ModelDragonBase<EntityAmphithere> {
+public class ModelAmphithere extends AdvancedEntityModel<AmphithereRenderState> implements ICustomStatueModel {
     public AdvancedModelBox BodyUpper;
     public AdvancedModelBox BodyLower;
     public AdvancedModelBox Neck1;
@@ -310,9 +311,10 @@ public class ModelAmphithere extends ModelDragonBase<EntityAmphithere> {
             FingerL4, WingR2, WingR3, WingR21, FingerR1, FingerR2, FingerR3, FingerR4);
     }
 
-    public void animate(IAnimatedEntity entity, float f, float f1, float f2, float f3, float f4, float f5) {
-        animator.update(entity);
-        if (animator.setAnimation(EntityAmphithere.ANIMATION_BITE)) {
+    public void animate(AmphithereRenderState state) {
+        this.resetToDefaultPose();
+        animator.update(state.animation.token, state.animationTick, state.partialTick);
+        if (animator.setAnimation(AnimationKind.BITE.token)) {
             animator.startKeyframe(5);
             this.rotate(animator, Neck1, -39, 0, 0);
             this.rotate(animator, Neck2, -18, 0, 0);
@@ -328,7 +330,7 @@ public class ModelAmphithere extends ModelDragonBase<EntityAmphithere> {
             animator.endKeyframe();
             animator.resetKeyframe(5);
         }
-        if (animator.setAnimation(EntityAmphithere.ANIMATION_BITE_RIDER)) {
+        if (animator.setAnimation(AnimationKind.BITE_RIDER.token)) {
             animator.startKeyframe(5);
             this.rotate(animator, Neck1, 8, 0, 63);
             this.rotate(animator, Neck2, -5, 35, 13);
@@ -344,7 +346,7 @@ public class ModelAmphithere extends ModelDragonBase<EntityAmphithere> {
             animator.endKeyframe();
             animator.resetKeyframe(5);
         }
-        if (animator.setAnimation(EntityAmphithere.ANIMATION_WING_BLAST)) {
+        if (animator.setAnimation(AnimationKind.WING_BLAST.token)) {
             animator.startKeyframe(5);
             wingBlastPose();
             this.rotateMinus(animator, WingR, 32, 0, 170);
@@ -367,7 +369,7 @@ public class ModelAmphithere extends ModelDragonBase<EntityAmphithere> {
             animator.endKeyframe();
             animator.resetKeyframe(10);
         }
-        if (animator.setAnimation(EntityAmphithere.ANIMATION_TAIL_WHIP)) {
+        if (animator.setAnimation(AnimationKind.TAIL_WHIP.token)) {
             animator.startKeyframe(10);
             this.rotate(animator, BodyUpper, 0, 30, 0);
             this.rotate(animator, BodyLower, 0, 10, 0);
@@ -402,7 +404,7 @@ public class ModelAmphithere extends ModelDragonBase<EntityAmphithere> {
             animator.resetKeyframe(7);
             animator.endKeyframe();
         }
-        if (animator.setAnimation(EntityAmphithere.ANIMATION_SPEAK)) {
+        if (animator.setAnimation(AnimationKind.SPEAK.token)) {
             animator.startKeyframe(5);
             this.rotate(animator, Jaw, 31, 0, 0);
             animator.endKeyframe();
@@ -431,10 +433,12 @@ public class ModelAmphithere extends ModelDragonBase<EntityAmphithere> {
     }
 
     @Override
-    public void setupAnim(EntityAmphithere amphithere, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
-        this.resetToDefaultPose();
-        animate(amphithere, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, 0);
-        if (this.young) {
+    public void setupAnim(AmphithereRenderState amphithere) {
+        animate(amphithere);
+        float limbSwing = amphithere.walkAnimationPos;
+        float limbSwingAmount = amphithere.walkAnimationSpeed;
+        float ageInTicks = amphithere.ageInTicks;
+        if (amphithere.isBaby) {
             this.BodyUpper.setShouldScaleChildren(true);
             this.HeadFront.setShouldScaleChildren(true);
             this.Jaw.setShouldScaleChildren(true);
@@ -447,6 +451,11 @@ public class ModelAmphithere extends ModelDragonBase<EntityAmphithere> {
             this.BodyUpper.setScale(1F, 1F, 1F);
             this.Head.setScale(1F, 1F, 1F);
             this.HeadFront.setScale(1F, 1F, 1F);
+            this.HeadFront.offsetZ = 0;
+            this.Jaw.offsetZ = 0;
+            this.BodyUpper.setShouldScaleChildren(false);
+            this.HeadFront.setShouldScaleChildren(false);
+            this.Jaw.setShouldScaleChildren(false);
         }
         float speed_walk = 0.4F;
         float speed_idle = 0.05F;
@@ -560,17 +569,30 @@ public class ModelAmphithere extends ModelDragonBase<EntityAmphithere> {
             progressRotation(Neck3, sitProgress, 0.18203784098300857F, -0.0F, 0.0F);
         }
 
-        if (amphithere.groundProgress <= 0 && amphithere.getAnimation() != EntityAmphithere.ANIMATION_WING_BLAST && !amphithere.isOnGround()) {
-            amphithere.roll_buffer.applyChainFlapBuffer(BodyUpper);
-            amphithere.pitch_buffer.applyChainWaveBuffer(BodyUpper);
-            amphithere.tail_buffer.applyChainSwingBuffer(TAIL);
-
+        if (amphithere.groundProgress <= 0 && amphithere.animation != AnimationKind.WING_BLAST && !amphithere.onGround) {
+            BodyUpper.rotateAngleZ += amphithere.bodyRoll;
+            BodyUpper.rotateAngleX += amphithere.bodyPitch;
+            for (int i = 0; i < TAIL.length; i++) {
+                TAIL[i].rotateAngleY += amphithere.tailYaw[i];
+            }
         }
     }
 
+    // ModelDragonBase used degrees for keyframes, but radians and a 20-tick
+    // divisor for progress targets. Keep those contracts local to this model.
+    private void rotate(ModelAnimator animator, AdvancedModelBox part, float x, float y, float z) {
+        animator.rotate(part, (float) Math.toRadians(x), (float) Math.toRadians(y), (float) Math.toRadians(z));
+    }
+
+    private void rotateMinus(ModelAnimator animator, AdvancedModelBox part, float x, float y, float z) {
+        animator.rotate(part, (float) Math.toRadians(x) - part.defaultRotationX,
+            (float) Math.toRadians(y) - part.defaultRotationY, (float) Math.toRadians(z) - part.defaultRotationZ);
+    }
+
+
     @Override
     public void renderStatue(PoseStack matrixStackIn, VertexConsumer bufferIn, int packedLightIn, Entity living) {
-        this.renderToBuffer(matrixStackIn, bufferIn, packedLightIn, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
+        this.renderToBuffer(matrixStackIn, bufferIn, packedLightIn, OverlayTexture.NO_OVERLAY, -1);
 
     }
 }

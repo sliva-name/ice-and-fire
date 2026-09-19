@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "S",
+    "E",
+    "W"
+  ],
+  "key": {
+    "W": "#forge:bones/wither",
+    "S": "iceandfire:wither_shard",
+    "E": "iceandfire:cockatrice_eye"
+  },
+  "result": {
+    "id": "iceandfire:cockatrice_scepter"
+  }
+}

@@ -17,7 +17,7 @@ import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,10 +26,10 @@ public class BlockDreadWoodLock extends Block implements IDragonProof, IDreadBlo
 
     public BlockDreadWoodLock() {
         super(
-            Properties
-                .of(Material.WOOD)
+            IafBlockRegistry.id(Properties
+                .of().mapColor(MapColor.WOOD)
                 .strength(-1.0F, 1000000F)
-                .sound(SoundType.WOOD)
+                .sound(SoundType.WOOD))
         );
         this.registerDefaultState(this.getStateDefinition().any().setValue(PLAYER_PLACED, Boolean.FALSE));
     }
@@ -40,14 +40,13 @@ public class BlockDreadWoodLock extends Block implements IDragonProof, IDreadBlo
         if (state.getValue(PLAYER_PLACED)) {
             float f = 8f;
             //Code from super method
-            return player.getDigSpeed(state, pos) / f / (float) 30;
+            return player.getDestroySpeed(state) / f / (float) 30;
         }
         return super.getDestroyProgress(state, player, worldIn, pos);
     }
 
     @Override
-    public @NotNull InteractionResult use(@NotNull BlockState state, @NotNull Level worldIn, @NotNull BlockPos pos, Player player, @NotNull InteractionHand handIn, @NotNull BlockHitResult resultIn) {
-        ItemStack stack = player.getItemInHand(handIn);
+    protected @NotNull InteractionResult useItemOn(@NotNull ItemStack stack, @NotNull BlockState state, @NotNull Level worldIn, @NotNull BlockPos pos, Player player, @NotNull InteractionHand handIn, @NotNull BlockHitResult resultIn) {
         if (stack.getItem() == IafItemRegistry.DREAD_KEY.get()) {
             if (!player.isCreative()) {
                 stack.shrink(1);

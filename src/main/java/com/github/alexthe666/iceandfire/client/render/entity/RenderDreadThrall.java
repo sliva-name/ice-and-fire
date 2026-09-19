@@ -1,88 +1,98 @@
 package com.github.alexthe666.iceandfire.client.render.entity;
 
+import com.github.alexthe666.citadel.animation.IAnimatedEntity;
+import com.github.alexthe666.iceandfire.client.model.ArmedCitadelEntityModel;
 import com.github.alexthe666.iceandfire.client.model.ModelDreadThrall;
-import com.github.alexthe666.iceandfire.client.model.util.HideableLayer;
 import com.github.alexthe666.iceandfire.client.render.entity.layer.IHasArmorVariantResource;
 import com.github.alexthe666.iceandfire.client.render.entity.layer.LayerBipedArmorMultiple;
+import com.github.alexthe666.iceandfire.client.render.entity.layer.LayerDreadItemInHand;
 import com.github.alexthe666.iceandfire.client.render.entity.layer.LayerGenericGlowing;
 import com.github.alexthe666.iceandfire.entity.EntityDreadThrall;
 import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.entity.HumanoidMobRenderer;
 import net.minecraft.client.renderer.entity.MobRenderer;
-import net.minecraft.client.renderer.entity.layers.ItemInHandLayer;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.EquipmentSlot;
 import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nullable;
+public class RenderDreadThrall extends MobRenderer<EntityDreadThrall, DreadHumanoidRenderState, ArmedCitadelEntityModel>
+    implements IHasArmorVariantResource {
+    public static final Identifier TEXTURE = Identifier.fromNamespaceAndPath("iceandfire", "textures/models/dread/dread_thrall.png");
+    public static final Identifier TEXTURE_EYES = Identifier.fromNamespaceAndPath("iceandfire", "textures/models/dread/dread_thrall_eyes.png");
+    public static final Identifier TEXTURE_LEG_ARMOR = Identifier.fromNamespaceAndPath("iceandfire", "textures/models/dread/thrall_legs.png");
+    public static final Identifier TEXTURE_ARMOR_0 = Identifier.fromNamespaceAndPath("iceandfire", "textures/models/dread/thrall_chest_1.png");
+    public static final Identifier TEXTURE_ARMOR_1 = Identifier.fromNamespaceAndPath("iceandfire", "textures/models/dread/thrall_chest_2.png");
+    public static final Identifier TEXTURE_ARMOR_2 = Identifier.fromNamespaceAndPath("iceandfire", "textures/models/dread/thrall_chest_3.png");
+    public static final Identifier TEXTURE_ARMOR_3 = Identifier.fromNamespaceAndPath("iceandfire", "textures/models/dread/thrall_chest_4.png");
+    public static final Identifier TEXTURE_ARMOR_4 = Identifier.fromNamespaceAndPath("iceandfire", "textures/models/dread/thrall_chest_5.png");
+    public static final Identifier TEXTURE_ARMOR_5 = Identifier.fromNamespaceAndPath("iceandfire", "textures/models/dread/thrall_chest_6.png");
+    public static final Identifier TEXTURE_ARMOR_6 = Identifier.fromNamespaceAndPath("iceandfire", "textures/models/dread/thrall_chest_7.png");
+    public static final Identifier TEXTURE_ARMOR_7 = Identifier.fromNamespaceAndPath("iceandfire", "textures/models/dread/thrall_chest_8.png");
 
-public class RenderDreadThrall extends MobRenderer<EntityDreadThrall, ModelDreadThrall> implements IHasArmorVariantResource {
-    public static final ResourceLocation TEXTURE = new ResourceLocation("iceandfire:textures/models/dread/dread_thrall.png");
-    public static final ResourceLocation TEXTURE_EYES = new ResourceLocation("iceandfire:textures/models/dread/dread_thrall_eyes.png");
-    public static final ResourceLocation TEXTURE_LEG_ARMOR = new ResourceLocation("iceandfire:textures/models/dread/thrall_legs.png");
-    public static final ResourceLocation TEXTURE_ARMOR_0 = new ResourceLocation("iceandfire:textures/models/dread/thrall_chest_1.png");
-    public static final ResourceLocation TEXTURE_ARMOR_1 = new ResourceLocation("iceandfire:textures/models/dread/thrall_chest_2.png");
-    public static final ResourceLocation TEXTURE_ARMOR_2 = new ResourceLocation("iceandfire:textures/models/dread/thrall_chest_3.png");
-    public static final ResourceLocation TEXTURE_ARMOR_3 = new ResourceLocation("iceandfire:textures/models/dread/thrall_chest_4.png");
-    public static final ResourceLocation TEXTURE_ARMOR_4 = new ResourceLocation("iceandfire:textures/models/dread/thrall_chest_5.png");
-    public static final ResourceLocation TEXTURE_ARMOR_5 = new ResourceLocation("iceandfire:textures/models/dread/thrall_chest_6.png");
-    public static final ResourceLocation TEXTURE_ARMOR_6 = new ResourceLocation("iceandfire:textures/models/dread/thrall_chest_7.png");
-    public static final ResourceLocation TEXTURE_ARMOR_7 = new ResourceLocation("iceandfire:textures/models/dread/thrall_chest_8.png");
-    public final HideableLayer<EntityDreadThrall, ModelDreadThrall, ItemInHandLayer<EntityDreadThrall, ModelDreadThrall>> itemLayer;
+    private final ModelDreadThrall body;
 
     public RenderDreadThrall(EntityRendererProvider.Context context) {
-        super(context, new ModelDreadThrall(0.0F, false), 0.6F);
+        this(context, new ModelDreadThrall(0.0F, false));
+    }
 
+    private RenderDreadThrall(EntityRendererProvider.Context context, ModelDreadThrall body) {
+        super(context, body.asArmedEntityModel(), 0.6F);
+        this.body = body;
         this.addLayer(new LayerGenericGlowing<>(this, TEXTURE_EYES));
-        this.itemLayer = new HideableLayer<>(new ItemInHandLayer<>(this), this);
-        this.addLayer(this.itemLayer);
-        this.addLayer(new LayerBipedArmorMultiple<>(this,
+        this.addLayer(new LayerDreadItemInHand<>(this));
+        this.addLayer(new LayerBipedArmorMultiple(this, this, body,
             new ModelDreadThrall(0.5F, true), new ModelDreadThrall(1.0F, true),
             TEXTURE_ARMOR_0, TEXTURE_LEG_ARMOR));
     }
 
     @Override
-    public ResourceLocation getArmorResource(int variant, EquipmentSlot equipmentSlotType) {
-        if (equipmentSlotType == EquipmentSlot.LEGS)
+    public Identifier getArmorResource(int variant, EquipmentSlot equipmentSlotType) {
+        if (equipmentSlotType == EquipmentSlot.LEGS) {
             return TEXTURE_LEG_ARMOR;
-        switch (variant) {
-            case 0:
-                return TEXTURE_ARMOR_0;
-            case 1:
-                return TEXTURE_ARMOR_1;
-            case 2:
-                return TEXTURE_ARMOR_2;
-            case 3:
-                return TEXTURE_ARMOR_3;
-            case 4:
-                return TEXTURE_ARMOR_4;
-            case 5:
-                return TEXTURE_ARMOR_5;
-            case 6:
-                return TEXTURE_ARMOR_6;
-            case 7:
-                return TEXTURE_ARMOR_7;
-            default:
-                return TEXTURE_ARMOR_0;
         }
+        return switch (variant) {
+            case 1 -> TEXTURE_ARMOR_1;
+            case 2 -> TEXTURE_ARMOR_2;
+            case 3 -> TEXTURE_ARMOR_3;
+            case 4 -> TEXTURE_ARMOR_4;
+            case 5 -> TEXTURE_ARMOR_5;
+            case 6 -> TEXTURE_ARMOR_6;
+            case 7 -> TEXTURE_ARMOR_7;
+            default -> TEXTURE_ARMOR_0;
+        };
     }
 
     @Override
-    public void scale(EntityDreadThrall livingEntityIn, PoseStack stack, float partialTickTime) {
+    public DreadHumanoidRenderState createRenderState() {
+        return new DreadHumanoidRenderState();
+    }
+
+    @Override
+    public void extractRenderState(EntityDreadThrall entity, DreadHumanoidRenderState state, float partialTick) {
+        super.extractRenderState(entity, state, partialTick);
+        HumanoidMobRenderer.extractHumanoidRenderState(entity, state, partialTick, this.itemModelResolver);
+        state.tickCount = entity.tickCount;
+        state.partialTick = partialTick;
+        state.animationTick = entity.getAnimationTick();
+        state.animation = entity.getAnimation() == EntityDreadThrall.ANIMATION_SPAWN
+            ? DreadHumanoidRenderState.SPAWN : IAnimatedEntity.NO_ANIMATION;
+        state.armorVariant = entity.getBodyArmorVariant();
+        state.texture = TEXTURE;
+        state.rightArmPose = HumanoidModel.ArmPose.EMPTY;
+        state.leftArmPose = HumanoidModel.ArmPose.EMPTY;
+        state.hideHeldItems = state.animation == DreadHumanoidRenderState.SPAWN
+            && state.animationTick <= DreadHumanoidRenderState.SPAWN.getDuration() - 10;
+    }
+
+    @Override
+    public void scale(DreadHumanoidRenderState state, PoseStack stack) {
         stack.scale(0.95F, 0.95F, 0.95F);
-        if (livingEntityIn.getAnimation() == this.getModel().getSpawnAnimation()) {
-            itemLayer.hidden = livingEntityIn.getAnimationTick() <= this.getModel().getSpawnAnimation().getDuration() - 10;
-            return;
-        }
-        itemLayer.hidden = false;
-
     }
 
-    @Nullable
     @Override
-    public ResourceLocation getTextureLocation(@NotNull EntityDreadThrall entity) {
+    public @NotNull Identifier getTextureLocation(DreadHumanoidRenderState state) {
         return TEXTURE;
     }
-
-
 }

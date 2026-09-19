@@ -24,7 +24,7 @@ public class SpawnSeaSerpent extends Feature<NoneFeatureConfiguration> {
     @Override
     public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> context) {
         WorldGenLevel worldIn = context.level();
-        Random rand = context.random();
+        net.minecraft.util.RandomSource rand = context.random();
         BlockPos position = context.origin();
 
         position = worldIn.getHeightmapPos(Heightmap.Types.WORLD_SURFACE_WG, position.offset(8, 0, 8));
@@ -33,9 +33,9 @@ public class SpawnSeaSerpent extends Feature<NoneFeatureConfiguration> {
         if (IafConfig.spawnSeaSerpents && IafWorldRegistry.isFarEnoughFromSpawn(worldIn, position) && rand.nextInt(IafConfig.seaSerpentSpawnChance + 1) == 0) {
             BlockPos pos = oceanPos.offset(rand.nextInt(10) - 5, rand.nextInt(30), rand.nextInt(10) - 5);
             if (worldIn.getFluidState(pos).getType() == Fluids.WATER) {
-                EntitySeaSerpent serpent = IafEntityRegistry.SEA_SERPENT.get().create(worldIn.getLevel());
+                EntitySeaSerpent serpent = IafEntityRegistry.SEA_SERPENT.get().create(worldIn.getLevel(), net.minecraft.world.entity.EntitySpawnReason.STRUCTURE);
                 serpent.onWorldSpawn(rand);
-                serpent.moveTo(pos.getX() + 0.5F, pos.getY() + 0.5F, pos.getZ() + 0.5F, 0, 0);
+                serpent.snapTo(pos.getX() + 0.5F, pos.getY() + 0.5F, pos.getZ() + 0.5F, 0, 0);
                 worldIn.addFreshEntity(serpent);
             }
         }

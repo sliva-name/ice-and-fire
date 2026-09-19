@@ -17,6 +17,12 @@ public class TabulaModelAccessor extends TabulaModel {
     }
 
     public List<AdvancedModelBox> getRootBox() {
-        return super.rootBoxes;
+        List<AdvancedModelBox> boxes = new java.util.ArrayList<>();
+        for (var part : getRootBoxes()) {
+            if (part instanceof AdvancedModelBox box) {
+                boxes.add(box);
+            }
+        }
+        return boxes;
     }
 }

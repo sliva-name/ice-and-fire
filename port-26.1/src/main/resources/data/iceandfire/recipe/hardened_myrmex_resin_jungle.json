@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "RR",
+    "RR"
+  ],
+  "key": {
+    "R": "iceandfire:myrmex_jungle_resin"
+  },
+  "result": {
+    "id": "iceandfire:myrmex_jungle_resin_block"
+  }
+}

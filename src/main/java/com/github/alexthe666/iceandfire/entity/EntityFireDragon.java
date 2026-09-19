@@ -1,5 +1,7 @@
 package com.github.alexthe666.iceandfire.entity;
 
+import net.minecraft.server.level.ServerLevel;
+
 import com.github.alexthe666.citadel.animation.Animation;
 import com.github.alexthe666.citadel.animation.IAnimatedEntity;
 import com.github.alexthe666.iceandfire.IafConfig;
@@ -13,7 +15,7 @@ import com.github.alexthe666.iceandfire.misc.IafSoundRegistry;
 import com.github.alexthe666.iceandfire.misc.IafTagRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
@@ -32,7 +34,7 @@ import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.pathfinder.BlockPathTypes;
+import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.MinecraftForge;
@@ -48,9 +50,9 @@ public class EntityFireDragon extends EntityDragonBase {
     public static final float[] growth_stage_4 = new float[]{12.5F, 20F};
     public static final float[] growth_stage_5 = new float[]{20F, 30F};
 
-    public static final ResourceLocation FEMALE_LOOT = new ResourceLocation("iceandfire", "entities/dragon/fire_dragon_female");
-    public static final ResourceLocation MALE_LOOT = new ResourceLocation("iceandfire", "entities/dragon/fire_dragon_male");
-    public static final ResourceLocation SKELETON_LOOT = new ResourceLocation("iceandfire", "entities/dragon/fire_dragon_skeleton");
+    public static final Identifier FEMALE_LOOT = Identifier.fromNamespaceAndPath("iceandfire", "entities/dragon/fire_dragon_female");
+    public static final Identifier MALE_LOOT = Identifier.fromNamespaceAndPath("iceandfire", "entities/dragon/fire_dragon_male");
+    public static final Identifier SKELETON_LOOT = Identifier.fromNamespaceAndPath("iceandfire", "entities/dragon/fire_dragon_skeleton");
 
     public EntityFireDragon(Level worldIn) {
         this(IafEntityRegistry.FIRE_DRAGON.get(), worldIn);
@@ -58,9 +60,9 @@ public class EntityFireDragon extends EntityDragonBase {
 
     public EntityFireDragon(EntityType<?> t, Level worldIn) {
         super(t, worldIn, DragonType.FIRE, 1, 1 + IafConfig.dragonAttackDamage, IafConfig.dragonHealth * 0.04, IafConfig.dragonHealth, 0.15F, 0.4F);
-        this.setPathfindingMalus(BlockPathTypes.DANGER_FIRE, 0.0F);
-        this.setPathfindingMalus(BlockPathTypes.DAMAGE_FIRE, 0.0F);
-        this.setPathfindingMalus(BlockPathTypes.LAVA, 8.0F);
+        this.setPathfindingMalus(PathType.FIRE_IN_NEIGHBOR, 0.0F);
+        this.setPathfindingMalus(PathType.FIRE, 0.0F);
+        this.setPathfindingMalus(PathType.LAVA, 8.0F);
         ANIMATION_SPEAK = Animation.create(20);
         ANIMATION_BITE = Animation.create(35);
         ANIMATION_SHAKEPREY = Animation.create(65);
@@ -139,7 +141,7 @@ public class EntityFireDragon extends EntityDragonBase {
     }
 
     @Override
-    public boolean doHurtTarget(Entity entityIn) {
+    public boolean doHurtTarget(@NotNull ServerLevel level, @NotNull Entity entityIn) {
         this.getLookControl().setLookAt(entityIn, 30.0F, 30.0F);
         if (!this.isPlayingAttackAnimation()) {
             switch (groundAttack) {
@@ -174,11 +176,11 @@ public class EntityFireDragon extends EntityDragonBase {
     public void aiStep() {
         super.aiStep();
         LivingEntity attackTarget = this.getTarget();
-        if (!level.isClientSide && attackTarget != null) {
+        if (!this.level().isClientSide() && attackTarget != null) {
             if (this.getBoundingBox().inflate(2.5F + this.getRenderSize() * 0.33F, 2.5F + this.getRenderSize() * 0.33F, 2.5F + this.getRenderSize() * 0.33F).intersects(attackTarget.getBoundingBox())) {
-                doHurtTarget(attackTarget);
+                doHurtTarget((ServerLevel) this.level(), attackTarget);
             }
-            if (this.groundAttack == IafDragonAttacks.Ground.FIRE && (usingGroundAttack || this.onGround)) {
+            if (this.groundAttack == IafDragonAttacks.Ground.FIRE && (usingGroundAttack || this.onGround())) {
                 shootFireAtMob(attackTarget);
             }
             if (this.airAttack == IafDragonAttacks.Air.TACKLE && !usingGroundAttack && this.distanceToSqr(attackTarget) < 100) {
@@ -187,7 +189,7 @@ public class EntityFireDragon extends EntityDragonBase {
                 double difZ = attackTarget.getZ() - this.getZ();
                 this.setDeltaMovement(this.getDeltaMovement().add(difX * 0.1D, difY * 0.1D, difZ * 0.1D));
                 if (this.getBoundingBox().inflate(1 + this.getRenderSize() * 0.5F, 1 + this.getRenderSize() * 0.5F, 1 + this.getRenderSize() * 0.5F).intersects(attackTarget.getBoundingBox())) {
-                    doHurtTarget(attackTarget);
+                    doHurtTarget((ServerLevel) this.level(), attackTarget);
                     usingGroundAttack = true;
                     randomizeAttacks();
                     setFlying(false);
@@ -230,11 +232,11 @@ public class EntityFireDragon extends EntityDragonBase {
                 d3 = d3 + this.random.nextGaussian() * 0.007499999832361937D * inaccuracy;
                 d4 = d4 + this.random.nextGaussian() * 0.007499999832361937D * inaccuracy;
                 EntityDragonFireCharge entitylargefireball = new EntityDragonFireCharge(
-                    IafEntityRegistry.FIRE_DRAGON_CHARGE.get(), level, this, d2, d3, d4);
+                    IafEntityRegistry.FIRE_DRAGON_CHARGE.get(), level(), this, d2, d3, d4);
 
                 entitylargefireball.setPos(headVec.x, headVec.y, headVec.z);
-                if (!level.isClientSide) {
-                    level.addFreshEntity(entitylargefireball);
+                if (!this.level().isClientSide()) {
+                    this.level().addFreshEntity(entitylargefireball);
                 }
             }
         } else {
@@ -263,7 +265,7 @@ public class EntityFireDragon extends EntityDragonBase {
     @Override
     protected float getBlockSpeedFactor() {
         // Disable soul sand slow down
-        if (this.onSoulSpeedBlock()) {
+        if (this.level().getBlockState(this.getBlockPosBelowThatAffectsMyMovement()).is(net.minecraft.tags.BlockTags.SOUL_SPEED_BLOCKS)) {
             return this.getDragonStage() >= 2 ? 1.0f : 0.8f;
         }
         return super.getBlockSpeedFactor();
@@ -295,7 +297,7 @@ public class EntityFireDragon extends EntityDragonBase {
                     vertical = 0.8f;
                 } else if (isGoingDown() && !isGoingUp()) {
                     vertical = -0.8f;
-                } else if (isGoingUp() && isGoingDown() && isControlledByLocalInstance()) {
+                } else if (isGoingUp() && isGoingDown() && isLocalInstanceAuthoritative()) {
                     // Try floating
                     this.setDeltaMovement(this.getDeltaMovement().multiply(1.0f, 0.3f, 1.0f));
                 }
@@ -305,7 +307,7 @@ public class EntityFireDragon extends EntityDragonBase {
                         vertical,
                         rider.zza
                 );
-                if (this.isControlledByLocalInstance()) {
+                if (this.isLocalInstanceAuthoritative()) {
                     this.setSpeed(speed);
 
                     this.moveRelative(this.getSpeed(), travelVector);
@@ -317,18 +319,18 @@ public class EntityFireDragon extends EntityDragonBase {
                     }
                     this.setDeltaMovement(currentMotion.scale(0.7D));
 
-                    this.calculateEntityAnimation(this, false);
+                    this.calculateEntityAnimation(false);
                 } else {
                     this.setDeltaMovement(Vec3.ZERO);
                 }
-                this.tryCheckInsideBlocks();
+                this.applyEffectsFromBlocks();
             } else {
                 super.travel(pTravelVector);
             }
         }
         // Over lava special
         else if (allowLocalMotionControl && this.getControllingPassenger() != null && canBeControlledByRider() && !isHovering() && !isFlying()
-                && this.level.getBlockState(this.getBlockPosBelowThatAffectsMyMovement()).getFluidState().is(FluidTags.LAVA)) {
+                && this.level().getBlockState(this.getBlockPosBelowThatAffectsMyMovement()).getFluidState().is(FluidTags.LAVA)) {
             LivingEntity rider = (LivingEntity) this.getControllingPassenger();
 
             double forward = rider.zza;
@@ -348,8 +350,8 @@ public class EntityFireDragon extends EntityDragonBase {
             // Slower going sideway
             strafing *= 0.05f;
 
-            if (this.isControlledByLocalInstance()) {
-                this.flyingSpeed = speed * 0.1F;
+            if (this.isLocalInstanceAuthoritative()) {
+                this.iafFlyingSpeed = speed * 0.1F;
                 this.setSpeed(speed);
 
                 // Vanilla walking behavior includes going up steps
@@ -363,7 +365,7 @@ public class EntityFireDragon extends EntityDragonBase {
             } else {
                 this.setDeltaMovement(Vec3.ZERO);
             }
-            this.tryCheckInsideBlocks();
+            this.applyEffectsFromBlocks();
 //            this.updatePitch(this.yOld - this.getY());
             return;
         } else {
@@ -372,7 +374,7 @@ public class EntityFireDragon extends EntityDragonBase {
     }
 
     @Override
-    public ResourceLocation getDeadLootTable() {
+    public Identifier getDeadLootTable() {
         if (this.getDeathStage() >= (this.getAgeInDays() / 5) / 2) {
             return SKELETON_LOOT;
         } else {
@@ -397,11 +399,11 @@ public class EntityFireDragon extends EntityDragonBase {
                     d4 = d4 + this.random.nextGaussian() * 0.007499999832361937D * inaccuracy;
                     this.playSound(IafSoundRegistry.FIREDRAGON_BREATH, 4, 1);
                     EntityDragonFireCharge entitylargefireball = new EntityDragonFireCharge(
-                        IafEntityRegistry.FIRE_DRAGON_CHARGE.get(), level, this, d2, d3, d4);
+                        IafEntityRegistry.FIRE_DRAGON_CHARGE.get(), level(), this, d2, d3, d4);
 
                     entitylargefireball.setPos(headVec.x, headVec.y, headVec.z);
-                    if (!level.isClientSide) {
-                        level.addFreshEntity(entitylargefireball);
+                    if (!this.level().isClientSide()) {
+                        this.level().addFreshEntity(entitylargefireball);
                     }
                     if (!entity.isAlive() || entity == null) {
                         this.setBreathingFire(false);
@@ -431,22 +433,22 @@ public class EntityFireDragon extends EntityDragonBase {
 
     @Override
     public void stimulateFire(double burnX, double burnY, double burnZ, int syncType) {
-        if (MinecraftForge.EVENT_BUS.post(new DragonFireEvent(this, burnX, burnY, burnZ))) return;
-        if (syncType == 1 && !level.isClientSide) {
+        if (DragonFireEvent.BUS.post(new DragonFireEvent(this, burnX, burnY, burnZ))) return;
+        if (syncType == 1 && !this.level().isClientSide()) {
             //sync with client
             IceAndFire.sendMSGToAll(new MessageDragonSyncFire(this.getId(), burnX, burnY, burnZ, 0));
         }
-        if (syncType == 2 && level.isClientSide) {
+        if (syncType == 2 && this.level().isClientSide()) {
             //sync with server
-            IceAndFire.NETWORK_WRAPPER.sendToServer(new MessageDragonSyncFire(this.getId(), burnX, burnY, burnZ, 0));
+            IceAndFire.sendMSGToServer(new MessageDragonSyncFire(this.getId(), burnX, burnY, burnZ, 0));
         }
-        if (syncType == 3 && !level.isClientSide) {
+        if (syncType == 3 && !this.level().isClientSide()) {
             //sync with client, fire bomb
             IceAndFire.sendMSGToAll(new MessageDragonSyncFire(this.getId(), burnX, burnY, burnZ, 5));
         }
-        if (syncType == 4 && level.isClientSide) {
+        if (syncType == 4 && this.level().isClientSide()) {
             //sync with server, fire bomb
-            IceAndFire.NETWORK_WRAPPER.sendToServer(new MessageDragonSyncFire(this.getId(), burnX, burnY, burnZ, 5));
+            IceAndFire.sendMSGToServer(new MessageDragonSyncFire(this.getId(), burnX, burnY, burnZ, 5));
         }
         if (syncType > 2 && syncType < 6) {
             if (this.getAnimation() != ANIMATION_FIRECHARGE) {
@@ -463,10 +465,10 @@ public class EntityFireDragon extends EntityDragonBase {
                 d4 = d4 + this.random.nextGaussian() * 0.007499999832361937D * inaccuracy;
                 this.playSound(IafSoundRegistry.FIREDRAGON_BREATH, 4, 1);
                 EntityDragonFireCharge entitylargefireball = new EntityDragonFireCharge(
-                    IafEntityRegistry.FIRE_DRAGON_CHARGE.get(), level, this, d2, d3, d4);
+                    IafEntityRegistry.FIRE_DRAGON_CHARGE.get(), level(), this, d2, d3, d4);
                 entitylargefireball.setPos(headVec.x, headVec.y, headVec.z);
-                if (!level.isClientSide) {
-                    level.addFreshEntity(entitylargefireball);
+                if (!this.level().isClientSide()) {
+                    this.level().addFreshEntity(entitylargefireball);
                 }
                 this.randomizeAttacks();
             }
@@ -489,14 +491,14 @@ public class EntityFireDragon extends EntityDragonBase {
             double progressY = headPos.y + d3 * (i / (float) distance);
             double progressZ = headPos.z + d4 * (i / (float) distance);
             if (canPositionBeSeen(progressX, progressY, progressZ)) {
-                if (level.isClientSide && random.nextInt(particleCount) == 0) {
+                if (this.level().isClientSide() && random.nextInt(particleCount) == 0) {
                     IceAndFire.PROXY.spawnDragonParticle(EnumParticles.DragonFire, headPos.x, headPos.y, headPos.z, 0, 0, 0, this);
                 }
             } else {
-                if (!level.isClientSide) {
-                    HitResult result = this.level.clip(new ClipContext(new Vec3(this.getX(), this.getY() + this.getEyeHeight(), this.getZ()), new Vec3(progressX, progressY, progressZ), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
-                    BlockPos pos = new BlockPos(result.getLocation());
-                    IafDragonDestructionManager.destroyAreaFire(level, pos, this);
+                if (!this.level().isClientSide()) {
+                    HitResult result = this.level().clip(new ClipContext(new Vec3(this.getX(), this.getY() + this.getEyeHeight(), this.getZ()), new Vec3(progressX, progressY, progressZ), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
+                    BlockPos pos = BlockPos.containing(result.getLocation());
+                    IafDragonDestructionManager.destroyAreaFire(level(), pos, this);
                 }
             }
         }
@@ -504,8 +506,8 @@ public class EntityFireDragon extends EntityDragonBase {
             double spawnX = burnX + (random.nextFloat() * 3.0) - 1.5;
             double spawnY = burnY + (random.nextFloat() * 3.0) - 1.5;
             double spawnZ = burnZ + (random.nextFloat() * 3.0) - 1.5;
-            if (!level.isClientSide) {
-                IafDragonDestructionManager.destroyAreaFire(level, new BlockPos(spawnX, spawnY, spawnZ), this);
+            if (!this.level().isClientSide()) {
+                IafDragonDestructionManager.destroyAreaFire(level(), BlockPos.containing(spawnX, spawnY, spawnZ), this);
             }
         }
     }
@@ -546,8 +548,8 @@ public class EntityFireDragon extends EntityDragonBase {
             double d2 = this.random.nextGaussian() * 0.02D;
             double d0 = this.random.nextGaussian() * 0.02D;
             double d1 = this.random.nextGaussian() * 0.02D;
-            if (level.isClientSide) {
-                this.level.addParticle(ParticleTypes.FLAME, this.getX() + this.random.nextFloat() * this.getBbWidth() * 2.0F - this.getBbWidth(), this.getY() + this.random.nextFloat() * this.getBbHeight(), this.getZ() + this.random.nextFloat() * this.getBbWidth() * 2.0F - this.getBbWidth(), d2, d0, d1);
+            if (this.level().isClientSide()) {
+                this.level().addParticle(ParticleTypes.FLAME, this.getX() + this.random.nextFloat() * this.getBbWidth() * 2.0F - this.getBbWidth(), this.getY() + this.random.nextFloat() * this.getBbHeight(), this.getZ() + this.random.nextFloat() * this.getBbWidth() * 2.0F - this.getBbWidth(), d2, d0, d1);
             }
         }
     }
@@ -559,7 +561,7 @@ public class EntityFireDragon extends EntityDragonBase {
             float headPosX = (float) (this.getX() + 1.8F * getRenderSize() * (0.3F + radiusAdd) * Mth.cos((float) ((getYRot() + 90) * Math.PI / 180)));
             float headPosZ = (float) (this.getY() + 1.8F * getRenderSize() * (0.3F + radiusAdd) * Mth.sin((float) ((getYRot() + 90) * Math.PI / 180)));
             float headPosY = (float) (this.getZ() + 0.5 * getRenderSize() * 0.3F);
-            level.addParticle(ParticleTypes.LARGE_SMOKE, headPosX, headPosY, headPosZ, 0, 0, 0);
+            this.level().addParticle(ParticleTypes.LARGE_SMOKE, headPosX, headPosY, headPosZ, 0, 0, 0);
         }
     }
 

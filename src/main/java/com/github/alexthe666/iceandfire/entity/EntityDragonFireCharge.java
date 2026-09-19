@@ -7,9 +7,9 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.projectile.Fireball;
+import net.minecraft.world.entity.projectile.hurtingprojectile.Fireball;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.network.PlayMessages;
+import net.minecraftforge.network.packets.SpawnEntity;
 
 import javax.annotation.Nullable;
 
@@ -19,7 +19,7 @@ public class EntityDragonFireCharge extends EntityDragonCharge {
         super(type, worldIn);
     }
 
-    public EntityDragonFireCharge(PlayMessages.SpawnEntity spawnEntity, Level worldIn) {
+    public EntityDragonFireCharge(SpawnEntity spawnEntity, Level worldIn) {
         this(IafEntityRegistry.FIRE_DRAGON_CHARGE.get(), worldIn);
     }
 
@@ -40,13 +40,13 @@ public class EntityDragonFireCharge extends EntityDragonCharge {
     @Override
     public void tick() {
         for (int i = 0; i < 4; ++i) {
-            this.level.addParticle(ParticleTypes.FLAME, this.getX() + ((this.random.nextDouble() - 0.5D) * getBbWidth()), this.getY() + ((this.random.nextDouble() - 0.5D) * getBbWidth()), this.getZ() + ((this.random.nextDouble() - 0.5D) * getBbWidth()), 0.0D, 0.0D, 0.0D);
+            this.level().addParticle(ParticleTypes.FLAME, this.getX() + ((this.random.nextDouble() - 0.5D) * getBbWidth()), this.getY() + ((this.random.nextDouble() - 0.5D) * getBbWidth()), this.getZ() + ((this.random.nextDouble() - 0.5D) * getBbWidth()), 0.0D, 0.0D, 0.0D);
         }
         if (this.isInWater()) {
             remove(RemovalReason.DISCARDED);
         }
         if (this.shouldBurn()) {
-            this.setSecondsOnFire(1);
+            this.igniteForSeconds(1);
         }
         super.tick();
     }

@@ -3,9 +3,8 @@ package com.github.alexthe666.iceandfire.message;
 import com.github.alexthe666.iceandfire.IceAndFire;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
-import java.util.function.Supplier;
 
 public class MessageSetMyrmexHiveNull {
 
@@ -23,9 +22,9 @@ public class MessageSetMyrmexHiveNull {
         public Handler() {
         }
 
-        public static void handle(MessageSetMyrmexHiveNull message, Supplier<NetworkEvent.Context> context) {
-            context.get().setPacketHandled(true);
-            Player player = context.get().getSender();
+        public static void handle(MessageSetMyrmexHiveNull message, CustomPayloadEvent.Context context) {
+            context.setPacketHandled(true);
+            Player player = context.getSender();
             if (player != null) {
                 IceAndFire.PROXY.setReferencedHive(null);
             }

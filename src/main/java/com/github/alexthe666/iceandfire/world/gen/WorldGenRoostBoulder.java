@@ -5,7 +5,7 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 
-import java.util.Random;
+import net.minecraft.util.RandomSource;
 import java.util.stream.Collectors;
 
 public class WorldGenRoostBoulder {
@@ -20,7 +20,7 @@ public class WorldGenRoostBoulder {
         this.replaceAir = replaceAir;
     }
 
-    public boolean generate(LevelAccessor worldIn, Random rand, BlockPos position) {
+    public boolean generate(LevelAccessor worldIn, RandomSource rand, BlockPos position) {
         while (true) {
             label50:
             {
@@ -31,7 +31,7 @@ public class WorldGenRoostBoulder {
 
                     Block block = worldIn.getBlockState(position.below()).getBlock();
 
-                    if (block != Blocks.GRASS && block != Blocks.DIRT && block != Blocks.STONE) {
+                    if (block != Blocks.SHORT_GRASS && block != Blocks.DIRT && block != Blocks.STONE) {
                         break label50;
                     }
                 }

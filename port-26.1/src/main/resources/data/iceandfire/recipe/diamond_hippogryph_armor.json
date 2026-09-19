@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "   ",
+    "FDF",
+    "   "
+  ],
+  "key": {
+    "F": "#forge:feathers",
+    "D": "minecraft:diamond_horse_armor"
+  },
+  "result": {
+    "id": "iceandfire:diamond_hippogryph_armor"
+  }
+}

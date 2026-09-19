@@ -8,7 +8,7 @@ import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nullable;
 import java.util.EnumSet;
-import java.util.Random;
+import net.minecraft.util.RandomSource;
 
 public class TrollAIFleeSun extends Goal {
     private final EntityTroll troll;
@@ -21,15 +21,15 @@ public class TrollAIFleeSun extends Goal {
     public TrollAIFleeSun(EntityTroll theCreatureIn, double movementSpeedIn) {
         this.troll = theCreatureIn;
         this.movementSpeed = movementSpeedIn;
-        this.world = theCreatureIn.level;
+        this.world = theCreatureIn.level();
         this.setFlags(EnumSet.of(Flag.MOVE));
     }
 
     @Override
     public boolean canUse() {
-        if (!this.world.isDay()) {
+        if (!this.world.isBrightOutside()) {
             return false;
-        } else if (!this.world.canSeeSky(new BlockPos(this.troll.getX(), this.troll.getBoundingBox().minY, this.troll.getZ()))) {
+        } else if (!this.world.canSeeSky(BlockPos.containing(this.troll.getX(), this.troll.getBoundingBox().minY, this.troll.getZ()))) {
             return false;
         } else {
             Vec3 Vector3d = this.findPossibleShelter();
@@ -63,8 +63,8 @@ public class TrollAIFleeSun extends Goal {
 
     @Nullable
     private Vec3 findPossibleShelter() {
-        Random random = this.troll.getRandom();
-        BlockPos blockpos = new BlockPos(this.troll.getX(), this.troll.getBoundingBox().minY, this.troll.getZ());
+        RandomSource random = this.troll.getRandom();
+        BlockPos blockpos = BlockPos.containing(this.troll.getX(), this.troll.getBoundingBox().minY, this.troll.getZ());
 
         for (int i = 0; i < 10; ++i) {
             BlockPos blockpos1 = blockpos.offset(random.nextInt(20) - 10, random.nextInt(6) - 3, random.nextInt(20) - 10);

@@ -1,17 +1,17 @@
 package com.github.alexthe666.iceandfire.client.model;
 
-import com.github.alexthe666.citadel.animation.IAnimatedEntity;
+import com.github.alexthe666.citadel.client.model.AdvancedEntityModel;
 import com.github.alexthe666.citadel.client.model.AdvancedModelBox;
 import com.github.alexthe666.citadel.client.model.ModelAnimator;
 import com.github.alexthe666.citadel.client.model.basic.BasicModelPart;
-import com.github.alexthe666.iceandfire.entity.EntityDeathWorm;
+import com.github.alexthe666.iceandfire.client.render.entity.DeathWormRenderState;
 import com.google.common.collect.ImmutableList;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.world.entity.Entity;
 
-public class ModelDeathWorm extends ModelDragonBase<EntityDeathWorm> {
+public class ModelDeathWorm extends AdvancedEntityModel<DeathWormRenderState> implements ICustomStatueModel {
     public AdvancedModelBox Body;
     public AdvancedModelBox Head;
     public AdvancedModelBox Spine1;
@@ -231,10 +231,14 @@ public class ModelDeathWorm extends ModelDragonBase<EntityDeathWorm> {
         this.updateDefaultPose();
     }
 
-    public void animate(IAnimatedEntity entity, float f, float f1, float f2, float f3, float f4) {
+    private void rotate(ModelAnimator animator, AdvancedModelBox part, float x, float y, float z) {
+        animator.rotate(part, (float) Math.toRadians(x), (float) Math.toRadians(y), (float) Math.toRadians(z));
+    }
+
+    public void animate(DeathWormRenderState state) {
         this.resetToDefaultPose();
-        animator.update(entity);
-        if (animator.setAnimation(EntityDeathWorm.ANIMATION_BITE)) {
+        animator.update(state.animation, state.animationTick, state.partialTick);
+        if (animator.setAnimation(DeathWormRenderState.BITE)) {
             animator.startKeyframe(3);
             this.rotate(animator, TopJaw, -20, 0, 0);
             this.rotate(animator, BottomJaw, 20, 0, 0);
@@ -258,13 +262,16 @@ public class ModelDeathWorm extends ModelDragonBase<EntityDeathWorm> {
     }
 
     @Override
-    public void setupAnim(EntityDeathWorm entity, float f, float f1, float f2, float f3, float f4) {
+    public void setupAnim(DeathWormRenderState worm) {
+        float f = worm.walkAnimationPos;
+        float f1 = worm.walkAnimationSpeed;
+        float f2 = worm.ageInTicks;
+        float f4 = worm.xRot;
         float speed_idle = 0.1F;
         float degree_idle = 0.5F;
         float speed_walk = 0.2F;
         float degree_walk = 0.15F;
-        EntityDeathWorm worm = entity;
-        animate(entity, f, f1, f2, f3, f4);
+        animate(worm);
         AdvancedModelBox[] WORM = {Body, Body2, Body3, Body4, Body5, Body6, Body7, Body8, Body9, Tail1, Tail2, Tail3, Tail4};
         this.walk(ToothT, speed_idle, degree_idle * 0.15F, true, 0.1F, 0F, f2, 1);
         this.walk(ToothB, speed_idle, degree_idle * 0.15F, false, 0.1F, 0F, f2, 1);
@@ -275,7 +282,7 @@ public class ModelDeathWorm extends ModelDragonBase<EntityDeathWorm> {
         this.chainSwing(WORM, speed_walk, degree_walk * 0.1F, -3, f2, 1);
         this.chainSwing(WORM, speed_walk, degree_walk, -3, f, f1);
         this.chainFlap(WORM, speed_walk, degree_walk * 0.75F, -3, f, f1);
-        float jumpProgress = worm.prevJumpProgress + (worm.jumpProgress - worm.prevJumpProgress) * (f2 - worm.tickCount);
+        float jumpProgress = worm.jumpProgress;
         this.progressRotation(Head, jumpProgress, (float) Math.toRadians(25), 0.0F, 0.0F);
         this.progressRotation(Body, jumpProgress, (float) Math.toRadians(65), 0.0F, 0.0F);
         this.progressRotation(Body2, jumpProgress, (float) Math.toRadians(-21), 0.0F, 0.0F);
@@ -289,10 +296,11 @@ public class ModelDeathWorm extends ModelDragonBase<EntityDeathWorm> {
         this.progressRotation(Tail2, jumpProgress, (float) Math.toRadians(-21), 0.0F, 0.0F);
         this.progressRotation(Tail3, jumpProgress, (float) Math.toRadians(-21), 0.0F, 0.0F);
         this.progressRotation(Tail4, jumpProgress, (float) Math.toRadians(-21), 0.0F, 0.0F);
-        if(worm.tail_buffer != null)
-            worm.tail_buffer.applyChainSwingBuffer(WORM);
+        for (AdvancedModelBox part : WORM) {
+            part.rotateAngleY += worm.tailYaw / WORM.length;
+        }
 
-        if(worm.getWormJumping() > 0){
+        if(worm.jumping){
             this.Body.rotateAngleX += f4 * ((float) Math.PI / 180F);
         }
     }

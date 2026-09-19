@@ -2,7 +2,7 @@ package com.github.alexthe666.iceandfire.enums;
 
 import com.github.alexthe666.iceandfire.config.BiomeConfig;
 import net.minecraft.core.Holder;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.biome.Biome;
 
 import java.util.ArrayList;
@@ -23,13 +23,13 @@ public enum EnumHippogryphTypes {
     DODO(true);
 
     public boolean developer;
-    public ResourceLocation TEXTURE;
-    public ResourceLocation TEXTURE_BLINK;
+    public Identifier TEXTURE;
+    public Identifier TEXTURE_BLINK;
 
     EnumHippogryphTypes(boolean developer) {
         this.developer = developer;
-        this.TEXTURE = new ResourceLocation("iceandfire:textures/models/hippogryph/" + name().toLowerCase(Locale.ROOT) + ".png");
-        this.TEXTURE_BLINK = new ResourceLocation("iceandfire:textures/models/hippogryph/" + name().toLowerCase(Locale.ROOT) + "_blink.png");
+        this.TEXTURE = Identifier.parse("iceandfire:textures/models/hippogryph/" + name().toLowerCase(Locale.ROOT) + ".png");
+        this.TEXTURE_BLINK = Identifier.parse("iceandfire:textures/models/hippogryph/" + name().toLowerCase(Locale.ROOT) + "_blink.png");
 
     }
 

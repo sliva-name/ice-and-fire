@@ -4,7 +4,7 @@ import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.alexthe666.iceandfire.entity.EntityDragonSkull;
 import com.github.alexthe666.iceandfire.entity.EntityIceDragon;
 import com.github.alexthe666.iceandfire.entity.EntityLightningDragon;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.EquipmentSlot;
 
 public enum EnumDragonTextures {
@@ -13,142 +13,142 @@ public enum EnumDragonTextures {
     VARIANT3("bronze_", "sapphire_", "copper_"),
     VARIANT4("gray_", "silver_", "black_");
 
-    public final ResourceLocation FIRESTAGE1TEXTURE;
-    public final ResourceLocation FIRESTAGE2TEXTURE;
-    public final ResourceLocation FIRESTAGE3TEXTURE;
-    public final ResourceLocation FIRESTAGE4TEXTURE;
-    public final ResourceLocation FIRESTAGE5TEXTURE;
-    public final ResourceLocation ICESTAGE1TEXTURE;
-    public final ResourceLocation ICESTAGE2TEXTURE;
-    public final ResourceLocation ICESTAGE3TEXTURE;
-    public final ResourceLocation ICESTAGE4TEXTURE;
-    public final ResourceLocation ICESTAGE5TEXTURE;
-    public final ResourceLocation FIRESTAGE1SLEEPINGTEXTURE;
-    public final ResourceLocation FIRESTAGE2SLEEPINGTEXTURE;
-    public final ResourceLocation FIRESTAGE3SLEEPINGTEXTURE;
-    public final ResourceLocation FIRESTAGE4SLEEPINGTEXTURE;
-    public final ResourceLocation FIRESTAGE5SLEEPINGTEXTURE;
-    public final ResourceLocation ICESTAGE1SLEEPINGTEXTURE;
-    public final ResourceLocation ICESTAGE2SLEEPINGTEXTURE;
-    public final ResourceLocation ICESTAGE3SLEEPINGTEXTURE;
-    public final ResourceLocation ICESTAGE4SLEEPINGTEXTURE;
-    public final ResourceLocation ICESTAGE5SLEEPINGTEXTURE;
-    public final ResourceLocation FIRESTAGE1EYESTEXTURE;
-    public final ResourceLocation FIRESTAGE2EYESTEXTURE;
-    public final ResourceLocation FIRESTAGE3EYESTEXTURE;
-    public final ResourceLocation FIRESTAGE4EYESTEXTURE;
-    public final ResourceLocation FIRESTAGE5EYESTEXTURE;
-    public final ResourceLocation ICESTAGE1EYESTEXTURE;
-    public final ResourceLocation ICESTAGE2EYESTEXTURE;
-    public final ResourceLocation ICESTAGE3EYESTEXTURE;
-    public final ResourceLocation ICESTAGE4EYESTEXTURE;
-    public final ResourceLocation ICESTAGE5EYESTEXTURE;
-    public final ResourceLocation FIRESTAGE1SKELETONTEXTURE;
-    public final ResourceLocation FIRESTAGE2SKELETONTEXTURE;
-    public final ResourceLocation FIRESTAGE3SKELETONTEXTURE;
-    public final ResourceLocation FIRESTAGE4SKELETONTEXTURE;
-    public final ResourceLocation FIRESTAGE5SKELETONTEXTURE;
-    public final ResourceLocation ICESTAGE1SKELETONTEXTURE;
-    public final ResourceLocation ICESTAGE2SKELETONTEXTURE;
-    public final ResourceLocation ICESTAGE3SKELETONTEXTURE;
-    public final ResourceLocation ICESTAGE4SKELETONTEXTURE;
-    public final ResourceLocation ICESTAGE5SKELETONTEXTURE;
-    public final ResourceLocation FIRE_MALE_OVERLAY;
-    public final ResourceLocation ICE_MALE_OVERLAY;
+    public final Identifier FIRESTAGE1TEXTURE;
+    public final Identifier FIRESTAGE2TEXTURE;
+    public final Identifier FIRESTAGE3TEXTURE;
+    public final Identifier FIRESTAGE4TEXTURE;
+    public final Identifier FIRESTAGE5TEXTURE;
+    public final Identifier ICESTAGE1TEXTURE;
+    public final Identifier ICESTAGE2TEXTURE;
+    public final Identifier ICESTAGE3TEXTURE;
+    public final Identifier ICESTAGE4TEXTURE;
+    public final Identifier ICESTAGE5TEXTURE;
+    public final Identifier FIRESTAGE1SLEEPINGTEXTURE;
+    public final Identifier FIRESTAGE2SLEEPINGTEXTURE;
+    public final Identifier FIRESTAGE3SLEEPINGTEXTURE;
+    public final Identifier FIRESTAGE4SLEEPINGTEXTURE;
+    public final Identifier FIRESTAGE5SLEEPINGTEXTURE;
+    public final Identifier ICESTAGE1SLEEPINGTEXTURE;
+    public final Identifier ICESTAGE2SLEEPINGTEXTURE;
+    public final Identifier ICESTAGE3SLEEPINGTEXTURE;
+    public final Identifier ICESTAGE4SLEEPINGTEXTURE;
+    public final Identifier ICESTAGE5SLEEPINGTEXTURE;
+    public final Identifier FIRESTAGE1EYESTEXTURE;
+    public final Identifier FIRESTAGE2EYESTEXTURE;
+    public final Identifier FIRESTAGE3EYESTEXTURE;
+    public final Identifier FIRESTAGE4EYESTEXTURE;
+    public final Identifier FIRESTAGE5EYESTEXTURE;
+    public final Identifier ICESTAGE1EYESTEXTURE;
+    public final Identifier ICESTAGE2EYESTEXTURE;
+    public final Identifier ICESTAGE3EYESTEXTURE;
+    public final Identifier ICESTAGE4EYESTEXTURE;
+    public final Identifier ICESTAGE5EYESTEXTURE;
+    public final Identifier FIRESTAGE1SKELETONTEXTURE;
+    public final Identifier FIRESTAGE2SKELETONTEXTURE;
+    public final Identifier FIRESTAGE3SKELETONTEXTURE;
+    public final Identifier FIRESTAGE4SKELETONTEXTURE;
+    public final Identifier FIRESTAGE5SKELETONTEXTURE;
+    public final Identifier ICESTAGE1SKELETONTEXTURE;
+    public final Identifier ICESTAGE2SKELETONTEXTURE;
+    public final Identifier ICESTAGE3SKELETONTEXTURE;
+    public final Identifier ICESTAGE4SKELETONTEXTURE;
+    public final Identifier ICESTAGE5SKELETONTEXTURE;
+    public final Identifier FIRE_MALE_OVERLAY;
+    public final Identifier ICE_MALE_OVERLAY;
 
-    public final ResourceLocation LIGHTNINGSTAGE1TEXTURE;
-    public final ResourceLocation LIGHTNINGSTAGE2TEXTURE;
-    public final ResourceLocation LIGHTNINGSTAGE3TEXTURE;
-    public final ResourceLocation LIGHTNINGSTAGE4TEXTURE;
-    public final ResourceLocation LIGHTNINGSTAGE5TEXTURE;
-    public final ResourceLocation LIGHTNINGSTAGE1SLEEPINGTEXTURE;
-    public final ResourceLocation LIGHTNINGSTAGE2SLEEPINGTEXTURE;
-    public final ResourceLocation LIGHTNINGSTAGE3SLEEPINGTEXTURE;
-    public final ResourceLocation LIGHTNINGSTAGE4SLEEPINGTEXTURE;
-    public final ResourceLocation LIGHTNINGSTAGE5SLEEPINGTEXTURE;
-    public final ResourceLocation LIGHTNINGSTAGE1EYESTEXTURE;
-    public final ResourceLocation LIGHTNINGSTAGE2EYESTEXTURE;
-    public final ResourceLocation LIGHTNINGSTAGE3EYESTEXTURE;
-    public final ResourceLocation LIGHTNINGSTAGE4EYESTEXTURE;
-    public final ResourceLocation LIGHTNINGSTAGE5EYESTEXTURE;
-    public final ResourceLocation LIGHTNINGSTAGE1SKELETONTEXTURE;
-    public final ResourceLocation LIGHTNINGSTAGE2SKELETONTEXTURE;
-    public final ResourceLocation LIGHTNINGSTAGE3SKELETONTEXTURE;
-    public final ResourceLocation LIGHTNINGSTAGE4SKELETONTEXTURE;
-    public final ResourceLocation LIGHTNINGSTAGE5SKELETONTEXTURE;
+    public final Identifier LIGHTNINGSTAGE1TEXTURE;
+    public final Identifier LIGHTNINGSTAGE2TEXTURE;
+    public final Identifier LIGHTNINGSTAGE3TEXTURE;
+    public final Identifier LIGHTNINGSTAGE4TEXTURE;
+    public final Identifier LIGHTNINGSTAGE5TEXTURE;
+    public final Identifier LIGHTNINGSTAGE1SLEEPINGTEXTURE;
+    public final Identifier LIGHTNINGSTAGE2SLEEPINGTEXTURE;
+    public final Identifier LIGHTNINGSTAGE3SLEEPINGTEXTURE;
+    public final Identifier LIGHTNINGSTAGE4SLEEPINGTEXTURE;
+    public final Identifier LIGHTNINGSTAGE5SLEEPINGTEXTURE;
+    public final Identifier LIGHTNINGSTAGE1EYESTEXTURE;
+    public final Identifier LIGHTNINGSTAGE2EYESTEXTURE;
+    public final Identifier LIGHTNINGSTAGE3EYESTEXTURE;
+    public final Identifier LIGHTNINGSTAGE4EYESTEXTURE;
+    public final Identifier LIGHTNINGSTAGE5EYESTEXTURE;
+    public final Identifier LIGHTNINGSTAGE1SKELETONTEXTURE;
+    public final Identifier LIGHTNINGSTAGE2SKELETONTEXTURE;
+    public final Identifier LIGHTNINGSTAGE3SKELETONTEXTURE;
+    public final Identifier LIGHTNINGSTAGE4SKELETONTEXTURE;
+    public final Identifier LIGHTNINGSTAGE5SKELETONTEXTURE;
 
-    public final ResourceLocation LIGHTNING_MALE_OVERLAY;
+    public final Identifier LIGHTNING_MALE_OVERLAY;
 
     EnumDragonTextures(String fireVariant, String iceVariant, String lightningVariant) {
-        FIRESTAGE1TEXTURE = new ResourceLocation("iceandfire:textures/models/firedragon/" + fireVariant + "1.png");
-        FIRESTAGE2TEXTURE = new ResourceLocation("iceandfire:textures/models/firedragon/" + fireVariant + "2.png");
-        FIRESTAGE3TEXTURE = new ResourceLocation("iceandfire:textures/models/firedragon/" + fireVariant + "3.png");
-        FIRESTAGE4TEXTURE = new ResourceLocation("iceandfire:textures/models/firedragon/" + fireVariant + "4.png");
-        FIRESTAGE5TEXTURE = new ResourceLocation("iceandfire:textures/models/firedragon/" + fireVariant + "5.png");
-        FIRESTAGE1SLEEPINGTEXTURE = new ResourceLocation("iceandfire:textures/models/firedragon/" + fireVariant + "1_sleeping.png");
-        FIRESTAGE2SLEEPINGTEXTURE = new ResourceLocation("iceandfire:textures/models/firedragon/" + fireVariant + "2_sleeping.png");
-        FIRESTAGE3SLEEPINGTEXTURE = new ResourceLocation("iceandfire:textures/models/firedragon/" + fireVariant + "3_sleeping.png");
-        FIRESTAGE4SLEEPINGTEXTURE = new ResourceLocation("iceandfire:textures/models/firedragon/" + fireVariant + "4_sleeping.png");
-        FIRESTAGE5SLEEPINGTEXTURE = new ResourceLocation("iceandfire:textures/models/firedragon/" + fireVariant + "5_sleeping.png");
-        FIRESTAGE1EYESTEXTURE = new ResourceLocation("iceandfire:textures/models/firedragon/" + fireVariant + "1_eyes.png");
-        FIRESTAGE2EYESTEXTURE = new ResourceLocation("iceandfire:textures/models/firedragon/" + fireVariant + "2_eyes.png");
-        FIRESTAGE3EYESTEXTURE = new ResourceLocation("iceandfire:textures/models/firedragon/" + fireVariant + "3_eyes.png");
-        FIRESTAGE4EYESTEXTURE = new ResourceLocation("iceandfire:textures/models/firedragon/" + fireVariant + "4_eyes.png");
-        FIRESTAGE5EYESTEXTURE = new ResourceLocation("iceandfire:textures/models/firedragon/" + fireVariant + "5_eyes.png");
-        FIRESTAGE1SKELETONTEXTURE = new ResourceLocation("iceandfire:textures/models/firedragon/fire_skeleton_1.png");
-        FIRESTAGE2SKELETONTEXTURE = new ResourceLocation("iceandfire:textures/models/firedragon/fire_skeleton_2.png");
-        FIRESTAGE3SKELETONTEXTURE = new ResourceLocation("iceandfire:textures/models/firedragon/fire_skeleton_3.png");
-        FIRESTAGE4SKELETONTEXTURE = new ResourceLocation("iceandfire:textures/models/firedragon/fire_skeleton_4.png");
-        FIRESTAGE5SKELETONTEXTURE = new ResourceLocation("iceandfire:textures/models/firedragon/fire_skeleton_5.png");
-        ICESTAGE1TEXTURE = new ResourceLocation("iceandfire:textures/models/icedragon/" + iceVariant + "1.png");
-        ICESTAGE2TEXTURE = new ResourceLocation("iceandfire:textures/models/icedragon/" + iceVariant + "2.png");
-        ICESTAGE3TEXTURE = new ResourceLocation("iceandfire:textures/models/icedragon/" + iceVariant + "3.png");
-        ICESTAGE4TEXTURE = new ResourceLocation("iceandfire:textures/models/icedragon/" + iceVariant + "4.png");
-        ICESTAGE5TEXTURE = new ResourceLocation("iceandfire:textures/models/icedragon/" + iceVariant + "5.png");
-        ICESTAGE1SLEEPINGTEXTURE = new ResourceLocation("iceandfire:textures/models/icedragon/" + iceVariant + "1_sleeping.png");
-        ICESTAGE2SLEEPINGTEXTURE = new ResourceLocation("iceandfire:textures/models/icedragon/" + iceVariant + "2_sleeping.png");
-        ICESTAGE3SLEEPINGTEXTURE = new ResourceLocation("iceandfire:textures/models/icedragon/" + iceVariant + "3_sleeping.png");
-        ICESTAGE4SLEEPINGTEXTURE = new ResourceLocation("iceandfire:textures/models/icedragon/" + iceVariant + "4_sleeping.png");
-        ICESTAGE5SLEEPINGTEXTURE = new ResourceLocation("iceandfire:textures/models/icedragon/" + iceVariant + "5_sleeping.png");
-        ICESTAGE1EYESTEXTURE = new ResourceLocation("iceandfire:textures/models/icedragon/" + iceVariant + "1_eyes.png");
-        ICESTAGE2EYESTEXTURE = new ResourceLocation("iceandfire:textures/models/icedragon/" + iceVariant + "2_eyes.png");
-        ICESTAGE3EYESTEXTURE = new ResourceLocation("iceandfire:textures/models/icedragon/" + iceVariant + "3_eyes.png");
-        ICESTAGE4EYESTEXTURE = new ResourceLocation("iceandfire:textures/models/icedragon/" + iceVariant + "4_eyes.png");
-        ICESTAGE5EYESTEXTURE = new ResourceLocation("iceandfire:textures/models/icedragon/" + iceVariant + "5_eyes.png");
-        ICESTAGE1SKELETONTEXTURE = new ResourceLocation("iceandfire:textures/models/icedragon/ice_skeleton_1.png");
-        ICESTAGE2SKELETONTEXTURE = new ResourceLocation("iceandfire:textures/models/icedragon/ice_skeleton_2.png");
-        ICESTAGE3SKELETONTEXTURE = new ResourceLocation("iceandfire:textures/models/icedragon/ice_skeleton_3.png");
-        ICESTAGE4SKELETONTEXTURE = new ResourceLocation("iceandfire:textures/models/icedragon/ice_skeleton_4.png");
-        ICESTAGE5SKELETONTEXTURE = new ResourceLocation("iceandfire:textures/models/icedragon/ice_skeleton_5.png");
-        FIRE_MALE_OVERLAY = new ResourceLocation("iceandfire:textures/models/firedragon/male_" + fireVariant.substring(0, fireVariant.length() - 1) + ".png");
-        ICE_MALE_OVERLAY = new ResourceLocation("iceandfire:textures/models/icedragon/male_" + iceVariant.substring(0, iceVariant.length() - 1) + ".png");
+        FIRESTAGE1TEXTURE = Identifier.parse("iceandfire:textures/models/firedragon/" + fireVariant + "1.png");
+        FIRESTAGE2TEXTURE = Identifier.parse("iceandfire:textures/models/firedragon/" + fireVariant + "2.png");
+        FIRESTAGE3TEXTURE = Identifier.parse("iceandfire:textures/models/firedragon/" + fireVariant + "3.png");
+        FIRESTAGE4TEXTURE = Identifier.parse("iceandfire:textures/models/firedragon/" + fireVariant + "4.png");
+        FIRESTAGE5TEXTURE = Identifier.parse("iceandfire:textures/models/firedragon/" + fireVariant + "5.png");
+        FIRESTAGE1SLEEPINGTEXTURE = Identifier.parse("iceandfire:textures/models/firedragon/" + fireVariant + "1_sleeping.png");
+        FIRESTAGE2SLEEPINGTEXTURE = Identifier.parse("iceandfire:textures/models/firedragon/" + fireVariant + "2_sleeping.png");
+        FIRESTAGE3SLEEPINGTEXTURE = Identifier.parse("iceandfire:textures/models/firedragon/" + fireVariant + "3_sleeping.png");
+        FIRESTAGE4SLEEPINGTEXTURE = Identifier.parse("iceandfire:textures/models/firedragon/" + fireVariant + "4_sleeping.png");
+        FIRESTAGE5SLEEPINGTEXTURE = Identifier.parse("iceandfire:textures/models/firedragon/" + fireVariant + "5_sleeping.png");
+        FIRESTAGE1EYESTEXTURE = Identifier.parse("iceandfire:textures/models/firedragon/" + fireVariant + "1_eyes.png");
+        FIRESTAGE2EYESTEXTURE = Identifier.parse("iceandfire:textures/models/firedragon/" + fireVariant + "2_eyes.png");
+        FIRESTAGE3EYESTEXTURE = Identifier.parse("iceandfire:textures/models/firedragon/" + fireVariant + "3_eyes.png");
+        FIRESTAGE4EYESTEXTURE = Identifier.parse("iceandfire:textures/models/firedragon/" + fireVariant + "4_eyes.png");
+        FIRESTAGE5EYESTEXTURE = Identifier.parse("iceandfire:textures/models/firedragon/" + fireVariant + "5_eyes.png");
+        FIRESTAGE1SKELETONTEXTURE = Identifier.parse("iceandfire:textures/models/firedragon/fire_skeleton_1.png");
+        FIRESTAGE2SKELETONTEXTURE = Identifier.parse("iceandfire:textures/models/firedragon/fire_skeleton_2.png");
+        FIRESTAGE3SKELETONTEXTURE = Identifier.parse("iceandfire:textures/models/firedragon/fire_skeleton_3.png");
+        FIRESTAGE4SKELETONTEXTURE = Identifier.parse("iceandfire:textures/models/firedragon/fire_skeleton_4.png");
+        FIRESTAGE5SKELETONTEXTURE = Identifier.parse("iceandfire:textures/models/firedragon/fire_skeleton_5.png");
+        ICESTAGE1TEXTURE = Identifier.parse("iceandfire:textures/models/icedragon/" + iceVariant + "1.png");
+        ICESTAGE2TEXTURE = Identifier.parse("iceandfire:textures/models/icedragon/" + iceVariant + "2.png");
+        ICESTAGE3TEXTURE = Identifier.parse("iceandfire:textures/models/icedragon/" + iceVariant + "3.png");
+        ICESTAGE4TEXTURE = Identifier.parse("iceandfire:textures/models/icedragon/" + iceVariant + "4.png");
+        ICESTAGE5TEXTURE = Identifier.parse("iceandfire:textures/models/icedragon/" + iceVariant + "5.png");
+        ICESTAGE1SLEEPINGTEXTURE = Identifier.parse("iceandfire:textures/models/icedragon/" + iceVariant + "1_sleeping.png");
+        ICESTAGE2SLEEPINGTEXTURE = Identifier.parse("iceandfire:textures/models/icedragon/" + iceVariant + "2_sleeping.png");
+        ICESTAGE3SLEEPINGTEXTURE = Identifier.parse("iceandfire:textures/models/icedragon/" + iceVariant + "3_sleeping.png");
+        ICESTAGE4SLEEPINGTEXTURE = Identifier.parse("iceandfire:textures/models/icedragon/" + iceVariant + "4_sleeping.png");
+        ICESTAGE5SLEEPINGTEXTURE = Identifier.parse("iceandfire:textures/models/icedragon/" + iceVariant + "5_sleeping.png");
+        ICESTAGE1EYESTEXTURE = Identifier.parse("iceandfire:textures/models/icedragon/" + iceVariant + "1_eyes.png");
+        ICESTAGE2EYESTEXTURE = Identifier.parse("iceandfire:textures/models/icedragon/" + iceVariant + "2_eyes.png");
+        ICESTAGE3EYESTEXTURE = Identifier.parse("iceandfire:textures/models/icedragon/" + iceVariant + "3_eyes.png");
+        ICESTAGE4EYESTEXTURE = Identifier.parse("iceandfire:textures/models/icedragon/" + iceVariant + "4_eyes.png");
+        ICESTAGE5EYESTEXTURE = Identifier.parse("iceandfire:textures/models/icedragon/" + iceVariant + "5_eyes.png");
+        ICESTAGE1SKELETONTEXTURE = Identifier.parse("iceandfire:textures/models/icedragon/ice_skeleton_1.png");
+        ICESTAGE2SKELETONTEXTURE = Identifier.parse("iceandfire:textures/models/icedragon/ice_skeleton_2.png");
+        ICESTAGE3SKELETONTEXTURE = Identifier.parse("iceandfire:textures/models/icedragon/ice_skeleton_3.png");
+        ICESTAGE4SKELETONTEXTURE = Identifier.parse("iceandfire:textures/models/icedragon/ice_skeleton_4.png");
+        ICESTAGE5SKELETONTEXTURE = Identifier.parse("iceandfire:textures/models/icedragon/ice_skeleton_5.png");
+        FIRE_MALE_OVERLAY = Identifier.parse("iceandfire:textures/models/firedragon/male_" + fireVariant.substring(0, fireVariant.length() - 1) + ".png");
+        ICE_MALE_OVERLAY = Identifier.parse("iceandfire:textures/models/icedragon/male_" + iceVariant.substring(0, iceVariant.length() - 1) + ".png");
 
-        LIGHTNINGSTAGE1TEXTURE = new ResourceLocation("iceandfire:textures/models/lightningdragon/" + lightningVariant + "1.png");
-        LIGHTNINGSTAGE2TEXTURE = new ResourceLocation("iceandfire:textures/models/lightningdragon/" + lightningVariant + "2.png");
-        LIGHTNINGSTAGE3TEXTURE = new ResourceLocation("iceandfire:textures/models/lightningdragon/" + lightningVariant + "3.png");
-        LIGHTNINGSTAGE4TEXTURE = new ResourceLocation("iceandfire:textures/models/lightningdragon/" + lightningVariant + "4.png");
-        LIGHTNINGSTAGE5TEXTURE = new ResourceLocation("iceandfire:textures/models/lightningdragon/" + lightningVariant + "5.png");
-        LIGHTNINGSTAGE1SLEEPINGTEXTURE = new ResourceLocation("iceandfire:textures/models/lightningdragon/" + lightningVariant + "1_sleeping.png");
-        LIGHTNINGSTAGE2SLEEPINGTEXTURE = new ResourceLocation("iceandfire:textures/models/lightningdragon/" + lightningVariant + "2_sleeping.png");
-        LIGHTNINGSTAGE3SLEEPINGTEXTURE = new ResourceLocation("iceandfire:textures/models/lightningdragon/" + lightningVariant + "3_sleeping.png");
-        LIGHTNINGSTAGE4SLEEPINGTEXTURE = new ResourceLocation("iceandfire:textures/models/lightningdragon/" + lightningVariant + "4_sleeping.png");
-        LIGHTNINGSTAGE5SLEEPINGTEXTURE = new ResourceLocation("iceandfire:textures/models/lightningdragon/" + lightningVariant + "5_sleeping.png");
-        LIGHTNINGSTAGE1EYESTEXTURE = new ResourceLocation("iceandfire:textures/models/lightningdragon/" + lightningVariant + "1_eyes.png");
-        LIGHTNINGSTAGE2EYESTEXTURE = new ResourceLocation("iceandfire:textures/models/lightningdragon/" + lightningVariant + "2_eyes.png");
-        LIGHTNINGSTAGE3EYESTEXTURE = new ResourceLocation("iceandfire:textures/models/lightningdragon/" + lightningVariant + "3_eyes.png");
-        LIGHTNINGSTAGE4EYESTEXTURE = new ResourceLocation("iceandfire:textures/models/lightningdragon/" + lightningVariant + "4_eyes.png");
-        LIGHTNINGSTAGE5EYESTEXTURE = new ResourceLocation("iceandfire:textures/models/lightningdragon/" + lightningVariant + "5_eyes.png");
-        LIGHTNINGSTAGE1SKELETONTEXTURE = new ResourceLocation("iceandfire:textures/models/lightningdragon/lightning_skeleton_1.png");
-        LIGHTNINGSTAGE2SKELETONTEXTURE = new ResourceLocation("iceandfire:textures/models/lightningdragon/lightning_skeleton_2.png");
-        LIGHTNINGSTAGE3SKELETONTEXTURE = new ResourceLocation("iceandfire:textures/models/lightningdragon/lightning_skeleton_3.png");
-        LIGHTNINGSTAGE4SKELETONTEXTURE = new ResourceLocation("iceandfire:textures/models/lightningdragon/lightning_skeleton_4.png");
-        LIGHTNINGSTAGE5SKELETONTEXTURE = new ResourceLocation("iceandfire:textures/models/lightningdragon/lightning_skeleton_5.png");
-        LIGHTNING_MALE_OVERLAY = new ResourceLocation("iceandfire:textures/models/lightningdragon/male_" + lightningVariant.substring(0, lightningVariant.length() - 1) + ".png");
+        LIGHTNINGSTAGE1TEXTURE = Identifier.parse("iceandfire:textures/models/lightningdragon/" + lightningVariant + "1.png");
+        LIGHTNINGSTAGE2TEXTURE = Identifier.parse("iceandfire:textures/models/lightningdragon/" + lightningVariant + "2.png");
+        LIGHTNINGSTAGE3TEXTURE = Identifier.parse("iceandfire:textures/models/lightningdragon/" + lightningVariant + "3.png");
+        LIGHTNINGSTAGE4TEXTURE = Identifier.parse("iceandfire:textures/models/lightningdragon/" + lightningVariant + "4.png");
+        LIGHTNINGSTAGE5TEXTURE = Identifier.parse("iceandfire:textures/models/lightningdragon/" + lightningVariant + "5.png");
+        LIGHTNINGSTAGE1SLEEPINGTEXTURE = Identifier.parse("iceandfire:textures/models/lightningdragon/" + lightningVariant + "1_sleeping.png");
+        LIGHTNINGSTAGE2SLEEPINGTEXTURE = Identifier.parse("iceandfire:textures/models/lightningdragon/" + lightningVariant + "2_sleeping.png");
+        LIGHTNINGSTAGE3SLEEPINGTEXTURE = Identifier.parse("iceandfire:textures/models/lightningdragon/" + lightningVariant + "3_sleeping.png");
+        LIGHTNINGSTAGE4SLEEPINGTEXTURE = Identifier.parse("iceandfire:textures/models/lightningdragon/" + lightningVariant + "4_sleeping.png");
+        LIGHTNINGSTAGE5SLEEPINGTEXTURE = Identifier.parse("iceandfire:textures/models/lightningdragon/" + lightningVariant + "5_sleeping.png");
+        LIGHTNINGSTAGE1EYESTEXTURE = Identifier.parse("iceandfire:textures/models/lightningdragon/" + lightningVariant + "1_eyes.png");
+        LIGHTNINGSTAGE2EYESTEXTURE = Identifier.parse("iceandfire:textures/models/lightningdragon/" + lightningVariant + "2_eyes.png");
+        LIGHTNINGSTAGE3EYESTEXTURE = Identifier.parse("iceandfire:textures/models/lightningdragon/" + lightningVariant + "3_eyes.png");
+        LIGHTNINGSTAGE4EYESTEXTURE = Identifier.parse("iceandfire:textures/models/lightningdragon/" + lightningVariant + "4_eyes.png");
+        LIGHTNINGSTAGE5EYESTEXTURE = Identifier.parse("iceandfire:textures/models/lightningdragon/" + lightningVariant + "5_eyes.png");
+        LIGHTNINGSTAGE1SKELETONTEXTURE = Identifier.parse("iceandfire:textures/models/lightningdragon/lightning_skeleton_1.png");
+        LIGHTNINGSTAGE2SKELETONTEXTURE = Identifier.parse("iceandfire:textures/models/lightningdragon/lightning_skeleton_2.png");
+        LIGHTNINGSTAGE3SKELETONTEXTURE = Identifier.parse("iceandfire:textures/models/lightningdragon/lightning_skeleton_3.png");
+        LIGHTNINGSTAGE4SKELETONTEXTURE = Identifier.parse("iceandfire:textures/models/lightningdragon/lightning_skeleton_4.png");
+        LIGHTNINGSTAGE5SKELETONTEXTURE = Identifier.parse("iceandfire:textures/models/lightningdragon/lightning_skeleton_5.png");
+        LIGHTNING_MALE_OVERLAY = Identifier.parse("iceandfire:textures/models/lightningdragon/male_" + lightningVariant.substring(0, lightningVariant.length() - 1) + ".png");
 
     }
 
 
-    public static ResourceLocation getTextureFromDragon(EntityDragonBase dragon) {
+    public static Identifier getTextureFromDragon(EntityDragonBase dragon) {
         if (dragon instanceof EntityIceDragon) {
             return getIceDragonTextures(dragon);
         } else if (dragon instanceof EntityLightningDragon) {
@@ -159,7 +159,7 @@ public enum EnumDragonTextures {
     }
 
 
-    public static ResourceLocation getEyeTextureFromDragon(EntityDragonBase dragon) {
+    public static Identifier getEyeTextureFromDragon(EntityDragonBase dragon) {
         EnumDragonTextures textures = getDragonEnum(dragon);
         if (dragon instanceof EntityIceDragon) {
             switch (dragon.getDragonStage()) {
@@ -209,7 +209,7 @@ public enum EnumDragonTextures {
         }
     }
 
-    private static ResourceLocation getFireDragonTextures(EntityDragonBase dragon) {
+    private static Identifier getFireDragonTextures(EntityDragonBase dragon) {
         EnumDragonTextures textures = getDragonEnum(dragon);
         if (dragon.isModelDead()) {
             if (dragon.getDeathStage() >= (dragon.getAgeInDays() / 5) / 2) {
@@ -277,7 +277,7 @@ public enum EnumDragonTextures {
         }
     }
 
-    private static ResourceLocation getIceDragonTextures(EntityDragonBase dragon) {
+    private static Identifier getIceDragonTextures(EntityDragonBase dragon) {
         EnumDragonTextures textures = getDragonEnum(dragon);
         if (dragon.isModelDead()) {
             if (dragon.getDeathStage() >= (dragon.getAgeInDays() / 5) / 2) {
@@ -345,7 +345,7 @@ public enum EnumDragonTextures {
         }
     }
 
-    private static ResourceLocation getLightningDragonTextures(EntityDragonBase dragon) {
+    private static Identifier getLightningDragonTextures(EntityDragonBase dragon) {
         EnumDragonTextures textures = getDragonEnum(dragon);
         if (dragon.isModelDead()) {
             if (dragon.getDeathStage() >= (dragon.getAgeInDays() / 5) / 2) {
@@ -427,7 +427,7 @@ public enum EnumDragonTextures {
         }
     }
 
-    public static ResourceLocation getFireDragonSkullTextures(EntityDragonSkull skull) {
+    public static Identifier getFireDragonSkullTextures(EntityDragonSkull skull) {
         switch (skull.getDragonStage()) {
             case 1:
                 return VARIANT1.FIRESTAGE1SKELETONTEXTURE;
@@ -444,7 +444,7 @@ public enum EnumDragonTextures {
         }
     }
 
-    public static ResourceLocation getIceDragonSkullTextures(EntityDragonSkull skull) {
+    public static Identifier getIceDragonSkullTextures(EntityDragonSkull skull) {
         switch (skull.getDragonStage()) {
             case 1:
                 return VARIANT1.ICESTAGE1SKELETONTEXTURE;
@@ -461,7 +461,7 @@ public enum EnumDragonTextures {
         }
     }
 
-    public static ResourceLocation getLightningDragonSkullTextures(EntityDragonSkull skull) {
+    public static Identifier getLightningDragonSkullTextures(EntityDragonSkull skull) {
         switch (skull.getDragonStage()) {
             case 1:
                 return VARIANT1.LIGHTNINGSTAGE1SKELETONTEXTURE;
@@ -513,19 +513,19 @@ public enum EnumDragonTextures {
         ARMORTAIL7("armor_tail_7"),
         ARMORTAIL8("armor_tail_8");
 
-        public final ResourceLocation FIRETEXTURE;
-        public final ResourceLocation ICETEXTURE;
-        public final ResourceLocation LIGHTNINGTEXTURE;
+        public final Identifier FIRETEXTURE;
+        public final Identifier ICETEXTURE;
+        public final Identifier LIGHTNINGTEXTURE;
 
         Armor(String resource) {
             if (!resource.isEmpty()) {
-                FIRETEXTURE = new ResourceLocation("iceandfire:textures/models/firedragon/" + resource + ".png");
-                ICETEXTURE = new ResourceLocation("iceandfire:textures/models/icedragon/" + resource + ".png");
-                LIGHTNINGTEXTURE = new ResourceLocation("iceandfire:textures/models/lightningdragon/" + resource + ".png");
+                FIRETEXTURE = Identifier.parse("iceandfire:textures/models/firedragon/" + resource + ".png");
+                ICETEXTURE = Identifier.parse("iceandfire:textures/models/icedragon/" + resource + ".png");
+                LIGHTNINGTEXTURE = Identifier.parse("iceandfire:textures/models/lightningdragon/" + resource + ".png");
             } else {
-                FIRETEXTURE = new ResourceLocation("iceandfire:textures/models/firedragon/empty.png");
-                ICETEXTURE = new ResourceLocation("iceandfire:textures/models/firedragon/empty.png");
-                LIGHTNINGTEXTURE = new ResourceLocation("iceandfire:textures/models/firedragon/empty.png");
+                FIRETEXTURE = Identifier.parse("iceandfire:textures/models/firedragon/empty.png");
+                ICETEXTURE = Identifier.parse("iceandfire:textures/models/firedragon/empty.png");
+                LIGHTNINGTEXTURE = Identifier.parse("iceandfire:textures/models/firedragon/empty.png");
             }
         }
 

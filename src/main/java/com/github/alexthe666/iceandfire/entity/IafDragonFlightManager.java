@@ -12,7 +12,7 @@ import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
-import net.minecraft.world.level.pathfinder.BlockPathTypes;
+import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.level.pathfinder.NodeEvaluator;
 import net.minecraft.world.phys.Vec3;
 
@@ -80,7 +80,7 @@ public class IafDragonFlightManager {
                 }
             }
 
-        } else if (target == null || dragon.distanceToSqr(target.x, target.y, target.z) < 4 || !dragon.level.isEmptyBlock(new BlockPos(target)) && (dragon.isHovering() || dragon.isFlying()) || dragon.getCommand() == 2 && dragon.shouldTPtoOwner()) {
+        } else if (target == null || dragon.distanceToSqr(target.x, target.y, target.z) < 4 || !dragon.level().isEmptyBlock(BlockPos.containing(target)) && (dragon.isHovering() || dragon.isFlying()) || dragon.getCommand() == 2 && dragon.shouldTPtoOwner()) {
             BlockPos viewBlock = null;
 
             if (dragon instanceof EntityIceDragon && dragon.isInWater()) {
@@ -93,11 +93,11 @@ public class IafDragonFlightManager {
                     viewBlock = DragonUtils.getBlockInViewEscort(dragon);
                 }
             } else if (dragon.lookingForRoostAIFlag) {
-                double xDist = Math.abs(dragon.getX() - dragon.getRestrictCenter().getX() - 0.5F);
-                double zDist = Math.abs(dragon.getZ() - dragon.getRestrictCenter().getZ() - 0.5F);
+                double xDist = Math.abs(dragon.getX() - dragon.getHomePosition().getX() - 0.5F);
+                double zDist = Math.abs(dragon.getZ() - dragon.getHomePosition().getZ() - 0.5F);
                 double xzDist = Math.sqrt(xDist * xDist + zDist * zDist);
-                BlockPos upPos = dragon.getRestrictCenter();
-                if (dragon.getDistanceSquared(Vec3.atCenterOf(dragon.getRestrictCenter())) > 200) {
+                BlockPos upPos = dragon.getHomePosition();
+                if (dragon.getDistanceSquared(Vec3.atCenterOf(dragon.getHomePosition())) > 200) {
                     upPos = upPos.above(30);
                 }
                 viewBlock = upPos;
@@ -184,7 +184,7 @@ public class IafDragonFlightManager {
                 PathNavigation pathnavigate = this.mob.getNavigation();
                 if (pathnavigate != null) {
                     NodeEvaluator nodeprocessor = pathnavigate.getNodeEvaluator();
-                    if (nodeprocessor != null && nodeprocessor.getBlockPathType(this.mob.level, Mth.floor(this.mob.getX() + (double) f7), Mth.floor(this.mob.getY()), Mth.floor(this.mob.getZ() + (double) f8)) != BlockPathTypes.WALKABLE) {
+                    if (nodeprocessor != null && nodeprocessor.getPathType(this.mob, BlockPos.containing(this.mob.getX() + (double) f7, this.mob.getY(), this.mob.getZ() + (double) f8)) != PathType.WALKABLE) {
                         this.strafeForwards = 1.0F;
                         this.strafeRight = 0.0F;
                         f1 = f;
@@ -214,14 +214,14 @@ public class IafDragonFlightManager {
                 }
                 this.mob.setYRot(this.rotlerp(this.mob.getYRot(), targetDegree, changeRange));
                 this.mob.setSpeed((float) (this.speedModifier * this.mob.getAttributeValue(Attributes.MOVEMENT_SPEED)));
-                if (d2 > (double) this.mob.maxUpStep && d0 * d0 + d1 * d1 < (double) Math.max(1.0F, this.mob.getBbWidth() / 2)) {
+                if (d2 > (double) this.mob.maxUpStep() && d0 * d0 + d1 * d1 < (double) Math.max(1.0F, this.mob.getBbWidth() / 2)) {
                     this.mob.getJumpControl().jump();
                     this.operation = Operation.JUMPING;
                 }
             } else if (this.operation == Operation.JUMPING) {
                 this.mob.setSpeed((float) (this.speedModifier * this.mob.getAttributeValue(Attributes.MOVEMENT_SPEED)));
 
-                if (this.mob.isOnGround()) {
+                if (this.mob.onGround()) {
                     this.operation = Operation.WAIT;
                 }
             } else {

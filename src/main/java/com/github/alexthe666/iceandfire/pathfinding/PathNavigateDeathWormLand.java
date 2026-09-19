@@ -1,5 +1,6 @@
 package com.github.alexthe666.iceandfire.pathfinding;
 
+import com.github.alexthe666.iceandfire.block.IafMaterials;
 import com.github.alexthe666.iceandfire.entity.EntityDeathWorm;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
@@ -8,7 +9,6 @@ import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.Material;
 import net.minecraft.world.level.pathfinder.*;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +37,12 @@ public class PathNavigateDeathWormLand extends PathNavigation {
      */
     @Override
     protected boolean canUpdatePath() {
-        return this.mob.isOnGround() || this.worm.isInSand() || this.mob.isPassenger();
+        return this.mob.onGround() || this.worm.isInSand() || this.mob.isPassenger();
+    }
+
+    @Override
+    public boolean canNavigateGround() {
+        return true;
     }
 
     @Override
@@ -50,29 +55,29 @@ public class PathNavigateDeathWormLand extends PathNavigation {
      */
     @Override
     public Path createPath(@NotNull BlockPos pos, int i) {
-        if (this.level.getBlockState(pos).getMaterial() == Material.AIR) {
+        if (IafMaterials.isAir(this.level.getBlockState(pos))) {
             BlockPos blockpos;
 
-            for (blockpos = pos.below(); blockpos.getY() > 0 && this.level.getBlockState(blockpos).getMaterial() == Material.AIR; blockpos = blockpos.below()) {
+            for (blockpos = pos.below(); blockpos.getY() > 0 && IafMaterials.isAir(this.level.getBlockState(blockpos)); blockpos = blockpos.below()) {
             }
 
             if (blockpos.getY() > 0) {
                 return super.createPath(blockpos.above(), i);
             }
 
-            while (blockpos.getY() < this.level.getMaxBuildHeight() && this.level.getBlockState(blockpos).getMaterial() == Material.AIR) {
+            while (blockpos.getY() < this.level.getMaxY() + 1 && IafMaterials.isAir(this.level.getBlockState(blockpos))) {
                 blockpos = blockpos.above();
             }
 
             pos = blockpos;
         }
 
-        if (!this.level.getBlockState(pos).getMaterial().isSolid()) {
+        if (!IafMaterials.isSolid(this.level.getBlockState(pos))) {
             return super.createPath(pos, i);
         } else {
             BlockPos blockpos1;
 
-            for (blockpos1 = pos.above(); blockpos1.getY() < this.level.getMaxBuildHeight() && this.level.getBlockState(blockpos1).getMaterial().isSolid(); blockpos1 = blockpos1.above()) {
+            for (blockpos1 = pos.above(); blockpos1.getY() < this.level.getMaxY() + 1 && IafMaterials.isSolid(this.level.getBlockState(blockpos1)); blockpos1 = blockpos1.above()) {
             }
 
             return super.createPath(blockpos1, i);
@@ -93,12 +98,12 @@ public class PathNavigateDeathWormLand extends PathNavigation {
     private int getPathablePosY() {
         if (this.worm.isInSand()) {
             int i = (int) this.mob.getBoundingBox().minY;
-            BlockState blockstate = this.level.getBlockState(new BlockPos(Mth.floor(this.mob.getX()), i, Mth.floor(this.mob.getZ())));
+            BlockState blockstate = this.level.getBlockState(BlockPos.containing(Mth.floor(this.mob.getX()), i, Mth.floor(this.mob.getZ())));
             int j = 0;
 
-            while (blockstate.getMaterial() == Material.SAND) {
+            while (IafMaterials.isSand(blockstate)) {
                 ++i;
-                blockstate = this.level.getBlockState(new BlockPos(Mth.floor(this.mob.getX()), i, Mth.floor(this.mob.getZ())));
+                blockstate = this.level.getBlockState(BlockPos.containing(Mth.floor(this.mob.getX()), i, Mth.floor(this.mob.getZ())));
                 ++j;
 
                 if (j > 16) {
@@ -115,7 +120,7 @@ public class PathNavigateDeathWormLand extends PathNavigation {
     protected void removeSunnyPath() {
 
         if (this.shouldAvoidSun) {
-            if (this.level.canSeeSky(new BlockPos(Mth.floor(this.mob.getX()), (int) (this.mob.getBoundingBox().minY + 0.5D), Mth.floor(this.mob.getZ())))) {
+            if (this.level.canSeeSky(BlockPos.containing(Mth.floor(this.mob.getX()), (int) (this.mob.getBoundingBox().minY + 0.5D), Mth.floor(this.mob.getZ())))) {
                 return;
             }
 
@@ -213,19 +218,19 @@ public class PathNavigateDeathWormLand extends PathNavigation {
                     double d1 = (double) l + 0.5D - vec31.z;
 
                     if (d0 * p_179683_8_ + d1 * p_179683_10_ >= 0.0D) {
-                        BlockPathTypes pathnodetype = this.nodeEvaluator.getBlockPathType(this.level, k, y - 1, l, this.mob, sizeX, sizeY, sizeZ, true, true);
-                        if (pathnodetype == BlockPathTypes.LAVA) {
+                        PathType pathnodetype = this.nodeEvaluator.getPathType(this.mob, new BlockPos(k, y - 1, l));
+                        if (pathnodetype == PathType.LAVA) {
                             return false;
                         }
 
-                        pathnodetype = this.nodeEvaluator.getBlockPathType(this.level, k, y, l, this.mob, sizeX, sizeY, sizeZ, true, true);
+                        pathnodetype = this.nodeEvaluator.getPathType(this.mob, new BlockPos(k, y, l));
                         float f = this.mob.getPathfindingMalus(pathnodetype);
 
                         if (f < 0.0F || f >= 8.0F) {
                             return false;
                         }
 
-                        if (pathnodetype == BlockPathTypes.DAMAGE_FIRE || pathnodetype == BlockPathTypes.DANGER_FIRE || pathnodetype == BlockPathTypes.DAMAGE_OTHER) {
+                        if (pathnodetype == PathType.FIRE || pathnodetype == PathType.FIRE_IN_NEIGHBOR || pathnodetype == PathType.DAMAGING) {
                             return false;
                         }
                     }
@@ -247,7 +252,7 @@ public class PathNavigateDeathWormLand extends PathNavigation {
             if (d0 * p_179692_8_ + d1 * p_179692_10_ >= 0.0D) {
                 Block block = this.level.getBlockState(blockpos).getBlock();
 
-                if (this.level.getBlockState(blockpos).getMaterial().blocksMotion() || this.level.getBlockState(blockpos).getMaterial() == Material.SAND) {
+                if (IafMaterials.blocksMotion(this.level.getBlockState(blockpos)) || IafMaterials.isSand(this.level.getBlockState(blockpos))) {
                     return false;
                 }
             }

@@ -3,17 +3,11 @@ package com.github.alexthe666.iceandfire.client.model;
 import com.github.alexthe666.citadel.animation.Animation;
 import com.github.alexthe666.citadel.client.model.ModelAnimator;
 import com.github.alexthe666.iceandfire.client.model.util.HideableModelRenderer;
-import com.github.alexthe666.iceandfire.entity.EntityDreadLich;
-import com.github.alexthe666.iceandfire.entity.EntityDreadThrall;
-import net.minecraft.client.model.ArmedModel;
+import com.github.alexthe666.iceandfire.client.render.entity.DreadHumanoidRenderState;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.util.Mth;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.HumanoidArm;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 
-public class ModelDreadLich extends ModelDreadBase<EntityDreadLich> implements ArmedModel {
+public class ModelDreadLich extends ModelDreadBase {
     public HideableModelRenderer robe;
     public HideableModelRenderer mask;
     public HideableModelRenderer hood;
@@ -88,35 +82,21 @@ public class ModelDreadLich extends ModelDreadBase<EntityDreadLich> implements A
         animator = ModelAnimator.create();
     }
 
-    public void setLivingAnimations(EntityDreadThrall LivingEntityIn, float limbSwing, float limbSwingAmount, float partialTickTime) {
-        this.rightArmPose = HumanoidModel.ArmPose.EMPTY;
-        this.leftArmPose = HumanoidModel.ArmPose.EMPTY;
-        ItemStack itemstack = LivingEntityIn.getItemInHand(InteractionHand.MAIN_HAND);
-
-        if (itemstack.getItem() == Items.BOW) {
-            if (LivingEntityIn.getMainArm() == HumanoidArm.RIGHT) {
-                this.rightArmPose = HumanoidModel.ArmPose.BOW_AND_ARROW;
-            } else {
-                this.leftArmPose = HumanoidModel.ArmPose.BOW_AND_ARROW;
-            }
-        }
-    }
-
     @Override
     public Animation getSpawnAnimation() {
-        return EntityDreadLich.ANIMATION_SPAWN;
+        return DreadHumanoidRenderState.SPAWN;
     }
 
     @Override
-    public void setupAnim(EntityDreadLich entityIn, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
-        super.setupAnim(entityIn, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch);
-        if (entityIn.getAnimation() == EntityDreadLich.ANIMATION_SUMMON) {
+    public void setupAnim(DreadHumanoidRenderState state) {
+        super.setupAnim(state);
+        if (state.animation == DreadHumanoidRenderState.SUMMON) {
             this.armRight.rotationPointZ = 0.0F;
             this.armRight.rotationPointX = -5.0F;
             this.armLeft.rotationPointZ = 0.0F;
             this.armLeft.rotationPointX = 5.0F;
-            this.armRight.rotateAngleX = Mth.cos(ageInTicks * 0.6662F) * 0.25F;
-            this.armLeft.rotateAngleX = Mth.cos(ageInTicks * 0.6662F) * 0.25F;
+            this.armRight.rotateAngleX = Mth.cos(state.ageInTicks * 0.6662F) * 0.25F;
+            this.armLeft.rotateAngleX = Mth.cos(state.ageInTicks * 0.6662F) * 0.25F;
             this.armRight.rotateAngleZ = 2.3561945F;
             this.armLeft.rotateAngleZ = -2.3561945F;
             this.armRight.rotateAngleY = 0.0F;

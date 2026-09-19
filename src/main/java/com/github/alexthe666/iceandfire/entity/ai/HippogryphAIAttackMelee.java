@@ -27,7 +27,7 @@ public class HippogryphAIAttackMelee extends Goal {
 
     public HippogryphAIAttackMelee(Mob creature, double speedIn, boolean useLongMemory) {
         this.attacker = creature;
-        this.world = creature.level;
+        this.world = creature.level();
         this.speedTowardsTarget = speedIn;
         this.longMemory = useLongMemory;
         this.setFlags(EnumSet.of(Flag.TARGET, Flag.MOVE));
@@ -77,7 +77,7 @@ public class HippogryphAIAttackMelee extends Goal {
             return false;
         } else if (!this.longMemory) {
             return !this.attacker.getNavigation().isDone();
-        } else if (!this.attacker.isWithinRestriction(LivingEntity.blockPosition())) {
+        } else if (!this.attacker.isWithinHome(LivingEntity.blockPosition())) {
             return false;
         } else {
             return !(LivingEntity instanceof Player) || !LivingEntity.isSpectator() && !((Player) LivingEntity).isCreative();
@@ -159,7 +159,9 @@ public class HippogryphAIAttackMelee extends Goal {
         if (distToEnemySqr <= d0) {
             this.attackTick = 20;
             this.attacker.swing(InteractionHand.MAIN_HAND);
-            this.attacker.doHurtTarget(enemy);
+            if (this.attacker.level() instanceof net.minecraft.server.level.ServerLevel _iafSl) {
+                this.attacker.doHurtTarget(_iafSl, enemy);
+            }
         }
     }
 

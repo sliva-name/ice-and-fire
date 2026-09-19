@@ -5,10 +5,8 @@ import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
-import java.util.function.Supplier;
 
 public class MessageDaytime {
 
@@ -36,14 +34,14 @@ public class MessageDaytime {
         public Handler() {
         }
 
-        public static void handle(MessageDaytime message, Supplier<NetworkEvent.Context> context) {
-            context.get().setPacketHandled(true);
-            Player player = context.get().getSender();
-            if(context.get().getDirection().getReceptionSide() == LogicalSide.CLIENT){
+        public static void handle(MessageDaytime message, CustomPayloadEvent.Context context) {
+            context.setPacketHandled(true);
+            Player player = context.getSender();
+            if(context.isClientSide()){
                 player = IceAndFire.PROXY.getClientSidePlayer();
             }
             if (player != null) {
-                Entity entity = player.level.getEntity(message.dragonId);
+                Entity entity = player.level().getEntity(message.dragonId);
                 if (entity instanceof EntityDragonBase) {
                     EntityDragonBase dragon = (EntityDragonBase) entity;
                     dragon.isDaytime = message.isDay;

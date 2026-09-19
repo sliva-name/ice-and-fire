@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "TTT",
+    "SDS",
+    " B "
+  ],
+  "key": {
+    "S": "#forge:scales/sea_serpent",
+    "T": "iceandfire:sea_serpent_fang",
+    "B": "iceandfire:dragonbone",
+    "D": "#forge:gems/diamond"
+  },
+  "result": {
+    "id": "iceandfire:tide_trident"
+  }
+}

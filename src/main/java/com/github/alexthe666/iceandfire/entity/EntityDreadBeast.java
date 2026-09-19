@@ -1,5 +1,9 @@
 package com.github.alexthe666.iceandfire.entity;
 
+import net.minecraft.server.level.ServerLevel;
+
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
 import com.github.alexthe666.citadel.animation.Animation;
 import com.github.alexthe666.citadel.animation.AnimationHandler;
 import com.github.alexthe666.citadel.animation.IAnimatedEntity;
@@ -60,18 +64,8 @@ public class EntityDreadBeast extends EntityDreadMob implements IAnimatedEntity,
         this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(7, new RandomLookAroundGoal(this));
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this, IDreadMob.class));
-        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false, new Predicate<LivingEntity>() {
-            @Override
-            public boolean apply(@Nullable LivingEntity entity) {
-                return DragonUtils.canHostilesTarget(entity);
-            }
-        }));
-        this.targetSelector.addGoal(3, new DreadAITargetNonDread(this, LivingEntity.class, false, new Predicate<LivingEntity>() {
-            @Override
-            public boolean apply(LivingEntity entity) {
-                return entity instanceof LivingEntity && DragonUtils.canHostilesTarget(entity);
-            }
-        }));
+        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false, (entity, serverLevel) -> DragonUtils.canHostilesTarget(entity)));
+        this.targetSelector.addGoal(3, new DreadAITargetNonDread(this, LivingEntity.class, false, (entity, serverLevel) -> DragonUtils.canHostilesTarget(entity)));
     }
 
     public static AttributeSupplier.Builder bakeAttributes() {
@@ -89,14 +83,14 @@ public class EntityDreadBeast extends EntityDreadMob implements IAnimatedEntity,
     }
 
     @Override
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(VARIANT, 0);
-        this.entityData.define(SCALE, 1F);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(VARIANT, 0);
+        builder.define(SCALE, 1F);
     }
 
     @Override
-    public float getScale() {
+    public float getAgeScale() {
         return getSize();
     }
 
@@ -109,7 +103,7 @@ public class EntityDreadBeast extends EntityDreadMob implements IAnimatedEntity,
     }
 
     @Override
-    public boolean doHurtTarget(@NotNull Entity entityIn) {
+    public boolean doHurtTarget(@NotNull ServerLevel level, @NotNull Entity entityIn) {
         if (this.getAnimation() == NO_ANIMATION) {
             this.setAnimation(ANIMATION_BITE);
         }
@@ -124,10 +118,10 @@ public class EntityDreadBeast extends EntityDreadMob implements IAnimatedEntity,
             firstHeight = INITIAL_HEIGHT * getSize();
         }
         if (this.getAnimation() == ANIMATION_SPAWN && this.getAnimationTick() < 30) {
-            BlockState belowBlock = level.getBlockState(this.blockPosition().below());
+            BlockState belowBlock = this.level().getBlockState(this.blockPosition().below());
             if (belowBlock.getBlock() != Blocks.AIR) {
                 for (int i = 0; i < 5; i++) {
-                    this.level.addParticle(new BlockParticleOption(ParticleTypes.BLOCK, belowBlock), this.getX() + (double) (this.random.nextFloat() * this.getBbWidth() * 2.0F) - (double) this.getBbWidth(), this.getBoundingBox().minY, this.getZ() + (double) (this.random.nextFloat() * this.getBbWidth() * 2.0F) - (double) this.getBbWidth(), this.random.nextGaussian() * 0.02D, this.random.nextGaussian() * 0.02D, this.random.nextGaussian() * 0.02D);
+                    this.level().addParticle(new BlockParticleOption(ParticleTypes.BLOCK, belowBlock), this.getX() + (double) (this.random.nextFloat() * this.getBbWidth() * 2.0F) - (double) this.getBbWidth(), this.getBoundingBox().minY, this.getZ() + (double) (this.random.nextFloat() * this.getBbWidth() * 2.0F) - (double) this.getBbWidth(), this.random.nextGaussian() * 0.02D, this.random.nextGaussian() * 0.02D, this.random.nextGaussian() * 0.02D);
                 }
             }
             this.setDeltaMovement(0, this.getDeltaMovement().y, 0);
@@ -138,7 +132,7 @@ public class EntityDreadBeast extends EntityDreadMob implements IAnimatedEntity,
             }
             this.lookAt(this.getTarget(), 360, 80);
             if (this.getAnimation() == ANIMATION_BITE && this.getAnimationTick() == 6) {
-                this.getTarget().hurt(DamageSource.mobAttack(this), (float) this.getAttribute(Attributes.ATTACK_DAMAGE).getValue());
+                this.getTarget().hurt(this.damageSources().mobAttack(this), (float) this.getAttribute(Attributes.ATTACK_DAMAGE).getValue());
                 // After calling hurt the target can become null due to forge hooks
                 if (this.getTarget() != null)
                     this.getTarget().knockback(0.25F, this.getX() - this.getTarget().getX(), this.getZ() - this.getTarget().getZ());
@@ -149,17 +143,17 @@ public class EntityDreadBeast extends EntityDreadMob implements IAnimatedEntity,
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag compound) {
+    public void addAdditionalSaveData(ValueOutput compound) {
         super.addAdditionalSaveData(compound);
         compound.putInt("Variant", this.getVariant());
         compound.putFloat("DreadScale", this.getSize());
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag compound) {
+    public void readAdditionalSaveData(ValueInput compound) {
         super.readAdditionalSaveData(compound);
-        this.setVariant(compound.getInt("Variant"));
-        this.setSize(compound.getFloat("DreadScale"));
+        this.setVariant(compound.getIntOr("Variant", 0));
+        this.setSize(compound.getFloatOr("DreadScale", 0.0F));
     }
 
     public int getVariant() {
@@ -172,8 +166,8 @@ public class EntityDreadBeast extends EntityDreadMob implements IAnimatedEntity,
 
     @Override
     @Nullable
-    public SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor worldIn, @NotNull DifficultyInstance difficultyIn, @NotNull MobSpawnType reason, @Nullable SpawnGroupData spawnDataIn, @Nullable CompoundTag dataTag) {
-        SpawnGroupData data = super.finalizeSpawn(worldIn, difficultyIn, reason, spawnDataIn, dataTag);
+    public SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor worldIn, @NotNull DifficultyInstance difficultyIn, @NotNull EntitySpawnReason reason, @Nullable SpawnGroupData spawnDataIn) {
+        SpawnGroupData data = super.finalizeSpawn(worldIn, difficultyIn, reason, spawnDataIn);
         this.setAnimation(ANIMATION_SPAWN);
         this.setVariant(random.nextInt(2));
         this.setSize(0.85F + random.nextFloat() * 0.5F);
@@ -220,8 +214,7 @@ public class EntityDreadBeast extends EntityDreadMob implements IAnimatedEntity,
         return null;
     }
 
-    @Override
-    public boolean isAlliedTo(Entity entityIn) {
+    public boolean iafIsAlliedTo(@NotNull Entity entityIn) {
         return entityIn instanceof IDreadMob || super.isAlliedTo(entityIn);
     }
 
@@ -229,19 +222,19 @@ public class EntityDreadBeast extends EntityDreadMob implements IAnimatedEntity,
     @Override
     @Nullable
     protected SoundEvent getAmbientSound() {
-        return SoundEvents.WOLF_GROWL;
+        return SoundEvents.WOLF_GROWL_BABY.value();
     }
 
     @Override
     @Nullable
     protected SoundEvent getHurtSound(@NotNull DamageSource source) {
-        return SoundEvents.WOLF_HURT;
+        return SoundEvents.WOLF_HURT_BABY.value();
     }
 
     @Override
     @Nullable
     protected SoundEvent getDeathSound() {
-        return SoundEvents.WOLF_DEATH;
+        return SoundEvents.WOLF_DEATH_BABY.value();
     }
 
     @Override

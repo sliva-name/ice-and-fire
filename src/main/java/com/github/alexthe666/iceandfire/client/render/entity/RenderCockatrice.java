@@ -1,94 +1,129 @@
 package com.github.alexthe666.iceandfire.client.render.entity;
 
-import com.github.alexthe666.citadel.client.model.AdvancedEntityModel;
 import com.github.alexthe666.iceandfire.client.model.ModelCockatrice;
 import com.github.alexthe666.iceandfire.client.model.ModelCockatriceChick;
 import com.github.alexthe666.iceandfire.client.particle.CockatriceBeamRender;
+import com.github.alexthe666.iceandfire.client.render.entity.CockatriceRenderState.AnimationKind;
 import com.github.alexthe666.iceandfire.entity.EntityCockatrice;
 import com.github.alexthe666.iceandfire.entity.EntityGorgon;
 import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import org.jetbrains.annotations.NotNull;
 
-public class RenderCockatrice extends MobRenderer<EntityCockatrice, AdvancedEntityModel<EntityCockatrice>> {
+public class RenderCockatrice extends MobRenderer<EntityCockatrice, CockatriceRenderState, EntityModel<CockatriceRenderState>> {
 
-    public static final ResourceLocation TEXTURE_ROOSTER = new ResourceLocation("iceandfire:textures/models/cockatrice/cockatrice_0.png");
-    public static final ResourceLocation TEXTURE_HEN = new ResourceLocation("iceandfire:textures/models/cockatrice/cockatrice_1.png");
-    public static final ResourceLocation TEXTURE_ROOSTER_CHICK = new ResourceLocation("iceandfire:textures/models/cockatrice/cockatrice_0_chick.png");
-    public static final ResourceLocation TEXTURE_HEN_CHICK = new ResourceLocation("iceandfire:textures/models/cockatrice/cockatrice_1_chick.png");
-    public static final ModelCockatrice ADULT_MODEL = new ModelCockatrice();
-    public static final ModelCockatriceChick BABY_MODEL = new ModelCockatriceChick();
+    public static final Identifier TEXTURE_ROOSTER = Identifier.fromNamespaceAndPath("iceandfire", "textures/models/cockatrice/cockatrice_0.png");
+    public static final Identifier TEXTURE_HEN = Identifier.fromNamespaceAndPath("iceandfire", "textures/models/cockatrice/cockatrice_1.png");
+    public static final Identifier TEXTURE_ROOSTER_CHICK = Identifier.fromNamespaceAndPath("iceandfire", "textures/models/cockatrice/cockatrice_0_chick.png");
+    public static final Identifier TEXTURE_HEN_CHICK = Identifier.fromNamespaceAndPath("iceandfire", "textures/models/cockatrice/cockatrice_1_chick.png");
+    private final EntityModel<CockatriceRenderState> adultModel;
+    private final EntityModel<CockatriceRenderState> babyModel = new ModelCockatriceChick().asEntityModel();
 
     public RenderCockatrice(EntityRendererProvider.Context context) {
-        super(context, new ModelCockatrice(), 0.6F);
-    }
-
-
-    private Vec3 getPosition(LivingEntity LivingEntityIn, double p_177110_2_, float p_177110_4_) {
-        double d0 = LivingEntityIn.xOld + (LivingEntityIn.getX() - LivingEntityIn.xOld) * (double) p_177110_4_;
-        double d1 = p_177110_2_ + LivingEntityIn.yOld + (LivingEntityIn.getY() - LivingEntityIn.yOld) * (double) p_177110_4_;
-        double d2 = LivingEntityIn.zOld + (LivingEntityIn.getZ() - LivingEntityIn.zOld) * (double) p_177110_4_;
-        return new Vec3(d0, d1, d2);
+        super(context, new ModelCockatrice().asEntityModel(), 0.6F);
+        adultModel = model;
     }
 
     @Override
-    public boolean shouldRender(@NotNull EntityCockatrice livingEntityIn, @NotNull Frustum camera, double camX, double camY, double camZ) {
-        if (super.shouldRender(livingEntityIn, camera, camX, camY, camZ)) {
+    public CockatriceRenderState createRenderState() {
+        return new CockatriceRenderState();
+    }
+
+    @Override
+    public void extractRenderState(EntityCockatrice entity, CockatriceRenderState state, float partialTick) {
+        super.extractRenderState(entity, state, partialTick);
+        state.partialTick = partialTick;
+        state.animationTick = entity.getAnimationTick();
+        var animation = entity.getAnimation();
+        state.animation = animation == EntityCockatrice.ANIMATION_JUMPAT ? AnimationKind.JUMPAT
+            : animation == EntityCockatrice.ANIMATION_WATTLESHAKE ? AnimationKind.WATTLESHAKE
+            : animation == EntityCockatrice.ANIMATION_BITE ? AnimationKind.BITE
+            : animation == EntityCockatrice.ANIMATION_SPEAK ? AnimationKind.SPEAK
+            : animation == EntityCockatrice.ANIMATION_EAT ? AnimationKind.EAT : AnimationKind.NONE;
+        state.sitProgress = entity.sitProgress;
+        state.stareProgress = entity.stareProgress;
+        state.isBaby = entity.isBaby();
+        state.hen = entity.isHen();
+        state.hasTargetedEntity = entity.hasTargetedEntity();
+        state.attackAnimationScale = entity.getAttackAnimationScale(partialTick);
+        state.beamTime = (float) entity.level().getGameTime() + partialTick;
+        state.tickCount = entity.tickCount;
+        // Use the current eye height, as the original beam did, even in a sleeping pose.
+        state.eyeHeight = entity.getEyeHeight();
+
+        LivingEntity target = entity.getTargetedEntity();
+        state.blinded = entity.hasEffect(MobEffects.BLINDNESS)
+            || target != null && target.hasEffect(MobEffects.BLINDNESS);
+        state.mutuallyLooking = !state.blinded && target != null
+            && EntityGorgon.isEntityLookingAt(entity, target, EntityCockatrice.VIEW_RADIUS)
+            && EntityGorgon.isEntityLookingAt(target, entity, EntityCockatrice.VIEW_RADIUS);
+        state.beamTarget = null;
+        if (target != null) {
+            // Snapshot only beam inputs, avoiding recursive extraction when two mobs target each other.
+            EntityRenderState targetState = new EntityRenderState();
+            Vec3 position = getPosition(target, 0.0D, partialTick);
+            targetState.x = position.x;
+            targetState.y = position.y;
+            targetState.z = position.z;
+            targetState.boundingBoxHeight = target.getBbHeight();
+            state.beamTarget = targetState;
+        }
+    }
+
+    private static Vec3 getPosition(LivingEntity entity, double yOffset, float partialTick) {
+        double x = entity.xOld + (entity.getX() - entity.xOld) * (double) partialTick;
+        double y = yOffset + entity.yOld + (entity.getY() - entity.yOld) * (double) partialTick;
+        double z = entity.zOld + (entity.getZ() - entity.zOld) * (double) partialTick;
+        return new Vec3(x, y, z);
+    }
+
+    @Override
+    public boolean shouldRender(EntityCockatrice entity, Frustum camera, double camX, double camY, double camZ) {
+        if (super.shouldRender(entity, camera, camX, camY, camZ)) {
             return true;
-        } else {
-            if (livingEntityIn.hasTargetedEntity()) {
-                LivingEntity livingentity = livingEntityIn.getTargetedEntity();
-                if (livingentity != null) {
-                    Vec3 Vector3d = this.getPosition(livingentity, (double) livingentity.getBbHeight() * 0.5D, 1.0F);
-                    Vec3 Vector3d1 = this.getPosition(livingEntityIn, livingEntityIn.getEyeHeight(), 1.0F);
-                    return camera.isVisible(new AABB(Vector3d1.x, Vector3d1.y, Vector3d1.z, Vector3d.x, Vector3d.y, Vector3d.z));
-                }
-            }
-
-            return false;
         }
-    }
-
-    @Override
-    public void render(EntityCockatrice entityIn, float entityYaw, float partialTicks, @NotNull PoseStack matrixStackIn, @NotNull MultiBufferSource bufferIn, int packedLightIn) {
-        if (entityIn.isBaby()) {
-            model = BABY_MODEL;
-        } else {
-            model = ADULT_MODEL;
-        }
-        super.render(entityIn, entityYaw, partialTicks, matrixStackIn, bufferIn, packedLightIn);
-        LivingEntity livingentity = entityIn.getTargetedEntity();
-        boolean blindness = entityIn.hasEffect(MobEffects.BLINDNESS) || livingentity != null && livingentity.hasEffect(MobEffects.BLINDNESS);
-        if (!blindness && livingentity != null && EntityGorgon.isEntityLookingAt(entityIn, livingentity, EntityCockatrice.VIEW_RADIUS) && EntityGorgon.isEntityLookingAt(livingentity, entityIn, EntityCockatrice.VIEW_RADIUS)) {
-            if (livingentity != null) {
-                CockatriceBeamRender.render(entityIn, livingentity, matrixStackIn, bufferIn, partialTicks);
+        if (entity.hasTargetedEntity()) {
+            LivingEntity target = entity.getTargetedEntity();
+            if (target != null) {
+                Vec3 end = getPosition(target, (double) target.getBbHeight() * 0.5D, 1.0F);
+                Vec3 start = getPosition(entity, entity.getEyeHeight(), 1.0F);
+                return camera.isVisible(new AABB(start.x, start.y, start.z, end.x, end.y, end.z));
             }
         }
-
+        return false;
     }
 
     @Override
-    protected void scale(EntityCockatrice entity, @NotNull PoseStack matrixStackIn, float partialTickTime) {
-        if (entity.isBaby()) {
-            matrixStackIn.scale(0.5F, 0.5F, 0.5F);
+    public void submit(CockatriceRenderState state, PoseStack poseStack, SubmitNodeCollector collector, CameraRenderState camera) {
+        model = state.isBaby ? babyModel : adultModel;
+        super.submit(state, poseStack, collector, camera);
+        if (!state.blinded && state.mutuallyLooking && state.beamTarget != null) {
+            CockatriceBeamRender.render(state, state.beamTarget, poseStack, collector);
         }
     }
 
     @Override
-    public @NotNull ResourceLocation getTextureLocation(EntityCockatrice cockatrice) {
-        if (cockatrice.isBaby()) {
-            return cockatrice.isHen() ? TEXTURE_HEN_CHICK : TEXTURE_ROOSTER_CHICK;
-        } else {
-            return cockatrice.isHen() ? TEXTURE_HEN : TEXTURE_ROOSTER;
+    protected void scale(CockatriceRenderState state, PoseStack poseStack) {
+        if (state.isBaby) {
+            poseStack.scale(0.5F, 0.5F, 0.5F);
         }
     }
 
+    @Override
+    public Identifier getTextureLocation(CockatriceRenderState state) {
+        if (state.isBaby) {
+            return state.hen ? TEXTURE_HEN_CHICK : TEXTURE_ROOSTER_CHICK;
+        }
+        return state.hen ? TEXTURE_HEN : TEXTURE_ROOSTER;
+    }
 }

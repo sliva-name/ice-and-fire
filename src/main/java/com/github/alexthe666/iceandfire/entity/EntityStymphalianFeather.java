@@ -1,8 +1,9 @@
 package com.github.alexthe666.iceandfire.entity;
 
+import com.github.alexthe666.iceandfire.entity.util.IafDrops;
+
 import com.github.alexthe666.iceandfire.IafConfig;
 import com.github.alexthe666.iceandfire.item.IafItemRegistry;
-import net.minecraft.network.protocol.Packet;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
@@ -11,13 +12,11 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.projectile.AbstractArrow;
+import net.minecraft.world.entity.projectile.arrow.AbstractArrow;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.EntityHitResult;
-import net.minecraftforge.common.ToolActions;
-import net.minecraftforge.network.NetworkHooks;
-import net.minecraftforge.network.PlayMessages;
+import net.minecraftforge.network.packets.SpawnEntity;
 import org.jetbrains.annotations.NotNull;
 
 public class EntityStymphalianFeather extends AbstractArrow {
@@ -27,25 +26,19 @@ public class EntityStymphalianFeather extends AbstractArrow {
     }
 
     public EntityStymphalianFeather(EntityType<? extends AbstractArrow> t, Level worldIn, LivingEntity shooter) {
-        super(t, shooter, worldIn);
+        super(t, shooter, worldIn, new ItemStack(IafItemRegistry.STYMPHALIAN_BIRD_FEATHER.get()), ItemStack.EMPTY);
         this.setBaseDamage(IafConfig.stymphalianBirdFeatherAttackStength);
     }
 
-    public EntityStymphalianFeather(PlayMessages.SpawnEntity spawnEntity, Level world) {
+    public EntityStymphalianFeather(SpawnEntity spawnEntity, Level world) {
         this(IafEntityRegistry.STYMPHALIAN_FEATHER.get(), world);
     }
-
-    @Override
-    public @NotNull Packet<?> getAddEntityPacket() {
-        return NetworkHooks.getEntitySpawningPacket(this);
-    }
-
     @Override
     public void remove(@NotNull RemovalReason reason) {
         super.remove(reason);
         if (IafConfig.stymphalianBirdFeatherDropChance > 0) {
-            if (!level.isClientSide && this.random.nextInt(IafConfig.stymphalianBirdFeatherDropChance) == 0) {
-                this.spawnAtLocation(getPickupItem(), 0.1F);
+            if (!this.level().isClientSide() && this.random.nextInt(IafConfig.stymphalianBirdFeatherDropChance) == 0) {
+                IafDrops.spawn(this, getPickupItem(), 0.1F);
             }
         }
 
@@ -70,7 +63,7 @@ public class EntityStymphalianFeather extends AbstractArrow {
                 LivingEntity LivingEntity = (LivingEntity) entityHit.getEntity();
                 LivingEntity.setArrowCount(LivingEntity.getArrowCount() - 1);
                 ItemStack itemstack1 = LivingEntity.isUsingItem() ? LivingEntity.getUseItem() : ItemStack.EMPTY;
-                if (itemstack1.getItem().canPerformAction(itemstack1, ToolActions.SHIELD_BLOCK)) {
+                if (itemstack1.has(net.minecraft.core.component.DataComponents.BLOCKS_ATTACKS)) {
                     damageShield(LivingEntity, 1.0F);
                 }
             }
@@ -79,24 +72,22 @@ public class EntityStymphalianFeather extends AbstractArrow {
     }
 
     protected void damageShield(LivingEntity entity, float damage) {
-        if (damage >= 3.0F && entity.getUseItem().getItem().canPerformAction(entity.getUseItem(), ToolActions.SHIELD_BLOCK)) {
+        if (damage >= 3.0F && entity.getUseItem().has(net.minecraft.core.component.DataComponents.BLOCKS_ATTACKS)) {
             ItemStack copyBeforeUse = entity.getUseItem().copy();
             int i = 1 + Mth.floor(damage);
             InteractionHand Hand = entity.getUsedItemHand();
-            copyBeforeUse.hurtAndBreak(i, entity, (player1) -> {
-                player1.broadcastBreakEvent(Hand);
-            });
+            entity.getUseItem().hurtAndBreak(i, entity, Hand);
             if (entity.getUseItem().isEmpty()) {
                 if (entity instanceof Player) {
                     net.minecraftforge.event.ForgeEventFactory.onPlayerDestroyItem((Player) entity, copyBeforeUse, Hand);
                 }
 
                 if (Hand == net.minecraft.world.InteractionHand.MAIN_HAND) {
-                    this.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
+                    entity.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
                 } else {
-                    this.setItemSlot(EquipmentSlot.OFFHAND, ItemStack.EMPTY);
+                    entity.setItemSlot(EquipmentSlot.OFFHAND, ItemStack.EMPTY);
                 }
-                this.playSound(SoundEvents.SHIELD_BREAK, 0.8F, 0.8F + this.level.random.nextFloat() * 0.4F);
+                this.playSound(SoundEvents.SHIELD_BREAK.value(), 0.8F, 0.8F + this.level().getRandom().nextFloat() * 0.4F);
             }
         }
     }
@@ -104,5 +95,10 @@ public class EntityStymphalianFeather extends AbstractArrow {
     @Override
     protected @NotNull ItemStack getPickupItem() {
         return new ItemStack(IafItemRegistry.STYMPHALIAN_BIRD_FEATHER.get());
+    }
+
+    @Override
+    protected @NotNull ItemStack getDefaultPickupItem() {
+        return getPickupItem();
     }
 }

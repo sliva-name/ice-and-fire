@@ -3,9 +3,9 @@ package com.github.alexthe666.iceandfire.client.model;
 import com.github.alexthe666.citadel.client.model.AdvancedModelBox;
 import com.github.alexthe666.citadel.client.model.ModelAnimator;
 import com.github.alexthe666.iceandfire.client.model.util.HideableModelRenderer;
-import com.github.alexthe666.iceandfire.entity.EntityDreadGhoul;
+import com.github.alexthe666.iceandfire.client.render.entity.DreadHumanoidRenderState;
 
-public class ModelDreadGhoul extends ModelBipedBase<EntityDreadGhoul> {
+public class ModelDreadGhoul extends ModelBipedBase {
 
     public AdvancedModelBox head2;
     public AdvancedModelBox clawsRight;
@@ -66,24 +66,26 @@ public class ModelDreadGhoul extends ModelBipedBase<EntityDreadGhoul> {
     }
 
     @Override
-    public void setupAnim(EntityDreadGhoul thrall, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+    public void setupAnim(DreadHumanoidRenderState state) {
         this.resetToDefaultPose();
-        this.faceTarget(netHeadYaw, headPitch, 1.0F, head);
-        animate(thrall, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, 0f);
+        this.faceTarget(state.yRot, state.xRot, 1.0F, head);
+        animate(state);
         float speed_walk = 0.6F;
         float speed_idle = 0.05F;
         float degree_walk = 1F;
-        if (thrall.getAnimation() == EntityDreadGhoul.ANIMATION_SPAWN) {
-            if (thrall.getAnimationTick() < 30) {
-                this.swing(armRight, 0.5F, 0.5F, false, 2, -0.7F, thrall.tickCount, 1);
-                this.swing(armLeft, 0.5F, 0.5F, true, 2, -0.7F, thrall.tickCount, 1);
-                this.flap(armRight, 0.5F, 0.5F, true, 1, 0, thrall.tickCount, 1);
-                this.flap(armLeft, 0.5F, 0.5F, true, 1, 0, thrall.tickCount, 1);
+        float limbSwing = state.walkAnimationPos;
+        float limbSwingAmount = state.walkAnimationSpeed;
+        if (state.animation == DreadHumanoidRenderState.SPAWN) {
+            if (state.animationTick < 30) {
+                this.swing(armRight, 0.5F, 0.5F, false, 2, -0.7F, state.tickCount, 1);
+                this.swing(armLeft, 0.5F, 0.5F, true, 2, -0.7F, state.tickCount, 1);
+                this.flap(armRight, 0.5F, 0.5F, true, 1, 0, state.tickCount, 1);
+                this.flap(armLeft, 0.5F, 0.5F, true, 1, 0, state.tickCount, 1);
             }
         }
-        this.flap(armLeft, speed_idle, 0.15F, false, 2, -0.1F, thrall.tickCount, 1);
-        this.flap(armRight, speed_idle, 0.15F, true, 2, -0.1F, thrall.tickCount, 1);
-        this.walk(head, speed_idle, 0.1F, true, 1, -0.05F, thrall.tickCount, 1);
+        this.flap(armLeft, speed_idle, 0.15F, false, 2, -0.1F, state.tickCount, 1);
+        this.flap(armRight, speed_idle, 0.15F, true, 2, -0.1F, state.tickCount, 1);
+        this.walk(head, speed_idle, 0.1F, true, 1, -0.05F, state.tickCount, 1);
 
         this.walk(legRight, speed_walk, degree_walk, false, 0, 0, limbSwing, limbSwingAmount);
         this.walk(legLeft, speed_walk, degree_walk, true, 0, 0, limbSwing, limbSwingAmount);
@@ -100,11 +102,10 @@ public class ModelDreadGhoul extends ModelBipedBase<EntityDreadGhoul> {
     }
 
     @Override
-    void animate(EntityDreadGhoul entity, float limbSwing, float limbSwingAmount,
-                 float ageInTicks, float netHeadYaw, float headPitch, float f) {
+    void animate(DreadHumanoidRenderState state) {
         this.resetToDefaultPose();
-        animator.update(entity);
-        if (animator.setAnimation(EntityDreadGhoul.ANIMATION_SLASH)) {
+        animator.update(state.animation, state.animationTick, state.partialTick);
+        if (animator.setAnimation(DreadHumanoidRenderState.SLASH)) {
             animator.startKeyframe(5);
             rotate(animator, this.armRight, 20, 45, 80);
             rotate(animator, this.body, 0, 30, 0);
@@ -127,7 +128,7 @@ public class ModelDreadGhoul extends ModelBipedBase<EntityDreadGhoul> {
             animator.endKeyframe();
             animator.resetKeyframe(5);
         }
-        if (animator.setAnimation(EntityDreadGhoul.ANIMATION_SPAWN)) {
+        if (animator.setAnimation(DreadHumanoidRenderState.SPAWN)) {
             animator.startKeyframe(0);
             animator.move(this.body, 0, 35, 0);
             rotateMinus(animator, this.armLeft, -180, -90, 50);

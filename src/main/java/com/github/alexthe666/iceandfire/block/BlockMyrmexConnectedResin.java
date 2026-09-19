@@ -12,7 +12,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.material.FluidState;
-import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.material.MapColor;
 import org.jetbrains.annotations.NotNull;
 
 public class BlockMyrmexConnectedResin extends HalfTransparentBlock {
@@ -26,12 +26,12 @@ public class BlockMyrmexConnectedResin extends HalfTransparentBlock {
 
     public BlockMyrmexConnectedResin(boolean jungle, boolean glass) {
         super(
-            Properties
-                .of(Material.STONE)
+            IafBlockRegistry.id(Properties
+                .of().mapColor(MapColor.STONE)
                 .strength(glass ? 1.5F : 3.5F)
                 .noOcclusion()
                 .dynamicShape()
-                .sound(glass ? SoundType.GLASS : SoundType.STONE)
+                .sound(glass ? SoundType.GLASS : SoundType.STONE))
         );
 
         this.registerDefaultState(this.getStateDefinition().any().setValue(UP, Boolean.FALSE)
@@ -76,7 +76,7 @@ public class BlockMyrmexConnectedResin extends HalfTransparentBlock {
     }
 
     @Override
-    public @NotNull BlockState updateShape(@NotNull BlockState stateIn, Direction facing, @NotNull BlockState facingState, @NotNull LevelAccessor worldIn, @NotNull BlockPos currentPos, @NotNull BlockPos facingPos) {
+    protected @NotNull BlockState updateShape(@NotNull BlockState stateIn, @NotNull net.minecraft.world.level.LevelReader worldIn, net.minecraft.world.level.ScheduledTickAccess ticks, @NotNull BlockPos currentPos, @NotNull Direction facing, @NotNull BlockPos facingPos, @NotNull BlockState facingState, @NotNull net.minecraft.util.RandomSource random) {
         BooleanProperty connect = null;
         switch (facing) {
             case NORTH:

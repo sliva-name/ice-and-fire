@@ -1,10 +1,10 @@
 package com.github.alexthe666.iceandfire.client.model;
 
-import com.github.alexthe666.citadel.animation.IAnimatedEntity;
 import com.github.alexthe666.citadel.client.model.AdvancedModelBox;
 import com.github.alexthe666.citadel.client.model.ModelAnimator;
 import com.github.alexthe666.citadel.client.model.basic.BasicModelPart;
-import com.github.alexthe666.iceandfire.entity.EntityMyrmexSentinel;
+import com.github.alexthe666.iceandfire.client.render.entity.MyrmexRenderState;
+import com.github.alexthe666.iceandfire.client.render.entity.MyrmexRenderState.AnimationKind;
 import com.google.common.collect.ImmutableList;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -263,10 +263,10 @@ public class ModelMyrmexSentinel extends ModelMyrmexBase {
             EyeL, legMidR1, legBottomR1, legMidR1_1, legBottomR1_1, legMidR2, legBottomR2, legMidR2_1, legBottomR2_1);
     }
 
-    public void animate(IAnimatedEntity entity, float f, float f1, float f2, float f3, float f4, float f5) {
+    public void animate(MyrmexRenderState state) {
         this.resetToDefaultPose();
-        animator.update(entity);
-        if (animator.setAnimation(EntityMyrmexSentinel.ANIMATION_GRAB)) {
+        animator.update(state.animation.token(), state.animationTick, state.partialTick);
+        if (animator.setAnimation(AnimationKind.GRAB.token())) {
             animator.startKeyframe(5);
             ModelUtils.rotateFrom(animator, Body1, -65, 0, 0);
             ModelUtils.rotateFrom(animator, Neck1, 0, 0, 0);
@@ -279,7 +279,7 @@ public class ModelMyrmexSentinel extends ModelMyrmexBase {
             animator.endKeyframe();
             animator.resetKeyframe(5);
         }
-        if (animator.setAnimation(EntityMyrmexSentinel.ANIMATION_STING)) {
+        if (animator.setAnimation(AnimationKind.SENTINEL_STING.token())) {
             animator.startKeyframe(5);
             ModelUtils.rotateFrom(animator, Body1, -36, -15, 0);
             ModelUtils.rotateFrom(animator, Body2, 0, -31, 0);
@@ -315,7 +315,7 @@ public class ModelMyrmexSentinel extends ModelMyrmexBase {
             animator.endKeyframe();
             animator.resetKeyframe(10);
         }
-        if (animator.setAnimation(EntityMyrmexSentinel.ANIMATION_NIBBLE)) {
+        if (animator.setAnimation(AnimationKind.NIBBLE.token())) {
             animator.startKeyframe(5);
             ModelUtils.rotate(animator, Neck1, -50, 0, 0);
             ModelUtils.rotate(animator, HeadBase, 50, 0, 0);
@@ -329,7 +329,7 @@ public class ModelMyrmexSentinel extends ModelMyrmexBase {
             ModelUtils.rotate(animator, MandibleL, 0, 50, 0);
             animator.endKeyframe();
         }
-        if (animator.setAnimation(EntityMyrmexSentinel.ANIMATION_SLASH)) {
+        if (animator.setAnimation(AnimationKind.SLASH.token())) {
             animator.startKeyframe(5);
             ModelUtils.rotateFrom(animator, Body1, -65, 0, 0);
             ModelUtils.rotateFrom(animator, Neck1, 0, 0, 0);
@@ -364,9 +364,13 @@ public class ModelMyrmexSentinel extends ModelMyrmexBase {
     }
 
     @Override
-    public void setupAnim(Entity entity, float f, float f1, float f2, float f3, float f4) {
-        animate((IAnimatedEntity) entity, f, f1, f2, f3, f4, 1);
-        EntityMyrmexSentinel myrmex = (EntityMyrmexSentinel) entity;
+    public void setupAnim(MyrmexRenderState state) {
+        float f = state.walkAnimationPos;
+        float f1 = state.walkAnimationSpeed;
+        float f2 = state.ageInTicks;
+        float f3 = state.yRot;
+        float f4 = state.xRot;
+        animate(state);
         AdvancedModelBox[] TAIL = new AdvancedModelBox[]{Tail1, Tail2, Tail3, Tail4, Tail5, Tail6, Tail7, Tail8, Tail9, Stinger};
         AdvancedModelBox[] NECK = new AdvancedModelBox[]{Neck1, HeadBase};
         AdvancedModelBox[] ARML1 = new AdvancedModelBox[]{legTopR1, legMidR1, legBottomR1};
@@ -376,11 +380,11 @@ public class ModelMyrmexSentinel extends ModelMyrmexBase {
         AdvancedModelBox[] LEGL2 = new AdvancedModelBox[]{legTopR2_1, legMidR2_1, legBottomR2_1};
         AdvancedModelBox[] LEGL3 = new AdvancedModelBox[]{legTopR3_1, legMidR3_1, legBottomR3_1};
         float speed_walk = 0.9F;
-        float speed_idle = myrmex.isHiding() ? 0.015F : 0.035F;
+        float speed_idle = state.hiding ? 0.015F : 0.035F;
         float degree_walk = 0.5F;
-        float degree_idle = myrmex.isHiding() ? 0.1F : 0.25F;
+        float degree_idle = state.hiding ? 0.1F : 0.25F;
 
-        if (entity.getPassengers().isEmpty()) {
+        if (!state.hasPassengers) {
             this.faceTarget(f3, f4, 2, NECK);
         }
         this.chainWave(TAIL, speed_idle, degree_idle * 0.15F, 0, f2, 1);
@@ -394,43 +398,43 @@ public class ModelMyrmexSentinel extends ModelMyrmexBase {
         this.bob(Body2, speed_walk, degree_walk, false, f, f1);
         this.chainWave(ARML1, speed_idle, degree_idle * -0.25F, 0, f2, 1);
         this.chainWave(ARMR1, speed_idle, degree_idle * -0.25F, 0, f2, 1);
-        this.progressRotation(legTopR1, myrmex.holdingProgress, (float) Math.toRadians(35F), (float) Math.toRadians(30F), (float) Math.toRadians(10F));
-        this.progressRotation(legTopR1_1, myrmex.holdingProgress, (float) Math.toRadians(35F), (float) Math.toRadians(-30F), (float) Math.toRadians(-10F));
-        this.progressRotation(legMidR1, myrmex.holdingProgress, (float) Math.toRadians(-133F), 0, 0);
-        this.progressRotation(legMidR1_1, myrmex.holdingProgress, (float) Math.toRadians(-133F), 0, 0);
-        this.progressRotation(legBottomR1, myrmex.holdingProgress, (float) Math.toRadians(140F), (float) Math.toRadians(20F), 0);
-        this.progressRotation(legBottomR1_1, myrmex.holdingProgress, (float) Math.toRadians(140F), (float) Math.toRadians(-20F), 0);
+        this.progressRotation(legTopR1, state.holdingProgress, (float) Math.toRadians(35F), (float) Math.toRadians(30F), (float) Math.toRadians(10F));
+        this.progressRotation(legTopR1_1, state.holdingProgress, (float) Math.toRadians(35F), (float) Math.toRadians(-30F), (float) Math.toRadians(-10F));
+        this.progressRotation(legMidR1, state.holdingProgress, (float) Math.toRadians(-133F), 0, 0);
+        this.progressRotation(legMidR1_1, state.holdingProgress, (float) Math.toRadians(-133F), 0, 0);
+        this.progressRotation(legBottomR1, state.holdingProgress, (float) Math.toRadians(140F), (float) Math.toRadians(20F), 0);
+        this.progressRotation(legBottomR1_1, state.holdingProgress, (float) Math.toRadians(140F), (float) Math.toRadians(-20F), 0);
 
 
-        this.progressRotation(legTopR1, myrmex.hidingProgress, (float) Math.toRadians(70F), 0, (float) Math.toRadians(70F));
-        this.progressRotation(legTopR1_1, myrmex.hidingProgress, (float) Math.toRadians(70F), 0, (float) Math.toRadians(-70F));
-        this.progressRotation(Body1, myrmex.hidingProgress, (float) Math.toRadians(-2F), 0, 0);
-        this.progressPosition(Body1, myrmex.hidingProgress, 0, 1.7F, -4.0F);
-        this.progressPosition(Body2, myrmex.hidingProgress, 0, 17F, 0);
-        this.progressRotation(Body2, myrmex.hidingProgress, (float) Math.toRadians(5F), 0, 0);
+        this.progressRotation(legTopR1, state.hidingProgress, (float) Math.toRadians(70F), 0, (float) Math.toRadians(70F));
+        this.progressRotation(legTopR1_1, state.hidingProgress, (float) Math.toRadians(70F), 0, (float) Math.toRadians(-70F));
+        this.progressRotation(Body1, state.hidingProgress, (float) Math.toRadians(-2F), 0, 0);
+        this.progressPosition(Body1, state.hidingProgress, 0, 1.7F, -4.0F);
+        this.progressPosition(Body2, state.hidingProgress, 0, 17F, 0);
+        this.progressRotation(Body2, state.hidingProgress, (float) Math.toRadians(5F), 0, 0);
 
-        this.progressRotation(legTopR2, myrmex.hidingProgress, (float) Math.toRadians(55), (float) Math.toRadians(30), (float) Math.toRadians(-7F));
-        this.progressRotation(legTopR2_1, myrmex.hidingProgress, (float) Math.toRadians(55), (float) Math.toRadians(-30), (float) Math.toRadians(7F));
-        this.progressRotation(legTopR3, myrmex.hidingProgress, (float) Math.toRadians(45), (float) Math.toRadians(10), (float) Math.toRadians(40F));
-        this.progressRotation(legTopR3_1, myrmex.hidingProgress, (float) Math.toRadians(45), (float) Math.toRadians(-10), (float) Math.toRadians(-40F));
-        this.progressRotation(legMidR2, myrmex.hidingProgress, 0, 0, (float) Math.toRadians(-140F));
-        this.progressRotation(legMidR2_1, myrmex.hidingProgress, 0, 0, (float) Math.toRadians(140F));
-        this.progressRotation(legMidR3, myrmex.hidingProgress, 0, 0, (float) Math.toRadians(146F));
-        this.progressRotation(legMidR3_1, myrmex.hidingProgress, 0, 0, (float) Math.toRadians(-146F));
-        this.progressRotation(legBottomR2, myrmex.hidingProgress, 0, 0, (float) Math.toRadians(146F));
-        this.progressRotation(legBottomR2_1, myrmex.hidingProgress, 0, 0, (float) Math.toRadians(-146F));
-        this.progressRotation(legBottomR3, myrmex.hidingProgress, 0, 0, (float) Math.toRadians(-156F));
-        this.progressRotation(legBottomR3_1, myrmex.hidingProgress, 0, 0, (float) Math.toRadians(156F));
-        this.progressRotation(HeadBase, myrmex.hidingProgress, (float) Math.toRadians(-15F), 0, 0);
-        this.progressPosition(HeadBase, myrmex.hidingProgress, 0.0F, 0F, -4.4F);
-        this.progressRotation(Tail1, myrmex.hidingProgress, (float) Math.toRadians(-20F), 0, (float) Math.toRadians(-46F));
-        this.progressRotation(Tail2, myrmex.hidingProgress, (float) Math.toRadians(26F), 0, 0);
-        this.progressRotation(Tail3, myrmex.hidingProgress, (float) Math.toRadians(40F), 0, (float) Math.toRadians(-30F));
-        this.progressRotation(Tail4, myrmex.hidingProgress, (float) Math.toRadians(25F), 0, (float) Math.toRadians(-18F));
-        this.progressRotation(Tail5, myrmex.hidingProgress, (float) Math.toRadians(23F), 0, 0);
-        this.progressRotation(Tail6, myrmex.hidingProgress, (float) Math.toRadians(10), (float) Math.toRadians(-15), (float) Math.toRadians(33F));
-        this.progressRotation(Tail7, myrmex.hidingProgress, (float) Math.toRadians(23F), 0, 0);
-        this.progressRotation(Tail8, myrmex.hidingProgress, (float) Math.toRadians(-20), (float) Math.toRadians(-45), (float) Math.toRadians(85F));
+        this.progressRotation(legTopR2, state.hidingProgress, (float) Math.toRadians(55), (float) Math.toRadians(30), (float) Math.toRadians(-7F));
+        this.progressRotation(legTopR2_1, state.hidingProgress, (float) Math.toRadians(55), (float) Math.toRadians(-30), (float) Math.toRadians(7F));
+        this.progressRotation(legTopR3, state.hidingProgress, (float) Math.toRadians(45), (float) Math.toRadians(10), (float) Math.toRadians(40F));
+        this.progressRotation(legTopR3_1, state.hidingProgress, (float) Math.toRadians(45), (float) Math.toRadians(-10), (float) Math.toRadians(-40F));
+        this.progressRotation(legMidR2, state.hidingProgress, 0, 0, (float) Math.toRadians(-140F));
+        this.progressRotation(legMidR2_1, state.hidingProgress, 0, 0, (float) Math.toRadians(140F));
+        this.progressRotation(legMidR3, state.hidingProgress, 0, 0, (float) Math.toRadians(146F));
+        this.progressRotation(legMidR3_1, state.hidingProgress, 0, 0, (float) Math.toRadians(-146F));
+        this.progressRotation(legBottomR2, state.hidingProgress, 0, 0, (float) Math.toRadians(146F));
+        this.progressRotation(legBottomR2_1, state.hidingProgress, 0, 0, (float) Math.toRadians(-146F));
+        this.progressRotation(legBottomR3, state.hidingProgress, 0, 0, (float) Math.toRadians(-156F));
+        this.progressRotation(legBottomR3_1, state.hidingProgress, 0, 0, (float) Math.toRadians(156F));
+        this.progressRotation(HeadBase, state.hidingProgress, (float) Math.toRadians(-15F), 0, 0);
+        this.progressPosition(HeadBase, state.hidingProgress, 0.0F, 0F, -4.4F);
+        this.progressRotation(Tail1, state.hidingProgress, (float) Math.toRadians(-20F), 0, (float) Math.toRadians(-46F));
+        this.progressRotation(Tail2, state.hidingProgress, (float) Math.toRadians(26F), 0, 0);
+        this.progressRotation(Tail3, state.hidingProgress, (float) Math.toRadians(40F), 0, (float) Math.toRadians(-30F));
+        this.progressRotation(Tail4, state.hidingProgress, (float) Math.toRadians(25F), 0, (float) Math.toRadians(-18F));
+        this.progressRotation(Tail5, state.hidingProgress, (float) Math.toRadians(23F), 0, 0);
+        this.progressRotation(Tail6, state.hidingProgress, (float) Math.toRadians(10), (float) Math.toRadians(-15), (float) Math.toRadians(33F));
+        this.progressRotation(Tail7, state.hidingProgress, (float) Math.toRadians(23F), 0, 0);
+        this.progressRotation(Tail8, state.hidingProgress, (float) Math.toRadians(-20), (float) Math.toRadians(-45), (float) Math.toRadians(85F));
 
     }
 

@@ -18,6 +18,18 @@ public class IFChainBuffer {
     private float prevYawVariation;
     private float prevPitchVariation;
 
+    public float getPreviousYawVariation() {
+        return prevYawVariation;
+    }
+
+    public float getYawVariation() {
+        return yawVariation;
+    }
+
+    public float sampleYaw(float partialTick) {
+        return Mth.lerp(partialTick, this.prevYawVariation, this.yawVariation);
+    }
+
     /**
      * Resets this ChainBuffer's rotations.
      */
@@ -299,7 +311,7 @@ public class IFChainBuffer {
 
 
     private float getPartialTicks() {
-        return Minecraft.getInstance().getFrameTime();
+        return Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false);
     }
 
 }

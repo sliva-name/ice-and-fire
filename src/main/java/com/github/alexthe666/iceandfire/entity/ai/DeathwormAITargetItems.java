@@ -1,5 +1,6 @@
 package com.github.alexthe666.iceandfire.entity.ai;
 
+import com.github.alexthe666.iceandfire.block.IafMaterials;
 import com.github.alexthe666.iceandfire.entity.EntityDeathWorm;
 import com.github.alexthe666.iceandfire.util.IAFMath;
 import net.minecraft.sounds.SoundEvents;
@@ -8,7 +9,6 @@ import net.minecraft.world.entity.ai.goal.target.TargetGoal;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.material.Material;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.scores.Team;
 
@@ -44,7 +44,7 @@ public class DeathwormAITargetItems<T extends ItemEntity> extends TargetGoal {
             @Override
             public boolean test(ItemEntity item) {
                 return item != null && !item.getItem().isEmpty() && item.getItem().getItem() == Blocks.TNT.asItem() &&
-                    item.level.getBlockState(item.blockPosition().below()).getMaterial() == Material.SAND;
+                    IafMaterials.isSand(item.level().getBlockState(item.blockPosition().below()));
             }
         };
         this.setFlags(EnumSet.of(Flag.TARGET));
@@ -56,7 +56,7 @@ public class DeathwormAITargetItems<T extends ItemEntity> extends TargetGoal {
         if (this.targetChance > 0 && this.mob.getRandom().nextInt(this.targetChance) != 0) {
             return false;
         }
-        List<ItemEntity> list = this.mob.level.getEntitiesOfClass(ItemEntity.class,
+        List<ItemEntity> list = this.mob.level().getEntitiesOfClass(ItemEntity.class,
             this.getTargetableArea(this.getFollowDistance()), this.targetEntitySelector);
         if (list.isEmpty()) {
             return false;
@@ -106,11 +106,11 @@ public class DeathwormAITargetItems<T extends ItemEntity> extends TargetGoal {
         } else if (this.mob.distanceToSqr(this.targetEntity) < 1) {
             EntityDeathWorm deathWorm = (EntityDeathWorm) this.mob;
             this.targetEntity.getItem().shrink(1);
-            this.mob.playSound(SoundEvents.GENERIC_EAT, 1, 1);
+            this.mob.playSound(SoundEvents.GENERIC_EAT.value(), 1, 1);
             deathWorm.setAnimation(EntityDeathWorm.ANIMATION_BITE);
             Player thrower = null;
-            if (this.targetEntity.getThrower() != null)
-                thrower = this.targetEntity.level.getPlayerByUUID(this.targetEntity.getThrower());
+            if (this.targetEntity.getOwner() instanceof Player owner)
+                thrower = owner;
             deathWorm.setExplosive(true, thrower);
             stop();
         }

@@ -6,31 +6,24 @@ import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.item.ArmorItem;
-import net.minecraft.world.item.ArmorMaterial;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
 import javax.annotation.Nullable;
 
-public class ItemSilverArmor extends ArmorItem{
+public class ItemSilverArmor extends Item implements IafArmorIdentity {
 
-    public ItemSilverArmor(ArmorMaterial material, EquipmentSlot slot) {
-        super(material, slot, new Item.Properties().tab(IceAndFire.TAB_ITEMS));
+    private final com.github.alexthe666.citadel.server.item.CustomArmorMaterial iafMaterial;
+    public ItemSilverArmor(com.github.alexthe666.citadel.server.item.CustomArmorMaterial material, EquipmentSlot slot) {
+        super(IafArmors.properties(material, slot));
+        this.iafMaterial = material;
     }
 
     @Override
-    public void initializeClient(java.util.function.Consumer<net.minecraftforge.client.IItemRenderProperties> consumer) {
-        consumer.accept(new net.minecraftforge.client.IItemRenderProperties() {
-            @Override
-            @Nullable
-            public HumanoidModel<?> getArmorModel(LivingEntity LivingEntity, ItemStack itemStack, EquipmentSlot armorSlot, HumanoidModel<?> _default) {
-                return new ModelSilverArmor(armorSlot == EquipmentSlot.LEGS || armorSlot == EquipmentSlot.HEAD);
-            }
-        });
+    public com.github.alexthe666.citadel.server.item.CustomArmorMaterial iafMaterial() {
+        return iafMaterial;
     }
 
-    @Override
     @Nullable
     public String getArmorTexture(ItemStack stack, Entity entity, EquipmentSlot slot, String type) {
         return "iceandfire:textures/models/armor/" + (slot == EquipmentSlot.LEGS ? "armor_silver_metal_layer_2" : "armor_silver_metal_layer_1") + ".png";

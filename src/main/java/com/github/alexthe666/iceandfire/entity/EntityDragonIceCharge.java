@@ -8,9 +8,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.projectile.Fireball;
+import net.minecraft.world.entity.projectile.hurtingprojectile.Fireball;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.network.PlayMessages;
+import net.minecraftforge.network.packets.SpawnEntity;
 
 import javax.annotation.Nullable;
 
@@ -21,7 +21,7 @@ public class EntityDragonIceCharge extends EntityDragonCharge {
 
     }
 
-    public EntityDragonIceCharge(PlayMessages.SpawnEntity spawnEntity, Level worldIn) {
+    public EntityDragonIceCharge(SpawnEntity spawnEntity, Level worldIn) {
         this(IafEntityRegistry.ICE_DRAGON_CHARGE.get(), worldIn);
     }
 
@@ -37,7 +37,7 @@ public class EntityDragonIceCharge extends EntityDragonCharge {
 
     @Override
     public void tick() {
-        if (this.level.isClientSide) {
+        if (this.level().isClientSide()) {
             for (int i = 0; i < 10; ++i) {
                 IceAndFire.PROXY.spawnParticle(EnumParticles.DragonIce, this.getX() + this.random.nextDouble() * 1 * (this.random.nextBoolean() ? -1 : 1), this.getY() + this.random.nextDouble() * 1 * (this.random.nextBoolean() ? -1 : 1), this.getZ() + this.random.nextDouble() * 1 * (this.random.nextBoolean() ? -1 : 1), 0.0D, 0.0D, 0.0D);
             }

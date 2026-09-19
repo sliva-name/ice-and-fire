@@ -1,68 +1,54 @@
 package com.github.alexthe666.iceandfire.client.render.entity.layer;
 
-import com.github.alexthe666.citadel.client.model.AdvancedEntityModel;
+import com.github.alexthe666.iceandfire.client.render.entity.DragonRenderState;
+import com.github.alexthe666.iceandfire.client.render.entity.RenderDragonBase;
 import com.github.alexthe666.iceandfire.client.texture.ArrayLayeredTexture;
-import com.github.alexthe666.iceandfire.entity.DragonType;
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.alexthe666.iceandfire.enums.EnumDragonTextures;
-import com.google.common.collect.Maps;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.entity.MobRenderer;
+import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.EquipmentSlot;
-import org.jetbrains.annotations.NotNull;
-
 import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 
-public class LayerDragonArmor extends RenderLayer<EntityDragonBase, AdvancedEntityModel<EntityDragonBase>> {
-    private static final Map<String, ResourceLocation> LAYERED_ARMOR_CACHE = Maps.newHashMap();
-    private static final EquipmentSlot[] ARMOR_SLOTS = {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET};
-    private final MobRenderer render;
+public class LayerDragonArmor extends RenderLayer<DragonRenderState, EntityModel<DragonRenderState>> {
+    private static final Map<String, Identifier> CACHE = new HashMap<>();
+    private static final EquipmentSlot[] SLOTS = {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET};
 
-    public LayerDragonArmor(MobRenderer renderIn, int type) {
-        super(renderIn);
-        this.render = renderIn;
-    }
+    public LayerDragonArmor(RenderDragonBase renderer, int type) { super(renderer); }
+    public static void clearCache(String key) { CACHE.remove(key); }
 
-    public static void clearCache(String str) {
-        LAYERED_ARMOR_CACHE.remove(str);
+    public static Identifier extractTexture(EntityDragonBase dragon, int type) {
+        String key = dragon.dragonType.getName();
+        boolean equipped = false;
+        var textures = new ArrayList<String>();
+        for (EquipmentSlot slot : SLOTS) {
+            int ordinal = dragon.getArmorOrdinal(dragon.getItemBySlot(slot));
+            key += "_" + ordinal;
+            equipped |= ordinal != 0;
+            var armor = EnumDragonTextures.Armor.getArmorForDragon(dragon, slot);
+            textures.add((type == 0 ? armor.FIRETEXTURE : type == 1 ? armor.ICETEXTURE : armor.LIGHTNINGTEXTURE).toString());
+        }
+        if (!equipped) return null;
+        return CACHE.computeIfAbsent(key, name -> {
+            Identifier id = Identifier.fromNamespaceAndPath("iceandfire", "dragon_armor_" + name);
+            Minecraft.getInstance().getTextureManager().registerAndLoad(id, new ArrayLayeredTexture(textures));
+            return id;
+        });
     }
 
     @Override
-    public void render(@NotNull PoseStack matrixStackIn, @NotNull MultiBufferSource bufferIn, int packedLightIn, EntityDragonBase dragon, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch) {
-        int armorHead = dragon.getArmorOrdinal(dragon.getItemBySlot(EquipmentSlot.HEAD));
-        int armorNeck = dragon.getArmorOrdinal(dragon.getItemBySlot(EquipmentSlot.CHEST));
-        int armorLegs = dragon.getArmorOrdinal(dragon.getItemBySlot(EquipmentSlot.LEGS));
-        int armorFeet = dragon.getArmorOrdinal(dragon.getItemBySlot(EquipmentSlot.FEET));
-        String armorTexture = dragon.dragonType.getName() + "_" + armorHead + "_" + armorNeck + "_" + armorLegs + "_" + armorFeet;
-        if (!armorTexture.equals(dragon.dragonType.getName() + "_0_0_0_0")) {
-            ResourceLocation resourcelocation = LAYERED_ARMOR_CACHE.get(armorTexture);
-            if (resourcelocation == null) {
-                resourcelocation = new ResourceLocation("iceandfire" + "dragon_armor_" + armorTexture);
-                List<String> tex = new ArrayList<String>();
-                for (EquipmentSlot slot : ARMOR_SLOTS) {
-                    if (dragon.dragonType == DragonType.FIRE) {
-                        tex.add(EnumDragonTextures.Armor.getArmorForDragon(dragon, slot).FIRETEXTURE.toString());
-                    } else if (dragon.dragonType == DragonType.ICE) {
-                        tex.add(EnumDragonTextures.Armor.getArmorForDragon(dragon, slot).ICETEXTURE.toString());
-                    } else {
-                        tex.add(EnumDragonTextures.Armor.getArmorForDragon(dragon, slot).LIGHTNINGTEXTURE.toString());
-                    }
-                }
-                ArrayLayeredTexture layeredBase = new ArrayLayeredTexture(tex);
-                Minecraft.getInstance().getTextureManager().register(resourcelocation, layeredBase);
-                LAYERED_ARMOR_CACHE.put(armorTexture, resourcelocation);
-            }
-            VertexConsumer ivertexbuilder = bufferIn.getBuffer(RenderType.entityCutoutNoCull(resourcelocation));
-            this.getParentModel().renderToBuffer(matrixStackIn, ivertexbuilder, packedLightIn, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
+    public void submit(PoseStack poses, SubmitNodeCollector collector, int light, DragonRenderState state, float yaw, float pitch) {
+        if (state.armorTexture != null) {
+            collector.order(1).submitModel(getParentModel(), state, poses, RenderTypes.entityCutoutCull(state.armorTexture),
+                light, OverlayTexture.NO_OVERLAY, -1, null, state.outlineColor, null);
         }
     }
 }

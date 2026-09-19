@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "S S",
+    "SSS",
+    "SSS"
+  ],
+  "key": {
+    "S": "iceandfire:dragonscales_green"
+  },
+  "result": {
+    "id": "iceandfire:armor_green_chestplate"
+  }
+}

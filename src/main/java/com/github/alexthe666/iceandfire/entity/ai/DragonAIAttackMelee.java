@@ -125,7 +125,9 @@ public class DragonAIAttackMelee extends Goal {
             if (d0 <= d1 && this.attackTick <= 0) {
                 this.attackTick = 20;
                 this.dragon.swing(InteractionHand.MAIN_HAND);
-                this.dragon.doHurtTarget(entity);
+                if (this.dragon.level() instanceof net.minecraft.server.level.ServerLevel _iafSl) {
+                    this.dragon.doHurtTarget(_iafSl, entity);
+                }
             }
         }
     }

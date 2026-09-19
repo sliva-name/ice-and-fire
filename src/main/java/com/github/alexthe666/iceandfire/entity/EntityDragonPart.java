@@ -2,7 +2,7 @@ package com.github.alexthe666.iceandfire.entity;
 
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.network.PlayMessages;
+import net.minecraftforge.network.packets.SpawnEntity;
 
 public class EntityDragonPart extends EntityMutlipartPart {
     private EntityDragonBase dragon;
@@ -11,7 +11,7 @@ public class EntityDragonPart extends EntityMutlipartPart {
         super(t, world);
     }
 
-    public EntityDragonPart(PlayMessages.SpawnEntity spawnEntity, Level worldIn) {
+    public EntityDragonPart(SpawnEntity spawnEntity, Level worldIn) {
         this(IafEntityRegistry.DRAGON_MULTIPART.get(), worldIn);
     }
 

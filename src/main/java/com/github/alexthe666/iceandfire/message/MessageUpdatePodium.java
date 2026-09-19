@@ -7,10 +7,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
-import java.util.function.Supplier;
 
 public class MessageUpdatePodium {
 
@@ -39,18 +37,18 @@ public class MessageUpdatePodium {
         public Handler() {
         }
 
-        public static void handle(MessageUpdatePodium message, Supplier<NetworkEvent.Context> context) {
-            context.get().setPacketHandled(true);
-            Player player = context.get().getSender();
-            if(context.get().getDirection().getReceptionSide() == LogicalSide.CLIENT){
+        public static void handle(MessageUpdatePodium message, CustomPayloadEvent.Context context) {
+            context.setPacketHandled(true);
+            Player player = context.getSender();
+            if(context.isClientSide()){
                 player = IceAndFire.PROXY.getClientSidePlayer();
             }
             if (player != null) {
-                if (player.level != null) {
+                if (player.level() != null) {
                     BlockPos pos = BlockPos.of(message.blockPos);
-                    if (player.level.getBlockEntity(pos) != null) {
-                        if (player.level.getBlockEntity(pos) instanceof TileEntityPodium) {
-                            TileEntityPodium podium = (TileEntityPodium) player.level.getBlockEntity(pos);
+                    if (player.level().getBlockEntity(pos) != null) {
+                        if (player.level().getBlockEntity(pos) instanceof TileEntityPodium) {
+                            TileEntityPodium podium = (TileEntityPodium) player.level().getBlockEntity(pos);
                             podium.setItem(0, message.heldStack);
                         }
                     }

@@ -4,45 +4,26 @@ import com.github.alexthe666.iceandfire.IceAndFire;
 import com.github.alexthe666.iceandfire.client.render.tile.RenderTrollWeapon;
 import com.github.alexthe666.iceandfire.enums.EnumTroll;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.SwordItem;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.common.util.NonNullLazy;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 import java.util.List;
-import java.util.function.Consumer;
 
-public class ItemTrollWeapon extends SwordItem {
+public class ItemTrollWeapon extends Item {
 
     public EnumTroll.Weapon weapon = EnumTroll.Weapon.AXE;
 
     public ItemTrollWeapon(EnumTroll.Weapon weapon) {
-        super(IafItemRegistry.TROLL_WEAPON_TOOL_MATERIAL, 15, -3.5F, new Item.Properties().tab(IceAndFire.TAB_ITEMS));
+        super(IafItemRegistry.defaultBuilder().sword(IafItemRegistry.TROLL_WEAPON_TOOL_MATERIAL, 15, -3.5F));
         this.weapon = weapon;
-    }
-
-    @Override
-    public void initializeClient(Consumer<net.minecraftforge.client.IItemRenderProperties> consumer) {
-
-        consumer.accept(new net.minecraftforge.client.IItemRenderProperties() {
-            static final NonNullLazy<BlockEntityWithoutLevelRenderer> renderer = NonNullLazy.of(() -> new RenderTrollWeapon(Minecraft.getInstance().getBlockEntityRenderDispatcher(), Minecraft.getInstance().getEntityModels()));
-
-            @Override
-            public BlockEntityWithoutLevelRenderer getItemStackRenderer() {
-                return renderer.get();
-            }
-        });
     }
 
     @Override
@@ -72,8 +53,8 @@ public class ItemTrollWeapon extends SwordItem {
     }
 
     @Override
-    public void appendHoverText(@NotNull ItemStack stack, @Nullable Level worldIn, List<Component> tooltip, @NotNull TooltipFlag flagIn) {
-        tooltip.add(new TranslatableComponent("item.iceandfire.legendary_weapon.desc").withStyle(ChatFormatting.GRAY));
+    public void appendHoverText(@NotNull ItemStack stack, Item.TooltipContext context, @NotNull net.minecraft.world.item.component.TooltipDisplay display, @NotNull java.util.function.Consumer<Component> tooltip, @NotNull TooltipFlag flagIn) {
+        tooltip.accept(Component.translatable("item.iceandfire.legendary_weapon.desc").withStyle(ChatFormatting.GRAY));
     }
 
 }

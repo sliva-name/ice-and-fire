@@ -4,31 +4,58 @@ import com.github.alexthe666.iceandfire.client.model.ModelTrollWeapon;
 import com.github.alexthe666.iceandfire.enums.EnumTroll;
 import com.github.alexthe666.iceandfire.item.ItemTrollWeapon;
 import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.client.model.geom.EntityModelSet;
-import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.block.model.ItemTransforms;
-import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
+import com.mojang.serialization.MapCodec;
+import java.util.Locale;
+import java.util.function.Consumer;
+import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.client.renderer.special.SpecialModelRenderer;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
-import org.jetbrains.annotations.NotNull;
+import org.joml.Vector3fc;
+import org.jspecify.annotations.Nullable;
 
-public class RenderTrollWeapon extends BlockEntityWithoutLevelRenderer {
-    private static final ModelTrollWeapon MODEL = new ModelTrollWeapon();
+public class RenderTrollWeapon implements SpecialModelRenderer<Identifier> {
+    private final EntityModel<EntityRenderState> model = new ModelTrollWeapon().asEntityModel();
 
-    public RenderTrollWeapon(BlockEntityRenderDispatcher dispatcher, EntityModelSet set) {
-        super(dispatcher, set);
+    @Override
+    public Identifier extractArgument(ItemStack stack) {
+        EnumTroll.Weapon weapon = stack.getItem() instanceof ItemTrollWeapon item ? item.weapon : EnumTroll.Weapon.AXE;
+        return textureFor(weapon);
+    }
+
+    private static Identifier textureFor(EnumTroll.Weapon weapon) {
+        return Identifier.fromNamespaceAndPath("iceandfire",
+            "textures/models/troll/weapon/weapon_" + weapon.name().toLowerCase(Locale.ROOT) + ".png");
     }
 
     @Override
-    public void renderByItem(ItemStack stack, ItemTransforms.@NotNull TransformType type, @NotNull PoseStack stackIn, @NotNull MultiBufferSource bufferIn, int combinedLightIn, int combinedOverlayIn) {
-        EnumTroll.Weapon weapon = EnumTroll.Weapon.AXE;
-        if (stack.getItem() instanceof ItemTrollWeapon)
-            weapon = ((ItemTrollWeapon) stack.getItem()).weapon;
+    public void submit(@Nullable Identifier texture, PoseStack poses, SubmitNodeCollector collector,
+                       int light, int overlay, boolean hasFoil, int outlineColor) {
+        poses.pushPose();
+        poses.translate(0, -1.25F, 0);
+        collector.submitModel(model, new EntityRenderState(), poses,
+            RenderTypes.entityCutoutCull(texture == null ? textureFor(EnumTroll.Weapon.AXE) : texture),
+            light, overlay, outlineColor, null);
+        poses.popPose();
+    }
 
-        stackIn.pushPose();
-        stackIn.translate(0.5F, -0.75F, 0.5F);
-        MODEL.renderToBuffer(stackIn, bufferIn.getBuffer(RenderType.entityCutout(weapon.TEXTURE)), combinedLightIn, combinedOverlayIn, 1.0F, 1.0F, 1.0F, 1.0F);
-        stackIn.popPose();
+    @Override
+    public void getExtents(Consumer<Vector3fc> output) {
+        PoseStack poses = new PoseStack();
+        poses.translate(0, -1.25F, 0);
+        model.root().getExtentsForGui(poses, output);
+    }
+
+    public record Unbaked() implements SpecialModelRenderer.Unbaked<Identifier> {
+        public static final MapCodec<Unbaked> MAP_CODEC = MapCodec.unit(new Unbaked());
+
+        @Override
+        public MapCodec<Unbaked> type() { return MAP_CODEC; }
+
+        @Override
+        public RenderTrollWeapon bake(BakingContext context) { return new RenderTrollWeapon(); }
     }
 }

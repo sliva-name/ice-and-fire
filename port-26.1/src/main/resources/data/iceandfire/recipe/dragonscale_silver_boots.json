@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "S S",
+    "S S"
+  ],
+  "key": {
+    "S": "iceandfire:dragonscales_silver"
+  },
+  "result": {
+    "id": "iceandfire:armor_silver_boots"
+  }
+}

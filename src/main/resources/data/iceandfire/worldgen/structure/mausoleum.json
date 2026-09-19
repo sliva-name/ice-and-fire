@@ -1,0 +1,7 @@
+{
+  "type": "iceandfire:mausoleum",
+  "biomes": "#iceandfire:has_structure/mausoleum",
+  "step": "surface_structures",
+  "spawn_overrides": {},
+  "terrain_adaptation": "none"
+}

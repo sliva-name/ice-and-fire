@@ -4,7 +4,7 @@ import com.github.alexthe666.iceandfire.entity.tile.IafTileEntityRegistry;
 import com.github.alexthe666.iceandfire.entity.tile.TileEntityGhostChest;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.stats.Stat;
 import net.minecraft.stats.Stats;
 import net.minecraft.util.Mth;
@@ -14,20 +14,20 @@ import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.material.MapColor;
 import org.jetbrains.annotations.NotNull;
 
 public class BlockGhostChest extends ChestBlock {
 
     public BlockGhostChest() {
         super(
-            Properties
-                .of(Material.WOOD)
+            () -> IafTileEntityRegistry.GHOST_CHEST.get(),
+            net.minecraft.sounds.SoundEvents.CHEST_OPEN,
+            net.minecraft.sounds.SoundEvents.CHEST_CLOSE,
+            IafBlockRegistry.id(Properties
+                .of().mapColor(MapColor.WOOD)
                 .strength(2.5F)
-                .sound(SoundType.WOOD),
-            () -> {
-                return IafTileEntityRegistry.GHOST_CHEST.get();
-            }
+                .sound(SoundType.WOOD))
         );
     }
 
@@ -37,7 +37,7 @@ public class BlockGhostChest extends ChestBlock {
     }
 
     @Override
-    protected @NotNull Stat<ResourceLocation> getOpenChestStat() {
+    protected @NotNull Stat<Identifier> getOpenChestStat() {
         return Stats.CUSTOM.get(Stats.TRIGGER_TRAPPED_CHEST);
     }
 

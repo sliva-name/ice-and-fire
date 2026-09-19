@@ -7,10 +7,8 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
-import java.util.function.Supplier;
 
 public class MessageMultipartInteract {
 
@@ -38,23 +36,23 @@ public class MessageMultipartInteract {
         public Handler() {
         }
 
-        public static void handle(MessageMultipartInteract message, Supplier<NetworkEvent.Context> context) {
-            context.get().setPacketHandled(true);
-            Player player = context.get().getSender();
-            if(context.get().getDirection().getReceptionSide() == LogicalSide.CLIENT){
+        public static void handle(MessageMultipartInteract message, CustomPayloadEvent.Context context) {
+            context.setPacketHandled(true);
+            Player player = context.getSender();
+            if(context.isClientSide()){
                 player = IceAndFire.PROXY.getClientSidePlayer();
             }
             if (player != null) {
-                if (player.level != null) {
-                    Entity entity = player.level.getEntity(message.creatureID);
+                if (player.level() != null) {
+                    Entity entity = player.level().getEntity(message.creatureID);
                     if (entity != null && entity instanceof LivingEntity) {
                         double dist = player.distanceTo(entity);
                         LivingEntity mob = (LivingEntity) entity;
                         if (dist < 100) {
                             if (message.dmg > 0F) {
-                                mob.hurt(DamageSource.mobAttack(player), message.dmg);
+                                mob.hurt(player.damageSources().playerAttack(player), message.dmg);
                             } else {
-                                mob.interact(player, InteractionHand.MAIN_HAND);
+                                mob.interact(player, InteractionHand.MAIN_HAND, player.position());
                             }
                         }
                     }

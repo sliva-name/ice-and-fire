@@ -9,7 +9,7 @@ import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nullable;
 import java.util.EnumSet;
-import java.util.Random;
+import net.minecraft.util.RandomSource;
 
 public class AquaticAIGetOutOfWater extends Goal {
     private final Mob creature;
@@ -22,7 +22,7 @@ public class AquaticAIGetOutOfWater extends Goal {
     public AquaticAIGetOutOfWater(Mob theCreatureIn, double movementSpeedIn) {
         this.creature = theCreatureIn;
         this.movementSpeed = movementSpeedIn;
-        this.world = theCreatureIn.level;
+        this.world = theCreatureIn.level();
         this.setFlags(EnumSet.of(Flag.MOVE));
     }
 
@@ -56,12 +56,12 @@ public class AquaticAIGetOutOfWater extends Goal {
 
     @Nullable
     private Vec3 findPossibleShelter() {
-        Random random = this.creature.getRandom();
-        BlockPos blockpos = new BlockPos(this.creature.getX(), this.creature.getBoundingBox().minY, this.creature.getZ());
+        RandomSource random = this.creature.getRandom();
+        BlockPos blockpos = BlockPos.containing(this.creature.getX(), this.creature.getBoundingBox().minY, this.creature.getZ());
 
         for (int i = 0; i < 10; ++i) {
             BlockPos blockpos1 = blockpos.offset(random.nextInt(20) - 10, random.nextInt(6) - 3, random.nextInt(20) - 10);
-            if (this.world.getBlockState(blockpos1).isSolidRender(world, blockpos1)) {
+            if (this.world.getBlockState(blockpos1).isSolidRender()) {
                 return new Vec3(blockpos1.getX(), blockpos1.getY(), blockpos1.getZ());
             }
         }

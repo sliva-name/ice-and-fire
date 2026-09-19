@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "BBB",
+    "BHB",
+    "BBB"
+  ],
+  "key": {
+    "B": "iceandfire:dragonforge_fire_brick",
+    "H": "iceandfire:fire_dragon_heart"
+  },
+  "result": {
+    "id": "iceandfire:dragonforge_fire_core_disabled"
+  }
+}

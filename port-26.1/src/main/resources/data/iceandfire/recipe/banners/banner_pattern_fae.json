@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    "iceandfire:pixie_wings",
+    "minecraft:paper"
+  ],
+  "result": {
+    "count": 1,
+    "id": "iceandfire:banner_pattern_fae"
+  }
+}

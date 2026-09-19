@@ -1,49 +1,32 @@
 package com.github.alexthe666.iceandfire.client.render.entity.layer;
 
-import com.github.alexthe666.iceandfire.client.model.ModelPixie;
+import com.github.alexthe666.iceandfire.client.render.entity.PixieRenderState;
 import com.github.alexthe666.iceandfire.client.render.entity.RenderPixie;
-import com.github.alexthe666.iceandfire.entity.EntityPixie;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Quaternion;
-import com.mojang.math.Vector3f;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.block.model.ItemTransforms;
+import com.mojang.math.Axis;
+import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import org.jetbrains.annotations.NotNull;
 
-public class LayerPixieItem extends RenderLayer<EntityPixie, ModelPixie> {
-
-    RenderPixie renderer;
-
+public class LayerPixieItem extends RenderLayer<PixieRenderState, EntityModel<PixieRenderState>> {
     public LayerPixieItem(RenderPixie renderer) {
         super(renderer);
-        this.renderer = renderer;
     }
 
     @Override
-    public void render(@NotNull PoseStack matrixStackIn, @NotNull MultiBufferSource bufferIn, int packedLightIn, EntityPixie entity, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch) {
-        ItemStack itemstack = entity.getItemInHand(InteractionHand.MAIN_HAND);
-        if (!itemstack.isEmpty()) {
-            matrixStackIn.pushPose();
-            matrixStackIn.translate(-0.0625F, 0.53125F, 0.21875F);
-            Item item = itemstack.getItem();
-            Minecraft minecraft = Minecraft.getInstance();
-            if (!(item instanceof BlockItem)) {
-                matrixStackIn.translate(-0.075F, 0, -0.05F);
-            } else {
-                matrixStackIn.translate(-0.075F, 0, -0.05F);
-            }
-            matrixStackIn.translate(0.05F, 0.55F, -0.4F);
-            matrixStackIn.mulPose(new Quaternion(Vector3f.XP, 200, true));
-            matrixStackIn.mulPose(new Quaternion(Vector3f.YP, 180, true));
-            Minecraft.getInstance().getItemRenderer().renderStatic(itemstack, ItemTransforms.TransformType.FIXED, packedLightIn, OverlayTexture.NO_OVERLAY, matrixStackIn, bufferIn, 0);
-            matrixStackIn.popPose();
+    public void submit(PoseStack stack, SubmitNodeCollector collector, int lightCoords, PixieRenderState state, float yRot, float xRot) {
+        if (state.heldItem.isEmpty()) {
+            return;
         }
+        stack.pushPose();
+        // Both block and non-block items used these same offsets in the original layer.
+        stack.translate(-0.0625F, 0.53125F, 0.21875F);
+        stack.translate(-0.075F, 0, -0.05F);
+        stack.translate(0.05F, 0.55F, -0.4F);
+        stack.mulPose(Axis.XP.rotationDegrees(200));
+        stack.mulPose(Axis.YP.rotationDegrees(180));
+        state.heldItem.submit(stack, collector, lightCoords, OverlayTexture.NO_OVERLAY, state.outlineColor);
+        stack.popPose();
     }
 }

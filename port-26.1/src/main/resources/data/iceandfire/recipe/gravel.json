@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    "#iceandfire:crackled_block",
+    "#iceandfire:crackled_block",
+    "#iceandfire:crackled_block",
+    "#iceandfire:crackled_block",
+    "#iceandfire:crackled_block",
+    "#iceandfire:crackled_block",
+    "#iceandfire:crackled_block",
+    "#iceandfire:crackled_block",
+    "#iceandfire:crackled_block"
+  ],
+  "result": {
+    "count": 1,
+    "id": "minecraft:gravel"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    "#forge:nuggets/copper",
+    "#forge:nuggets/copper"
+  ],
+  "result": {
+    "count": 1,
+    "id": "iceandfire:copper_pile"
+  }
+}

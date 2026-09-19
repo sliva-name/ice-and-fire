@@ -32,12 +32,14 @@ public class AiDebug {
                 continue;
             }
             if (entity.goalSelector != null) {
-                List<String> goals = entity.goalSelector.getRunningGoals().map(goal -> goal.getGoal().toString()).collect(Collectors.toList());
+                List<String> goals = java.util.stream.StreamSupport.stream(entity.goalSelector.getAvailableGoals().spliterator(), false)
+                    .filter(goal -> goal.isRunning()).map(goal -> goal.getGoal().toString()).collect(Collectors.toList());
                 if (!goals.isEmpty())
                     LOGGER.debug("{} - GOALS: {}", entity, goals);
             }
             if (entity.targetSelector != null) {
-                List<String> targets = entity.targetSelector.getRunningGoals().map(goal -> goal.getGoal().toString()).collect(Collectors.toList());
+                List<String> targets = java.util.stream.StreamSupport.stream(entity.targetSelector.getAvailableGoals().spliterator(), false)
+                    .filter(goal -> goal.isRunning()).map(goal -> goal.getGoal().toString()).collect(Collectors.toList());
                 if (!targets.isEmpty())
                     LOGGER.debug("{} - TARGET: {}", entity, targets);
             }

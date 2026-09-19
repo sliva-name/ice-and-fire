@@ -19,7 +19,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.NotNull;
@@ -35,18 +35,24 @@ public class BlockDragonforgeCore extends BaseEntityBlock implements IDragonProo
 
     public BlockDragonforgeCore(int isFire, boolean activated) {
         super(
-            Properties
-                .of(Material.METAL)
+            IafBlockRegistry.id(Properties
+                .of().mapColor(MapColor.METAL)
                 .dynamicShape()
                 .strength(40, 500)
                 .sound(SoundType.METAL)
                 .lightLevel((state) -> {
                     return activated ? 15 : 0;
                 })
+                .pushReaction(PushReaction.BLOCK))
         );
 
         this.isFire = isFire;
         this.activated = activated;
+    }
+
+    @Override
+    protected com.mojang.serialization.MapCodec<? extends BaseEntityBlock> codec() {
+        return simpleCodec(properties -> new BlockDragonforgeCore(this.isFire, this.activated));
     }
 
     static String name(int dragonType, boolean activated) {
@@ -89,15 +95,11 @@ public class BlockDragonforgeCore extends BaseEntityBlock implements IDragonProo
         }
     }
 
-    @Override
-    public @NotNull PushReaction getPistonPushReaction(@NotNull BlockState state) {
-        return PushReaction.BLOCK;
-    }
 
     @Override
-    public @NotNull InteractionResult use(@NotNull BlockState state, @NotNull Level worldIn, @NotNull BlockPos pos, Player player, @NotNull InteractionHand handIn, @NotNull BlockHitResult hit) {
+    protected @NotNull InteractionResult useWithoutItem(@NotNull BlockState state, @NotNull Level worldIn, @NotNull BlockPos pos, Player player, @NotNull BlockHitResult hit) {
         if (!player.isShiftKeyDown()) {
-            if (worldIn.isClientSide) {
+            if (worldIn.isClientSide()) {
                 IceAndFire.PROXY.setRefrencedTE(worldIn.getBlockEntity(pos));
             } else {
                 MenuProvider inamedcontainerprovider = this.getMenuProvider(state, worldIn, pos);
@@ -129,17 +131,17 @@ public class BlockDragonforgeCore extends BaseEntityBlock implements IDragonProo
     }
 
     @Override
-    public void onRemove(@NotNull BlockState state, Level worldIn, @NotNull BlockPos pos, @NotNull BlockState newState, boolean isMoving) {
+    protected void affectNeighborsAfterRemoval(@NotNull BlockState state, @NotNull net.minecraft.server.level.ServerLevel worldIn, @NotNull BlockPos pos, boolean movedByPiston) {
         BlockEntity tileentity = worldIn.getBlockEntity(pos);
         if (tileentity instanceof TileEntityDragonforge) {
             Containers.dropContents(worldIn, pos, (TileEntityDragonforge) tileentity);
             worldIn.updateNeighbourForOutputSignal(pos, this);
-            worldIn.removeBlockEntity(pos);
         }
+        super.affectNeighborsAfterRemoval(state, worldIn, pos, movedByPiston);
     }
 
     @Override
-    public int getAnalogOutputSignal(@NotNull BlockState blockState, Level worldIn, @NotNull BlockPos pos) {
+    protected int getAnalogOutputSignal(@NotNull BlockState blockState, @NotNull Level worldIn, @NotNull BlockPos pos, @NotNull net.minecraft.core.Direction direction) {
         return AbstractContainerMenu.getRedstoneSignalFromBlockEntity(worldIn.getBlockEntity(pos));
     }
 

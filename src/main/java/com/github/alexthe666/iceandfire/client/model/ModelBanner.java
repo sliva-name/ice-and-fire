@@ -1,12 +1,12 @@
 package com.github.alexthe666.iceandfire.client.model;
 
+import com.github.alexthe666.citadel.client.model.basic.BasicEntityModel;
 import com.github.alexthe666.citadel.client.model.basic.BasicModelPart;
 import com.google.common.collect.ImmutableList;
-import net.minecraft.client.model.ListModel;
-import net.minecraft.world.entity.Entity;
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import org.jetbrains.annotations.NotNull;
 
-public class ModelBanner extends ListModel {
+public class ModelBanner extends BasicEntityModel<EntityRenderState> {
     public final BasicModelPart flag = getModelRender();
     public final BasicModelPart pole = new BasicModelPart(64, 64, 44, 0);
     public final BasicModelPart bar;
@@ -24,13 +24,11 @@ public class ModelBanner extends ListModel {
     }
 
     @Override
-    public void setupAnim(@NotNull Entity entityIn, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
-
+    public void setupAnim(@NotNull EntityRenderState state) {
     }
 
     @Override
     public @NotNull Iterable<BasicModelPart> parts() {
         return ImmutableList.of(flag, pole, bar);
     }
-
 }

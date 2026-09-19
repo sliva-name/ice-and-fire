@@ -1,13 +1,19 @@
 package com.github.alexthe666.iceandfire.entity;
 
+import net.minecraft.server.level.ServerLevel;
+
+import net.minecraft.core.UUIDUtil;
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
 import com.github.alexthe666.iceandfire.entity.ai.*;
+import com.github.alexthe666.iceandfire.entity.util.IafOwners;
 import com.github.alexthe666.iceandfire.pathfinding.raycoms.AdvancedPathNavigate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -29,13 +35,13 @@ import java.util.UUID;
 
 public class EntityMyrmexSwarmer extends EntityMyrmexRoyal {
 
-    private static final EntityDataAccessor<Optional<UUID>> SUMMONER_ID = SynchedEntityData.defineId(EntityMyrmexSwarmer.class, EntityDataSerializers.OPTIONAL_UUID);
+    private static final EntityDataAccessor<String> SUMMONER_ID = SynchedEntityData.defineId(EntityMyrmexSwarmer.class, EntityDataSerializers.STRING);
     private static final EntityDataAccessor<Integer> TICKS_ALIVE = SynchedEntityData.defineId(EntityMyrmexSwarmer.class, EntityDataSerializers.INT);
 
     public EntityMyrmexSwarmer(EntityType type, Level worldIn) {
         super(type, worldIn);
         this.moveControl = new EntityMyrmexRoyal.FlyMoveHelper(this);
-        this.navigation = createNavigator(level, AdvancedPathNavigate.MovementType.FLYING);
+        this.navigation = createNavigator(worldIn, AdvancedPathNavigate.MovementType.FLYING);
         switchNavigator(false);
     }
 
@@ -54,7 +60,7 @@ public class EntityMyrmexSwarmer extends EntityMyrmexRoyal {
     }
 
     @Override
-    protected int getExperienceReward(Player player) {
+    protected int getBaseExperienceReward(@NotNull ServerLevel level) {
         return 0;
     }
 
@@ -94,24 +100,23 @@ public class EntityMyrmexSwarmer extends EntityMyrmexRoyal {
     }
 
     @Override
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(SUMMONER_ID, Optional.empty());
-        this.entityData.define(TICKS_ALIVE, 0);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(SUMMONER_ID, "");
+        builder.define(TICKS_ALIVE, 0);
     }
 
     @Nullable
     public LivingEntity getSummoner() {
         try {
             UUID uuid = this.getSummonerUUID();
-            return uuid == null ? null : this.level.getPlayerByUUID(uuid);
+            return uuid == null ? null : this.level().getPlayerByUUID(uuid);
         } catch (IllegalArgumentException var2) {
             return null;
         }
     }
 
-    @Override
-    public boolean isAlliedTo(@NotNull Entity entityIn) {
+    public boolean iafIsAlliedTo(@NotNull Entity entityIn) {
         if (entityIn == null) {
             return false;
         }
@@ -119,18 +124,18 @@ public class EntityMyrmexSwarmer extends EntityMyrmexRoyal {
             return false;
         }
         if (entityIn instanceof TamableAnimal) {
-            UUID ownerID = ((TamableAnimal) entityIn).getOwnerUUID();
+            UUID ownerID = IafOwners.getUUID((TamableAnimal) entityIn);
             return ownerID != null && ownerID.equals(this.getSummonerUUID());
         }
         return entityIn.getUUID().equals(this.getSummonerUUID()) || entityIn instanceof EntityMyrmexSwarmer && ((EntityMyrmexSwarmer) entityIn).getSummonerUUID() != null && ((EntityMyrmexSwarmer) entityIn).getSummonerUUID().equals(this.getSummonerUUID());
     }
 
     public void setSummonerID(@Nullable UUID uuid) {
-        this.entityData.set(SUMMONER_ID, Optional.ofNullable(uuid));
+        this.entityData.set(SUMMONER_ID, uuid == null ? "" : uuid.toString());
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag compound) {
+    public void addAdditionalSaveData(ValueOutput compound) {
         super.addAdditionalSaveData(compound);
         if (this.getSummonerUUID() == null) {
             compound.putString("SummonerUUID", "");
@@ -142,11 +147,11 @@ public class EntityMyrmexSwarmer extends EntityMyrmexRoyal {
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag compound) {
+    public void readAdditionalSaveData(ValueInput compound) {
         super.readAdditionalSaveData(compound);
         String s = "";
-        if (compound.hasUUID("SummonerUUID")) {
-            s = compound.getString("SummonerUUID");
+        if (compound.read("SummonerUUID", UUIDUtil.CODEC).isPresent()) {
+            s = compound.getStringOr("SummonerUUID", "");
         }
         if (!s.isEmpty()) {
             try {
@@ -154,7 +159,7 @@ public class EntityMyrmexSwarmer extends EntityMyrmexRoyal {
             } catch (Throwable var4) {
             }
         }
-        this.setTicksAlive(compound.getInt("SummonTicks"));
+        this.setTicksAlive(compound.getIntOr("SummonTicks", 0));
     }
 
     public void setSummonedBy(Player player) {
@@ -163,7 +168,15 @@ public class EntityMyrmexSwarmer extends EntityMyrmexRoyal {
 
     @Nullable
     public UUID getSummonerUUID() {
-        return (UUID) ((Optional) this.entityData.get(SUMMONER_ID)).orElse(null);
+        String stored = this.entityData.get(SUMMONER_ID);
+        if (stored == null || stored.isEmpty()) {
+            return null;
+        }
+        try {
+            return UUID.fromString(stored);
+        } catch (IllegalArgumentException ignored) {
+            return null;
+        }
     }
 
     public int getTicksAlive() {
@@ -178,7 +191,7 @@ public class EntityMyrmexSwarmer extends EntityMyrmexRoyal {
     public void aiStep() {
         super.aiStep();
         setFlying(true);
-        boolean flying = this.isFlying() && !this.onGround;
+        boolean flying = this.isFlying() && !this.onGround();
         setTicksAlive(getTicksAlive() + 1);
         if (flying) {
             this.setDeltaMovement(this.getDeltaMovement().add(0, -0.08D, 0));
@@ -186,7 +199,7 @@ public class EntityMyrmexSwarmer extends EntityMyrmexRoyal {
                 this.setDeltaMovement(this.getDeltaMovement().add(0, 0.08D, 0));
             }
         }
-        if (this.onGround) {
+        if (this.onGround()) {
             this.setDeltaMovement(this.getDeltaMovement().add(0, 0.2D, 0));
         }
         if (this.getTarget() != null) {
@@ -195,21 +208,21 @@ public class EntityMyrmexSwarmer extends EntityMyrmexRoyal {
                 this.setAnimation(random.nextBoolean() ? ANIMATION_BITE : ANIMATION_STING);
             }
         }
-        if (this.getTicksAlive() > 1800) {
-            this.kill();
+        if (this.getTicksAlive() > 1800 && this.level() instanceof ServerLevel serverLevel) {
+            this.kill(serverLevel);
         }
         if (this.getAnimation() == ANIMATION_BITE && this.getTarget() != null && this.getAnimationTick() == 6) {
             this.playBiteSound();
             double dist = this.distanceToSqr(this.getTarget());
             if (dist < attackDistance()) {
-                this.getTarget().hurt(DamageSource.mobAttack(this), ((int) this.getAttribute(Attributes.ATTACK_DAMAGE).getValue()));
+                this.getTarget().hurt(this.damageSources().mobAttack(this), ((int) this.getAttribute(Attributes.ATTACK_DAMAGE).getValue()));
             }
         }
         if (this.getAnimation() == ANIMATION_STING && this.getTarget() != null && this.getAnimationTick() == 6) {
             this.playStingSound();
             double dist = this.distanceToSqr(this.getTarget());
             if (dist < attackDistance()) {
-                this.getTarget().hurt(DamageSource.mobAttack(this), ((int) this.getAttribute(Attributes.ATTACK_DAMAGE).getValue() * 2));
+                this.getTarget().hurt(this.damageSources().mobAttack(this), ((int) this.getAttribute(Attributes.ATTACK_DAMAGE).getValue() * 2));
                 // After calling hurt the target can become null due to forge hooks
                 if (this.getTarget() != null)
                     this.getTarget().addEffect(new MobEffectInstance(MobEffects.POISON, 70, 1));
@@ -223,9 +236,8 @@ public class EntityMyrmexSwarmer extends EntityMyrmexRoyal {
     }
 
     @Override
-    @Nullable
-    protected ResourceLocation getDefaultLootTable() {
-        return null;
+    protected boolean shouldDropLoot(@NotNull ServerLevel level) {
+        return false;
     }
 
     @Override

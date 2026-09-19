@@ -19,7 +19,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.NotNull;
@@ -33,15 +33,21 @@ public class BlockDragonforgeBricks extends BaseEntityBlock implements IDragonPr
 
     public BlockDragonforgeBricks(int isFire) {
         super(
-            Properties
-                .of(Material.STONE)
+            IafBlockRegistry.id(Properties
+                .of().mapColor(MapColor.STONE)
                 .dynamicShape()
                 .strength(40, 500)
     			.sound(SoundType.METAL)
+                .pushReaction(PushReaction.BLOCK))
 		);
 
         this.isFire = isFire;
         this.registerDefaultState(this.getStateDefinition().any().setValue(GRILL, Boolean.FALSE));
+    }
+
+    @Override
+    protected com.mojang.serialization.MapCodec<? extends BaseEntityBlock> codec() {
+        return simpleCodec(properties -> new BlockDragonforgeBricks(this.isFire));
     }
 
     static String name(int dragonType) {
@@ -49,16 +55,11 @@ public class BlockDragonforgeBricks extends BaseEntityBlock implements IDragonPr
     }
 
     @Override
-    public @NotNull PushReaction getPistonPushReaction(@NotNull BlockState state) {
-        return PushReaction.BLOCK;
-    }
-
-    @Override
-    public @NotNull InteractionResult use(@NotNull BlockState state, @NotNull Level worldIn, @NotNull BlockPos pos, @NotNull Player player, @NotNull InteractionHand handIn, BlockHitResult resultIn) {
+    protected @NotNull InteractionResult useWithoutItem(@NotNull BlockState state, @NotNull Level worldIn, @NotNull BlockPos pos, @NotNull Player player, BlockHitResult resultIn) {
         if (this.getConnectedTileEntity(worldIn, resultIn.getBlockPos()) != null) {
             TileEntityDragonforge forge = this.getConnectedTileEntity(worldIn, resultIn.getBlockPos());
             if (forge != null && forge.fireType == isFire) {
-                if (worldIn.isClientSide) {
+                if (worldIn.isClientSide()) {
                     IceAndFire.PROXY.setRefrencedTE(worldIn.getBlockEntity(forge.getBlockPos()));
                 } else {
                     MenuProvider inamedcontainerprovider = this.getMenuProvider(forge.getBlockState(), worldIn, forge.getBlockPos());

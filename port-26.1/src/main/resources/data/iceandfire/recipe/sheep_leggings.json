@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "WWW",
+    "WLW",
+    "W W"
+  ],
+  "key": {
+    "L": "minecraft:leather_leggings",
+    "W": "minecraft:white_wool"
+  },
+  "result": {
+    "id": "iceandfire:sheep_leggings"
+  }
+}

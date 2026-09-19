@@ -4,15 +4,17 @@ import com.github.alexthe666.iceandfire.IafConfig;
 import com.github.alexthe666.iceandfire.IceAndFire;
 import com.github.alexthe666.iceandfire.world.gen.TypedFeature;
 import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.NbtUtils;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.saveddata.SavedData;
-import net.minecraft.world.level.storage.DimensionDataStorage;
-import org.jetbrains.annotations.NotNull;
+import net.minecraft.world.level.saveddata.SavedDataType;
+import net.minecraft.world.level.storage.SavedDataStorage;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,22 +28,40 @@ public class IafWorldData extends SavedData {
         OCEAN
     }
 
-    private static final String IDENTIFIER = IceAndFire.MODID + "_general";
+    private static final Codec<Pair<String, BlockPos>> ENTRY_CODEC = RecordCodecBuilder.create(instance -> instance.group(
+        Codec.STRING.fieldOf("id").forGetter(Pair::getFirst),
+        BlockPos.CODEC.fieldOf("position").forGetter(Pair::getSecond)
+    ).apply(instance, Pair::of));
+
+    private static final Codec<Map<FeatureType, List<Pair<String, BlockPos>>>> MAP_CODEC =
+        Codec.unboundedMap(Codec.STRING.xmap(FeatureType::valueOf, FeatureType::name), ENTRY_CODEC.listOf());
+
     private static final Map<FeatureType, List<Pair<String, BlockPos>>> LAST_GENERATED = new HashMap<>();
+
+    public static final Codec<IafWorldData> CODEC = MAP_CODEC.xmap(IafWorldData::fromSaved, data -> LAST_GENERATED);
+
+    public static final SavedDataType<IafWorldData> TYPE = new SavedDataType<>(
+        Identifier.fromNamespaceAndPath(IceAndFire.MODID, "general"),
+        IafWorldData::new,
+        CODEC,
+        DataFixTypes.LEVEL
+    );
 
     public IafWorldData() { /* Nothing to do */ }
 
-    public IafWorldData(final CompoundTag tag) {
-        this.load(tag);
+    private static IafWorldData fromSaved(Map<FeatureType, List<Pair<String, BlockPos>>> map) {
+        LAST_GENERATED.clear();
+        LAST_GENERATED.putAll(map);
+        return new IafWorldData();
     }
 
+    @Nullable
     public static IafWorldData get(final Level world) {
         if (world instanceof ServerLevel) {
             ServerLevel overworld = world.getServer().getLevel(world.dimension());
-            DimensionDataStorage storage = overworld.getDataStorage();
-            IafWorldData data = storage.computeIfAbsent(IafWorldData::new, IafWorldData::new, IDENTIFIER);
+            SavedDataStorage storage = overworld.getDataStorage();
+            IafWorldData data = storage.computeIfAbsent(TYPE);
             data.setDirty();
-
             return data;
         }
 
@@ -73,41 +93,5 @@ public class IafWorldData extends SavedData {
         entries.add(Pair.of(id, position));
 
         return canGenerate;
-    }
-
-    public IafWorldData load(final CompoundTag tag) {
-        FeatureType[] types = FeatureType.values();
-
-        for (FeatureType type : types) {
-            ListTag list = tag.getList(type.toString(), ListTag.TAG_COMPOUND);
-
-            for (int i = 0; i < list.size(); i++) {
-                CompoundTag entry = list.getCompound(i);
-                String id = entry.getString("id");
-                BlockPos position = NbtUtils.readBlockPos(entry.getCompound("position"));
-                LAST_GENERATED.computeIfAbsent(type, key -> new ArrayList<>()).add(Pair.of(id, position));
-            }
-        }
-
-        return this;
-    }
-
-    @Override
-    public @NotNull CompoundTag save(@NotNull final CompoundTag tag) {
-        LAST_GENERATED.forEach((key, value) -> {
-            ListTag listTag = new ListTag();
-
-            value.forEach(entry -> {
-                CompoundTag subTag = new CompoundTag();
-                subTag.putString("id", entry.getFirst());
-                subTag.put("position", NbtUtils.writeBlockPos(entry.getSecond()));
-
-                listTag.add(subTag);
-            });
-
-            tag.put(key.toString(), listTag);
-        });
-
-        return tag;
     }
 }

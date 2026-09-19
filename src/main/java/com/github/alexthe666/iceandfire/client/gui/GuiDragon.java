@@ -4,74 +4,59 @@ import com.github.alexthe666.iceandfire.IceAndFire;
 import com.github.alexthe666.iceandfire.client.StatCollector;
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.alexthe666.iceandfire.inventory.ContainerDragon;
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
-import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Inventory;
 import org.jetbrains.annotations.NotNull;
 
 public class GuiDragon extends AbstractContainerScreen<ContainerDragon> {
-    private static final ResourceLocation texture = new ResourceLocation("iceandfire:textures/gui/dragon.png");
+    private static final Identifier texture = Identifier.parse("iceandfire:textures/gui/dragon.png");
     private float mousePosx;
     private float mousePosY;
 
     public GuiDragon(ContainerDragon dragonInv, Inventory playerInv, Component name) {
-        super(dragonInv, playerInv, name);
-        this.imageHeight = 214;
+        super(dragonInv, playerInv, name, 176, 214);
     }
 
     @Override
-    protected void renderLabels(@NotNull PoseStack matrixStack, int mouseX, int mouseY) {
-
-    }
-
-    @Override
-    public void render(@NotNull PoseStack matrixStack, int mouseX, int mouseY, float partialTicks) {
-        this.renderBackground(matrixStack);
+    public void extractRenderState(@NotNull GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTicks) {
         this.mousePosx = mouseX;
         this.mousePosY = mouseY;
-        super.render(matrixStack, mouseX, mouseY, partialTicks);
-        this.renderTooltip(matrixStack, mouseX, mouseY);
+        super.extractRenderState(graphics, mouseX, mouseY, partialTicks);
+        this.extractTooltip(graphics, mouseX, mouseY);
     }
 
     @Override
-    protected void renderBg(@NotNull PoseStack matrixStack, float partialTicks, int mouseX, int mouseY) {
-        RenderSystem.setShader(GameRenderer::getPositionTexShader);
-        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-        RenderSystem.setShaderTexture(0, texture);
-        int k = (this.width - this.imageWidth) / 2;
-        int l = (this.height - this.imageHeight) / 2;
-        this.blit(matrixStack, k, l, 0, 0, this.imageWidth, this.imageHeight);
+    public void extractBackground(@NotNull GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTicks) {
+        int k = this.leftPos;
+        int l = this.topPos;
+        graphics.blit(RenderPipelines.GUI_TEXTURED, texture, k, l, 0, 0, this.imageWidth, this.imageHeight, 256, 256);
         Entity entity = IceAndFire.PROXY.getReferencedMob();
-        if (entity instanceof EntityDragonBase) {
-            EntityDragonBase dragon = (EntityDragonBase) entity;
+        if (entity instanceof EntityDragonBase dragon) {
             float dragonScale = 1F / Math.max(0.0001F, dragon.getScale());
-            InventoryScreen.renderEntityInInventory(k + 88, l + (int) (0.5F * (dragon.flyProgress)) + 55, (int) (dragonScale * 23F), k + 51 - this.mousePosx, l + 75 - 50 - this.mousePosY, dragon);
-        }
-        if (entity instanceof EntityDragonBase) {
-            EntityDragonBase dragon = (EntityDragonBase) entity;
-
-            Font font = this.getMinecraft().font;
+            int scale = Math.max(1, (int) (dragonScale * 23F));
+            int entX = k + 88;
+            int entY = l + (int) (0.5F * (dragon.flyProgress)) + 55;
+            InventoryScreen.extractEntityInInventoryFollowsMouse(graphics, entX - scale, entY - scale * 2, entX + scale, entY, scale, this.mousePosx, this.mousePosY, 0.0625F, dragon);
+            Font font = this.font;
             String s3 = dragon.getCustomName() == null ? StatCollector.translateToLocal("dragon.unnamed") : StatCollector.translateToLocal("dragon.name") + " " + dragon.getCustomName().getString();
-            font.draw(matrixStack, s3, k + this.imageWidth / 2 - font.width(s3) / 2, l + 75, 0XFFFFFF);
+            graphics.text(font, s3, k + this.imageWidth / 2 - font.width(s3) / 2, l + 75, 0xFFFFFF);
             String s2 = StatCollector.translateToLocal("dragon.health") + " " + Math.floor(Math.min(dragon.getHealth(), dragon.getMaxHealth())) + " / " + dragon.getMaxHealth();
-            font.draw(matrixStack, s2, k + this.imageWidth / 2 - font.width(s2) / 2, l + 84, 0XFFFFFF);
+            graphics.text(font, s2, k + this.imageWidth / 2 - font.width(s2) / 2, l + 84, 0xFFFFFF);
             String s5 = StatCollector.translateToLocal("dragon.gender") + StatCollector.translateToLocal((dragon.isMale() ? "dragon.gender.male" : "dragon.gender.female"));
-            font.draw(matrixStack, s5, k + this.imageWidth / 2 - font.width(s5) / 2, l + 93, 0XFFFFFF);
+            graphics.text(font, s5, k + this.imageWidth / 2 - font.width(s5) / 2, l + 93, 0xFFFFFF);
             String s6 = StatCollector.translateToLocal("dragon.hunger") + dragon.getHunger() + "/100";
-            font.draw(matrixStack, s6, k + this.imageWidth / 2 - font.width(s6) / 2, l + 102, 0XFFFFFF);
+            graphics.text(font, s6, k + this.imageWidth / 2 - font.width(s6) / 2, l + 102, 0xFFFFFF);
             String s4 = StatCollector.translateToLocal("dragon.stage") + " " + dragon.getDragonStage() + " " + StatCollector.translateToLocal("dragon.days.front") + dragon.getAgeInDays() + " " + StatCollector.translateToLocal("dragon.days.back");
-            font.draw(matrixStack, s4, k + this.imageWidth / 2 - font.width(s4) / 2, l + 111, 0XFFFFFF);
+            graphics.text(font, s4, k + this.imageWidth / 2 - font.width(s4) / 2, l + 111, 0xFFFFFF);
             String s7 = dragon.getOwner() != null ? StatCollector.translateToLocal("dragon.owner") + dragon.getOwner().getName().getString() : StatCollector.translateToLocal("dragon.untamed");
-            font.draw(matrixStack, s7, k + this.imageWidth / 2 - font.width(s7) / 2, l + 120, 0XFFFFFF);
+            graphics.text(font, s7, k + this.imageWidth / 2 - font.width(s7) / 2, l + 120, 0xFFFFFF);
         }
     }
-
-
 }

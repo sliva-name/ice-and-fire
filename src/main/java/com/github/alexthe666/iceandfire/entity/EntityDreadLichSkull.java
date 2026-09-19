@@ -1,8 +1,8 @@
 package com.github.alexthe666.iceandfire.entity;
 
+import net.minecraft.network.syncher.SynchedEntityData;
 import com.github.alexthe666.iceandfire.IceAndFire;
 import com.github.alexthe666.iceandfire.enums.EnumParticles;
-import net.minecraft.network.protocol.Packet;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
@@ -10,21 +10,20 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.projectile.AbstractArrow;
+import net.minecraft.world.entity.projectile.arrow.AbstractArrow;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
-import net.minecraftforge.common.ToolActions;
-import net.minecraftforge.network.NetworkHooks;
-import net.minecraftforge.network.PlayMessages;
+import net.minecraftforge.network.packets.SpawnEntity;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public class EntityDreadLichSkull extends AbstractArrow {
 
+    private double iafBaseDamage = 6.0D;
 
     public EntityDreadLichSkull(EntityType<? extends AbstractArrow> type, Level worldIn) {
         super(type, worldIn);
@@ -40,17 +39,19 @@ public class EntityDreadLichSkull extends AbstractArrow {
 
     public EntityDreadLichSkull(EntityType<? extends AbstractArrow> type, Level worldIn, LivingEntity shooter,
                                 double x, double y, double z) {
-        super(type, shooter, worldIn);
+        super(type, shooter, worldIn, ItemStack.EMPTY, ItemStack.EMPTY);
         this.setBaseDamage(6);
+        this.iafBaseDamage = 6;
     }
 
     public EntityDreadLichSkull(EntityType<? extends AbstractArrow> type, Level worldIn, LivingEntity shooter,
                                 double dmg) {
-        super(type, shooter, worldIn);
+        super(type, shooter, worldIn, ItemStack.EMPTY, ItemStack.EMPTY);
         this.setBaseDamage(dmg);
+        this.iafBaseDamage = dmg;
     }
 
-    public EntityDreadLichSkull(PlayMessages.SpawnEntity spawnEntity, Level worldIn) {
+    public EntityDreadLichSkull(SpawnEntity spawnEntity, Level worldIn) {
         this(IafEntityRegistry.DREAD_LICH_SKULL.get(), worldIn);
     }
 
@@ -60,8 +61,8 @@ public class EntityDreadLichSkull extends AbstractArrow {
     }
 
     @Override
-    protected void defineSynchedData() {
-        super.defineSynchedData();
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
     }
 
     @Override
@@ -81,7 +82,7 @@ public class EntityDreadLichSkull extends AbstractArrow {
             LivingEntity target = ((Player) shootingEntity).getKillCredit();
             if (target == null || !target.isAlive()) {
                 double d0 = 10;
-                List<Entity> list = level.getEntities(shootingEntity, (new AABB(this.getX(), this.getY(), this.getZ(), this.getX() + 1.0D, this.getY() + 1.0D, this.getZ() + 1.0D)).inflate(d0, 10.0D, d0), EntitySelector.ENTITY_STILL_ALIVE);
+                List<Entity> list = this.level().getEntities(shootingEntity, (new AABB(this.getX(), this.getY(), this.getZ(), this.getX() + 1.0D, this.getY() + 1.0D, this.getZ() + 1.0D)).inflate(d0, 10.0D, d0), EntitySelector.ENTITY_STILL_ALIVE);
                 LivingEntity closest = null;
                 if (!list.isEmpty()) {
                     for (Entity e : list) {
@@ -105,7 +106,7 @@ public class EntityDreadLichSkull extends AbstractArrow {
                 flag = false;
             }
         }
-        if ((sqrt < 0.1F || this.horizontalCollision || this.verticalCollision || this.inGround) && this.tickCount > 5 && flag) {
+        if ((sqrt < 0.1F || this.horizontalCollision || this.verticalCollision || this.isInGround()) && this.tickCount > 5 && flag) {
             this.remove(RemovalReason.DISCARDED);
         }
         double d0 = 0;
@@ -131,7 +132,7 @@ public class EntityDreadLichSkull extends AbstractArrow {
     @Override
     public void playSound(@NotNull SoundEvent soundIn, float volume, float pitch) {
         if (!this.isSilent() && soundIn != SoundEvents.ARROW_HIT && soundIn != SoundEvents.ARROW_HIT_PLAYER) {
-            this.level.playSound(null, this.getX(), this.getY(), this.getZ(), soundIn, this.getSoundSource(), volume, pitch);
+            this.level().playSound(null, this.getX(), this.getY(), this.getZ(), soundIn, this.getSoundSource(), volume, pitch);
         }
     }
 
@@ -155,30 +156,28 @@ public class EntityDreadLichSkull extends AbstractArrow {
         Entity shootingEntity = this.getOwner();
         if (living != null && (shootingEntity == null || !living.is(shootingEntity))) {
             if (living instanceof Player) {
-                this.damageShield((Player) living, (float) this.getBaseDamage());
+                this.damageShield((Player) living, (float) this.iafBaseDamage);
             }
         }
     }
 
     protected void damageShield(Player player, float damage) {
-        if (damage >= 3.0F && player.getUseItem().getItem().canPerformAction(player.getUseItem(), ToolActions.SHIELD_BLOCK)) {
+        if (damage >= 3.0F && player.getUseItem().has(net.minecraft.core.component.DataComponents.BLOCKS_ATTACKS)) {
             ItemStack copyBeforeUse = player.getUseItem().copy();
             int i = 1 + Mth.floor(damage);
-            player.getUseItem().hurtAndBreak(i, player, (playerSheild) -> {
-                playerSheild.broadcastBreakEvent(playerSheild.getUsedItemHand());
-            });
+            player.getUseItem().hurtAndBreak(i, player, player.getUsedItemHand());
 
             if (player.getUseItem().isEmpty()) {
                 InteractionHand Hand = player.getUsedItemHand();
                 net.minecraftforge.event.ForgeEventFactory.onPlayerDestroyItem(player, copyBeforeUse, Hand);
 
                 if (Hand == net.minecraft.world.InteractionHand.MAIN_HAND) {
-                    this.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
+                    player.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
                 } else {
-                    this.setItemSlot(EquipmentSlot.OFFHAND, ItemStack.EMPTY);
+                    player.setItemSlot(EquipmentSlot.OFFHAND, ItemStack.EMPTY);
                 }
                 player.stopUsingItem();
-                this.playSound(SoundEvents.SHIELD_BREAK, 0.8F, 0.8F + this.level.random.nextFloat() * 0.4F);
+                this.playSound(SoundEvents.SHIELD_BREAK.value(), 0.8F, 0.8F + this.level().getRandom().nextFloat() * 0.4F);
             }
         }
     }
@@ -187,7 +186,6 @@ public class EntityDreadLichSkull extends AbstractArrow {
         return 15728880;
     }
 
-    @Override
     public float getBrightness() {
         return 1.0F;
     }
@@ -203,8 +201,7 @@ public class EntityDreadLichSkull extends AbstractArrow {
     }
 
     @Override
-    public @NotNull Packet<?> getAddEntityPacket() {
-        return NetworkHooks.getEntitySpawningPacket(this);
+    protected @NotNull ItemStack getDefaultPickupItem() {
+        return ItemStack.EMPTY;
     }
-
 }

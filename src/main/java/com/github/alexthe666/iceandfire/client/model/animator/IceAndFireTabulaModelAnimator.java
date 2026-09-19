@@ -8,9 +8,9 @@ import net.minecraft.util.Mth;
 
 public class IceAndFireTabulaModelAnimator {
 
-    protected TabulaModel baseModel;
+    protected TabulaModel<?> baseModel;
 
-    public IceAndFireTabulaModelAnimator(TabulaModel baseModel) {
+    public IceAndFireTabulaModelAnimator(TabulaModel<?> baseModel) {
         this.baseModel = baseModel;
     }
 
@@ -61,7 +61,7 @@ public class IceAndFireTabulaModelAnimator {
         animator.rotate(model, (float) Math.toRadians(x), (float) Math.toRadians(y), (float) Math.toRadians(z));
     }
 
-    public void moveToPose(TabulaModel model, TabulaModel modelTo) {
+    public void moveToPose(TabulaModel<?> model, TabulaModel<?> modelTo) {
         for (AdvancedModelBox cube : model.getCubes().values()) {
             AdvancedModelBox cubeTo = modelTo.getCube(cube.boxName);
             if (!isRotationEqual(baseModel.getCube(cube.boxName), cubeTo)) {

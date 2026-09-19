@@ -1,27 +1,28 @@
 package com.github.alexthe666.iceandfire.client.model.util;
 
 import com.github.alexthe666.citadel.client.model.TabulaModel;
-import com.github.alexthe666.iceandfire.IceAndFire;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
-import java.util.ArrayList;
+
 import java.util.HashMap;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
+
 
 /**
  * A library containing all animations for all dragons. Contains methods for registering and retrieving models
  */
 public class DragonAnimationsLibrary {
-    private static final HashMap<String, TabulaModel> models = new HashMap<>();
+    private static final Logger LOGGER = LogManager.getLogger();
+    private static final HashMap<String, TabulaModel<?>> models = new HashMap<>();
     private static String toKey(IEnumDragonPoses p, IEnumDragonModelTypes m) {
         return p.getPose() + m.getModelType();
     }
 
-    public static TabulaModel getModel(IEnumDragonPoses pose, IEnumDragonModelTypes modelType) {
-        TabulaModel result = models.get(toKey(pose, modelType));
+    public static TabulaModel<?> getModel(IEnumDragonPoses pose, IEnumDragonModelTypes modelType) {
+        TabulaModel<?> result = models.get(toKey(pose, modelType));
         if(result == null)
-            IceAndFire.LOGGER.error("No model defined for " + pose.getPose() + modelType.getModelType() + " have you registered your animations?");
+            LOGGER.error("No model defined for " + pose.getPose() + modelType.getModelType() + " have you registered your animations?");
         return result;
     }
 
@@ -33,7 +34,7 @@ public class DragonAnimationsLibrary {
      * @see #register(IEnumDragonPoses[], IEnumDragonModelTypes[])
      */
     public static void registerSingle(IEnumDragonPoses pose, IEnumDragonModelTypes modelType) {
-        registerSingle(pose, modelType, IceAndFire.MODID);
+        registerSingle(pose, modelType, "iceandfire");
     }
 
     /**
@@ -46,7 +47,7 @@ public class DragonAnimationsLibrary {
     public static void register(IEnumDragonPoses[] poses, IEnumDragonModelTypes[] modelTypes) {
         for(IEnumDragonPoses p : poses)
             for(IEnumDragonModelTypes m : modelTypes)
-                registerSingle(p, m, IceAndFire.MODID);
+                registerSingle(p, m, "iceandfire");
     }
 
     /**
@@ -73,13 +74,13 @@ public class DragonAnimationsLibrary {
      */
     public static void registerSingle(IEnumDragonPoses pose, IEnumDragonModelTypes modelType, String modID) {
         //Load model
-        TabulaModel result;
+        TabulaModel<?> result;
         String location = "/assets/" + modID + "/models/tabula/" + modelType.getModelType() + "dragon/" + modelType.getModelType() + "dragon_" + pose.getPose() + ".tbl";
         try{
-            result = new TabulaModel(TabulaModelHandlerHelper.loadTabulaModel(location));
+            result = new TabulaModel<>(TabulaModelHandlerHelper.loadTabulaModel(location));
         }
         catch(IOException | NullPointerException e) {
-            IceAndFire.LOGGER.warn("Could not load " + location + ": " + e.getMessage());
+            LOGGER.warn("Could not load " + location + ": " + e.getMessage());
             return;
         }
 
@@ -108,14 +109,14 @@ public class DragonAnimationsLibrary {
      * @see #registerReferences(IEnumDragonPoses[], IEnumDragonModelTypes, IEnumDragonModelTypes[])
      */
     public static void registerReference(IEnumDragonPoses pose, IEnumDragonModelTypes modelSource, IEnumDragonModelTypes modelDestination) {
-        TabulaModel source = getModel(pose, modelSource);
+        TabulaModel<?> source = getModel(pose, modelSource);
         String     destKey =   toKey(pose, modelDestination);
 
         if(source == null)
             return;
 
         if(models.containsKey(destKey))
-            IceAndFire.LOGGER.info(
+            LOGGER.info(
                     "Overriding existing model '" + destKey +
                     "' with reference to '"       + toKey(pose, modelSource));
 

@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "X",
+    "#",
+    "Y"
+  ],
+  "key": {
+    "#": "#forge:rods/wooden",
+    "X": "iceandfire:hydra_fang",
+    "Y": "minecraft:lily_pad"
+  },
+  "result": {
+    "count": 4,
+    "id": "iceandfire:hydra_arrow"
+  }
+}

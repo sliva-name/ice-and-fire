@@ -20,9 +20,9 @@ public abstract class DreadSpawnerBaseLogic extends BaseSpawner {
         if (!this.isNearPlayer(p_151320_, p_151321_)) {
             this.oSpin = this.spin;
         } else {
-            double d0 = (double) p_151321_.getX() + p_151320_.random.nextDouble();
-            double d1 = (double) p_151321_.getY() + p_151320_.random.nextDouble();
-            double d2 = (double) p_151321_.getZ() + p_151320_.random.nextDouble();
+            double d0 = (double) p_151321_.getX() + p_151320_.getRandom().nextDouble();
+            double d1 = (double) p_151321_.getY() + p_151320_.getRandom().nextDouble();
+            double d2 = (double) p_151321_.getZ() + p_151320_.getRandom().nextDouble();
             p_151320_.addParticle(ParticleTypes.SMOKE, d0, d1, d2, 0.0D, 0.0D, 0.0D);
             IceAndFire.PROXY.spawnParticle(EnumParticles.Dread_Torch, d0, d1, d2, 0.0D, 0.0D, 0.0D);
             if (this.spawnDelay > 0) {
@@ -45,7 +45,7 @@ public abstract class DreadSpawnerBaseLogic extends BaseSpawner {
     }
 
     @Override
-    public double getoSpin() {
+    public double getOSpin() {
         return oSpin;
     }
 }

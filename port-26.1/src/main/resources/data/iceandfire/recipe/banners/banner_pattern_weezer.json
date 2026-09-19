@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    "iceandfire:weezer_blue_album",
+    "minecraft:paper"
+  ],
+  "result": {
+    "count": 1,
+    "id": "iceandfire:banner_pattern_weezer"
+  }
+}

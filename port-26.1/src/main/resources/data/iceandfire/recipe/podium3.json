@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "SPS",
+    " P ",
+    "SPS"
+  ],
+  "key": {
+    "S": "minecraft:spruce_slab",
+    "P": "minecraft:spruce_planks"
+  },
+  "result": {
+    "id": "iceandfire:podium_spruce"
+  }
+}

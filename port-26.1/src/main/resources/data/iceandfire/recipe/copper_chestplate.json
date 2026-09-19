@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "S S",
+    "SSS",
+    "SSS"
+  ],
+  "key": {
+    "S": "#forge:ingots/copper"
+  },
+  "result": {
+    "id": "iceandfire:armor_copper_metal_chestplate"
+  }
+}

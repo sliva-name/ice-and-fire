@@ -10,12 +10,7 @@ import java.util.function.Predicate;
 public class CyclopsAITargetSheepPlayers<T extends LivingEntity> extends NearestAttackableTargetGoal<T> {
 
     public CyclopsAITargetSheepPlayers(Mob goalOwnerIn, Class<T> targetClassIn, boolean checkSight) {
-        super(goalOwnerIn, targetClassIn, 0, checkSight, true, new Predicate<LivingEntity>() {
-            @Override
-            public boolean test(LivingEntity livingEntity) {
-                return false; //TODO Sheep hunt cyclops
-            }
-        });
+        super(goalOwnerIn, targetClassIn, 0, checkSight, true, (living, serverLevel) -> false);
         this.setFlags(EnumSet.of(Flag.TARGET));
 
     }

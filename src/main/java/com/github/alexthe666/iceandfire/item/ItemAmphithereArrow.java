@@ -5,9 +5,8 @@ import com.github.alexthe666.iceandfire.entity.EntityAmphithereArrow;
 import com.github.alexthe666.iceandfire.entity.IafEntityRegistry;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.projectile.AbstractArrow;
+import net.minecraft.world.entity.projectile.arrow.AbstractArrow;
 import net.minecraft.world.item.ArrowItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -21,16 +20,16 @@ import java.util.List;
 public class ItemAmphithereArrow extends ArrowItem {
 
     public ItemAmphithereArrow() {
-        super(new Item.Properties().tab(IceAndFire.TAB_ITEMS));
+        super(IafItemRegistry.defaultBuilder());
     }
 
     @Override
-    public @NotNull AbstractArrow createArrow(@NotNull Level worldIn, @NotNull ItemStack stack, @NotNull LivingEntity shooter) {
+    public @NotNull AbstractArrow createArrow(@NotNull Level worldIn, @NotNull ItemStack stack, @NotNull LivingEntity shooter, @NotNull ItemStack weapon) {
         return new EntityAmphithereArrow(IafEntityRegistry.AMPHITHERE_ARROW.get(), shooter, worldIn);
     }
 
     @Override
-    public void appendHoverText(@NotNull ItemStack stack, @Nullable Level worldIn, List<Component> tooltip, @NotNull TooltipFlag flagIn) {
-        tooltip.add(new TranslatableComponent("item.iceandfire.amphithere_arrow.desc").withStyle(ChatFormatting.GRAY));
+    public void appendHoverText(@NotNull ItemStack stack, Item.TooltipContext context, @NotNull net.minecraft.world.item.component.TooltipDisplay display, @NotNull java.util.function.Consumer<Component> tooltip, @NotNull TooltipFlag flagIn) {
+        tooltip.accept(Component.translatable("item.iceandfire.amphithere_arrow.desc").withStyle(ChatFormatting.GRAY));
     }
 }

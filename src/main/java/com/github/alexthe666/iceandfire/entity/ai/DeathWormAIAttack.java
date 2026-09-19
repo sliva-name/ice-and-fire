@@ -25,7 +25,7 @@ public class DeathWormAIAttack extends Goal {
             jumpCooldown--;
         }
         return !(this.worm.getTarget() == null || worm.isVehicle()
-            || !worm.isOnGround() && !worm.isInSandStrict() || jumpCooldown > 0);
+            || !worm.onGround() && !worm.isInSandStrict() || jumpCooldown > 0);
     }
 
     @Override
@@ -45,7 +45,7 @@ public class DeathWormAIAttack extends Goal {
         if (target != null) {
             if (worm.isInSand()) {
                 BlockPos topSand = worm.blockPosition();
-                while (worm.level.getBlockState(topSand.above()).is(BlockTags.SAND)) {
+                while (worm.level().getBlockState(topSand.above()).is(BlockTags.SAND)) {
                     topSand = topSand.above();
                 }
                 worm.setPos(worm.getX(), topSand.getY() + 0.5F, worm.getZ());
@@ -69,7 +69,7 @@ public class DeathWormAIAttack extends Goal {
                 return jumpCooldown <= 0
                     && (d0 * d0 >= 0.03F || this.worm.getXRot() == 0.0F || Math.abs(this.worm.getXRot()) >= 10.0F
                     || !this.worm.isInWater())
-                    && !this.worm.isOnGround();
+                    && !this.worm.onGround();
             }
         }
         return false;
@@ -106,7 +106,9 @@ public class DeathWormAIAttack extends Goal {
         LivingEntity target = this.worm.getTarget();
         if (target != null && this.worm.hasLineOfSight(target)) {
             if (this.worm.distanceTo(target) < 3F) {
-                this.worm.doHurtTarget(target);
+                if (this.worm.level() instanceof net.minecraft.server.level.ServerLevel _iafSl) {
+                    this.worm.doHurtTarget(_iafSl, target);
+                }
             }
         }
 

@@ -15,7 +15,7 @@ public class DragonAITargetNonTamed<T extends LivingEntity> extends NearestAttac
     private final EntityDragonBase dragon;
 
     public DragonAITargetNonTamed(EntityDragonBase entityIn, Class<T> classTarget, boolean checkSight, Predicate<LivingEntity> targetSelector) {
-        super(entityIn, classTarget, 5, checkSight, false, targetSelector);
+        super(entityIn, classTarget, 5, checkSight, false, IafSelectors.of(targetSelector));
         this.setFlags(EnumSet.of(Flag.TARGET));
         this.dragon = entityIn;
     }

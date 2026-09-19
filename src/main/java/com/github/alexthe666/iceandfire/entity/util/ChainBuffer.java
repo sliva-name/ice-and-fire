@@ -16,6 +16,18 @@ public class ChainBuffer {
     /**
      * Resets this ChainBuffer's rotations.
      */
+    public float getYawVariation() {
+        return this.yawVariation;
+    }
+
+    public float getPreviousYawVariation() {
+        return this.prevYawVariation;
+    }
+
+    public float sampleYaw(float partialTick) {
+        return Mth.lerp(partialTick, this.prevYawVariation, this.yawVariation);
+    }
+
     public void resetRotations() {
         this.yawVariation = 0.0F;
         this.pitchVariation = 0.0F;
@@ -134,7 +146,7 @@ public class ChainBuffer {
     }
 
     private float getPartialTicks() {
-        return Minecraft.getInstance().getFrameTime();
+        return Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false);
     }
 
     /**

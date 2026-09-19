@@ -13,14 +13,14 @@ public class CockatriceAITarget<T extends LivingEntity> extends NearestAttackabl
     private final EntityCockatrice cockatrice;
 
     public CockatriceAITarget(EntityCockatrice entityIn, Class<T> classTarget, boolean checkSight, Predicate<LivingEntity> targetSelector) {
-        super(entityIn, classTarget, 0, checkSight, false, targetSelector);
+        super(entityIn, classTarget, 0, checkSight, false, IafSelectors.of(targetSelector));
         this.cockatrice = entityIn;
         this.setFlags(EnumSet.of(Flag.TARGET));
     }
 
     @Override
     public boolean canUse() {
-        if (this.mob.getRandom().nextInt(20) != 0 || this.cockatrice.level.getDifficulty() == Difficulty.PEACEFUL) {
+        if (this.mob.getRandom().nextInt(20) != 0 || this.cockatrice.level().getDifficulty() == Difficulty.PEACEFUL) {
             return false;
         }
         if (super.canUse() && target != null && !target.getClass().equals(this.cockatrice.getClass())) {

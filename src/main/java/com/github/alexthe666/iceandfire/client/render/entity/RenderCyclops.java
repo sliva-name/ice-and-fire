@@ -3,73 +3,67 @@ package com.github.alexthe666.iceandfire.client.render.entity;
 import com.github.alexthe666.iceandfire.client.model.ModelCyclops;
 import com.github.alexthe666.iceandfire.entity.EntityCyclops;
 import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
-import net.minecraft.resources.ResourceLocation;
-import org.jetbrains.annotations.NotNull;
+import net.minecraft.resources.Identifier;
 
-public class RenderCyclops extends MobRenderer<EntityCyclops, ModelCyclops> {
-
-    public static final ResourceLocation TEXTURE_0 = new ResourceLocation("iceandfire:textures/models/cyclops/cyclops_0.png");
-    public static final ResourceLocation BLINK_0_TEXTURE = new ResourceLocation("iceandfire:textures/models/cyclops/cyclops_0_blink.png");
-    public static final ResourceLocation BLINDED_0_TEXTURE = new ResourceLocation("iceandfire:textures/models/cyclops/cyclops_0_injured.png");
-    public static final ResourceLocation TEXTURE_1 = new ResourceLocation("iceandfire:textures/models/cyclops/cyclops_1.png");
-    public static final ResourceLocation BLINK_1_TEXTURE = new ResourceLocation("iceandfire:textures/models/cyclops/cyclops_1_blink.png");
-    public static final ResourceLocation BLINDED_1_TEXTURE = new ResourceLocation("iceandfire:textures/models/cyclops/cyclops_1_injured.png");
-    public static final ResourceLocation TEXTURE_2 = new ResourceLocation("iceandfire:textures/models/cyclops/cyclops_2.png");
-    public static final ResourceLocation BLINK_2_TEXTURE = new ResourceLocation("iceandfire:textures/models/cyclops/cyclops_2_blink.png");
-    public static final ResourceLocation BLINDED_2_TEXTURE = new ResourceLocation("iceandfire:textures/models/cyclops/cyclops_2_injured.png");
-    public static final ResourceLocation TEXTURE_3 = new ResourceLocation("iceandfire:textures/models/cyclops/cyclops_3.png");
-    public static final ResourceLocation BLINK_3_TEXTURE = new ResourceLocation("iceandfire:textures/models/cyclops/cyclops_3_blink.png");
-    public static final ResourceLocation BLINDED_3_TEXTURE = new ResourceLocation("iceandfire:textures/models/cyclops/cyclops_3_injured.png");
+public class RenderCyclops extends MobRenderer<EntityCyclops, CyclopsRenderState, EntityModel<CyclopsRenderState>> {
+    public static final Identifier TEXTURE_0 = CyclopsRenderState.Variant.ZERO.texture;
+    public static final Identifier BLINK_0_TEXTURE = CyclopsRenderState.Variant.ZERO.blinkTexture;
+    public static final Identifier BLINDED_0_TEXTURE = CyclopsRenderState.Variant.ZERO.blindedTexture;
+    public static final Identifier TEXTURE_1 = CyclopsRenderState.Variant.ONE.texture;
+    public static final Identifier BLINK_1_TEXTURE = CyclopsRenderState.Variant.ONE.blinkTexture;
+    public static final Identifier BLINDED_1_TEXTURE = CyclopsRenderState.Variant.ONE.blindedTexture;
+    public static final Identifier TEXTURE_2 = CyclopsRenderState.Variant.TWO.texture;
+    public static final Identifier BLINK_2_TEXTURE = CyclopsRenderState.Variant.TWO.blinkTexture;
+    public static final Identifier BLINDED_2_TEXTURE = CyclopsRenderState.Variant.TWO.blindedTexture;
+    public static final Identifier TEXTURE_3 = CyclopsRenderState.Variant.THREE.texture;
+    public static final Identifier BLINK_3_TEXTURE = CyclopsRenderState.Variant.THREE.blinkTexture;
+    public static final Identifier BLINDED_3_TEXTURE = CyclopsRenderState.Variant.THREE.blindedTexture;
 
     public RenderCyclops(EntityRendererProvider.Context context) {
-        super(context, new ModelCyclops(), 1.6F);
+        super(context, new ModelCyclops().asEntityModel(), 1.6F);
     }
 
     @Override
-    protected void scale(@NotNull EntityCyclops entity, PoseStack matrixStackIn, float partialTickTime) {
-        matrixStackIn.scale(2.25F, 2.25F, 2.25F);
-
+    public CyclopsRenderState createRenderState() {
+        return new CyclopsRenderState();
     }
 
     @Override
-    public @NotNull ResourceLocation getTextureLocation(EntityCyclops cyclops) {
-        switch (cyclops.getVariant()) {
-            case 0:
-                if (cyclops.isBlinded()) {
-                    return BLINDED_0_TEXTURE;
-                } else if (cyclops.isBlinking()) {
-                    return BLINK_0_TEXTURE;
-                } else {
-                    return TEXTURE_0;
-                }
-            case 1:
-                if (cyclops.isBlinded()) {
-                    return BLINDED_1_TEXTURE;
-                } else if (cyclops.isBlinking()) {
-                    return BLINK_1_TEXTURE;
-                } else {
-                    return TEXTURE_1;
-                }
-            case 2:
-                if (cyclops.isBlinded()) {
-                    return BLINDED_2_TEXTURE;
-                } else if (cyclops.isBlinking()) {
-                    return BLINK_2_TEXTURE;
-                } else {
-                    return TEXTURE_2;
-                }
-            case 3:
-                if (cyclops.isBlinded()) {
-                    return BLINDED_3_TEXTURE;
-                } else if (cyclops.isBlinking()) {
-                    return BLINK_3_TEXTURE;
-                } else {
-                    return TEXTURE_3;
-                }
-        }
-        return TEXTURE_0;
+    public void extractRenderState(EntityCyclops entity, CyclopsRenderState state, float partialTick) {
+        super.extractRenderState(entity, state, partialTick);
+        state.partialTick = partialTick;
+        state.animationTick = entity.getAnimationTick();
+        var animation = entity.getAnimation();
+        // The legacy entity initializes these static tokens in its constructor.
+        // Only extraction compares them; the model uses independent enum tokens.
+        state.animation = animation == EntityCyclops.ANIMATION_STOMP ? CyclopsRenderState.AnimationKind.STOMP
+            : animation == EntityCyclops.ANIMATION_KICK ? CyclopsRenderState.AnimationKind.KICK
+            : animation == EntityCyclops.ANIMATION_EATPLAYER ? CyclopsRenderState.AnimationKind.EATPLAYER
+            : animation == EntityCyclops.ANIMATION_ROAR ? CyclopsRenderState.AnimationKind.ROAR
+            : CyclopsRenderState.AnimationKind.NONE;
+        // Explicit integer save-data mapping; unknown IDs use the normal texture 0,
+        // even when blinded/blinking. Blinded takes precedence for known variants.
+        int variant = entity.getVariant();
+        state.variant = switch (variant) {
+            case 1 -> CyclopsRenderState.Variant.ONE;
+            case 2 -> CyclopsRenderState.Variant.TWO;
+            case 3 -> CyclopsRenderState.Variant.THREE;
+            default -> CyclopsRenderState.Variant.ZERO;
+        };
+        state.blinded = variant >= 0 && variant <= 3 && entity.isBlinded();
+        state.blinking = variant >= 0 && variant <= 3 && entity.isBlinking();
     }
 
+    @Override
+    protected void scale(CyclopsRenderState state, PoseStack poses) {
+        poses.scale(2.25F, 2.25F, 2.25F);
+    }
+
+    @Override
+    public Identifier getTextureLocation(CyclopsRenderState state) {
+        return state.bodyTexture();
+    }
 }

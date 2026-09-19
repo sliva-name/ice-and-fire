@@ -1,0 +1,76 @@
+plugins {
+    id 'java-library'
+    id 'net.minecraftforge.gradle'
+}
+
+version = '1.11.3-26.1-port-dev'
+group = 'com.github.alexthe666'
+base.archivesName = 'citadel-iceandfire-subset'
+java.toolchain.languageVersion = JavaLanguageVersion.of(25)
+
+repositories {
+    minecraft.mavenizer(it)
+    maven fg.forgeMaven
+    maven fg.minecraftLibsMaven
+    mavenCentral()
+}
+
+dependencies {
+    implementation minecraft.dependency('net.minecraftforge:forge:26.1-62.0.9')
+    annotationProcessor 'net.minecraftforge:eventbus-validator:7.0.1'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+tasks.register('animationApiTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.github.alexthe666.citadel.animation.AnimationApiTest'
+}
+
+tasks.register('tabulaAssetsTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath + files('../../src/main/resources')
+    mainClass = 'com.github.alexthe666.citadel.client.model.TabulaAssetsTest'
+    args file('../../src/main/resources').absolutePath
+}
+
+tasks.register('modelFoundationTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.github.alexthe666.citadel.client.model.ModelFoundationTest'
+}
+
+tasks.register('modelAnimatorTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.github.alexthe666.citadel.client.model.ModelAnimatorTest'
+}
+
+tasks.register('tabulaModelTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.github.alexthe666.citadel.client.model.TabulaModelTest'
+    args file('../../src/main/resources').absolutePath
+}
+
+// Regression suites are plain Java entry points, not JUnit-discovered tests.
+// Keep Gradle's standard test/check lifecycle running all five suites.
+tasks.named('test') {
+    dependsOn 'animationApiTest', 'tabulaAssetsTest', 'modelFoundationTest', 'modelAnimatorTest', 'tabulaModelTest'
+    exclude '**/*'
+}
+
+def wantsDistribution = gradle.startParameter.taskNames.any { name ->
+    name == 'jar' || name == 'assemble' || name == 'build' || name == 'publish' ||
+        name.endsWith(':jar') || name.endsWith(':assemble') || name.endsWith(':build') || name.endsWith(':publish')
+}
+tasks.named('jar') {
+    doFirst {
+        if (wantsDistribution) {
+            throw new GradleException('Incomplete Citadel subset: not for distribution. See NOTICE.md and ../../PORTING.md.')
+        }
+    }
+}

@@ -8,8 +8,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
-import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -27,7 +25,7 @@ public class ItemDragonSkull extends Item {
     private final int dragonType;
 
     public ItemDragonSkull(int dragonType) {
-        super(new Item.Properties().tab(IceAndFire.TAB_ITEMS).stacksTo(1));
+        super(IafItemRegistry.defaultBuilder().stacksTo(1));
         this.dragonType = dragonType;
     }
 
@@ -46,25 +44,26 @@ public class ItemDragonSkull extends Item {
     }
 
     @Override
-    public void onCraftedBy(ItemStack itemStack, @NotNull Level world, @NotNull Player player) {
-        itemStack.setTag(new CompoundTag());
+    public void onCraftedBy(ItemStack itemStack, @NotNull Player player) {
+        IafItemData.write(itemStack, new CompoundTag());
     }
 
     @Override
-    public void inventoryTick(ItemStack stack, @NotNull Level worldIn, @NotNull Entity entityIn, int itemSlot, boolean isSelected) {
-        if (stack.getTag() == null) {
-            stack.setTag(new CompoundTag());
-            stack.getTag().putInt("Stage", 4);
-            stack.getTag().putInt("DragonAge", 75);
+    public void inventoryTick(ItemStack stack, @NotNull net.minecraft.server.level.ServerLevel worldIn, @NotNull Entity entityIn, @NotNull net.minecraft.world.entity.EquipmentSlot slot) {
+        if (!IafItemData.has(stack)) {
+            IafItemData.update(stack, tag -> {
+                tag.putInt("Stage", 4);
+                tag.putInt("DragonAge", 75);
+            });
         }
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, @Nullable Level worldIn, List<Component> tooltip, @NotNull TooltipFlag flagIn) {
+    public void appendHoverText(ItemStack stack, Item.TooltipContext context, net.minecraft.world.item.component.TooltipDisplay display, java.util.function.Consumer<Component> tooltip, @NotNull TooltipFlag flagIn) {
         String iceorfire = "dragon." + getType(dragonType);
-        tooltip.add(new TranslatableComponent(iceorfire).withStyle(ChatFormatting.GRAY));
-        if (stack.getTag() != null) {
-            tooltip.add(new TranslatableComponent("dragon.stage").withStyle(ChatFormatting.GRAY).append(new TextComponent(" " + stack.getTag().getInt("Stage"))));
+        tooltip.accept(Component.translatable(iceorfire).withStyle(ChatFormatting.GRAY));
+        if (IafItemData.has(stack)) {
+            tooltip.accept(Component.translatable("dragon.stage").withStyle(ChatFormatting.GRAY).append(Component.literal(" " + IafItemData.copy(stack).getIntOr("Stage", 0))));
         }
     }
 
@@ -76,22 +75,23 @@ public class ItemDragonSkull extends Item {
          * egg.setPosition(pos.getX() + 0.5, pos.getY() + 1, pos.getZ() +
          * 0.5); if(!worldIn.isRemote){ worldIn.spawnEntityInWorld(egg); }
          */
-        if (stack.getTag() != null) {
+        if (IafItemData.has(stack)) {
+            CompoundTag tag = IafItemData.copy(stack);
             EntityDragonSkull skull = new EntityDragonSkull(IafEntityRegistry.DRAGON_SKULL.get(), context.getLevel());
             skull.setDragonType(dragonType);
-            skull.setStage(stack.getTag().getInt("Stage"));
-            skull.setDragonAge(stack.getTag().getInt("DragonAge"));
+            skull.setStage(tag.getIntOr("Stage", 0));
+            skull.setDragonAge(tag.getIntOr("DragonAge", 0));
             BlockPos offset = context.getClickedPos().relative(context.getClickedFace(), 1);
-            skull.moveTo(offset.getX() + 0.5, offset.getY(), offset.getZ() + 0.5, 0, 0);
+            skull.snapTo(offset.getX() + 0.5, offset.getY(), offset.getZ() + 0.5, 0.0F, 0.0F);
             float yaw = context.getPlayer().getYRot();
             if (context.getClickedFace() != Direction.UP) {
                 yaw = context.getPlayer().getDirection().toYRot();
             }
-            skull.setYaw(yaw);
-            if (stack.hasCustomHoverName()) {
+            skull.setYRot(yaw);
+            if (stack.has(net.minecraft.core.component.DataComponents.CUSTOM_NAME)) {
                 skull.setCustomName(stack.getHoverName());
             }
-            if (!context.getLevel().isClientSide) {
+            if (!context.getLevel().isClientSide()) {
                 context.getLevel().addFreshEntity(skull);
             }
             if (!context.getPlayer().isCreative()) {

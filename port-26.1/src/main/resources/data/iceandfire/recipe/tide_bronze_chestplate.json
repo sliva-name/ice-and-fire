@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "S S",
+    "SSS",
+    "HSH"
+  ],
+  "key": {
+    "S": "iceandfire:sea_serpent_scales_bronze",
+    "H": "iceandfire:shiny_scales"
+  },
+  "result": {
+    "id": "iceandfire:tide_bronze_chestplate"
+  }
+}

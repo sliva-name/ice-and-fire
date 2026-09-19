@@ -11,7 +11,7 @@ import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,13 +22,18 @@ public class BlockMyrmexCocoon extends BaseEntityBlock {
 
     public BlockMyrmexCocoon() {
         super(
-            Properties
-                .of(Material.DIRT)
+            IafBlockRegistry.id(Properties
+                .of().mapColor(MapColor.DIRT)
                 .strength(2.5F)
                 .noOcclusion()
                 .dynamicShape()
-                .sound(SoundType.SLIME_BLOCK)
+                .sound(SoundType.SLIME_BLOCK))
         );
+    }
+
+    @Override
+    protected com.mojang.serialization.MapCodec<? extends BaseEntityBlock> codec() {
+        return simpleCodec(properties -> new BlockMyrmexCocoon());
     }
 
     @Override
@@ -37,19 +42,19 @@ public class BlockMyrmexCocoon extends BaseEntityBlock {
     }
 
     @Override
-    public void onRemove(@NotNull BlockState state, Level worldIn, @NotNull BlockPos pos, @NotNull BlockState newState, boolean isMoving) {
+    protected void affectNeighborsAfterRemoval(@NotNull BlockState state, @NotNull net.minecraft.server.level.ServerLevel worldIn, @NotNull BlockPos pos, boolean movedByPiston) {
         BlockEntity tileentity = worldIn.getBlockEntity(pos);
         if (tileentity instanceof Container) {
             Containers.dropContents(worldIn, pos, (Container) tileentity);
             worldIn.updateNeighbourForOutputSignal(pos, this);
         }
-        super.onRemove(state, worldIn, pos, newState, isMoving);
+        super.affectNeighborsAfterRemoval(state, worldIn, pos, movedByPiston);
     }
 
     @Override
-    public @NotNull InteractionResult use(@NotNull BlockState state, @NotNull Level worldIn, @NotNull BlockPos pos, Player player, @NotNull InteractionHand handIn, @NotNull BlockHitResult hit) {
+    protected @NotNull InteractionResult useWithoutItem(@NotNull BlockState state, @NotNull Level worldIn, @NotNull BlockPos pos, Player player, @NotNull BlockHitResult hit) {
         if (!player.isShiftKeyDown()) {
-            if (worldIn.isClientSide) {
+            if (worldIn.isClientSide()) {
                 IceAndFire.PROXY.setRefrencedTE(worldIn.getBlockEntity(pos));
             } else {
                 MenuProvider inamedcontainerprovider = this.getMenuProvider(state, worldIn, pos);

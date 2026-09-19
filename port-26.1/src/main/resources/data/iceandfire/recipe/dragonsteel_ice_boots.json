@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "D D",
+    "D D"
+  ],
+  "key": {
+    "D": "#forge:ingots/dragonsteel_ice"
+  },
+  "result": {
+    "id": "iceandfire:dragonsteel_ice_boots"
+  }
+}

@@ -9,7 +9,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.material.MapColor;
 import org.jetbrains.annotations.NotNull;
 
 public class BlockMyrmexResin extends Block {
@@ -18,10 +18,10 @@ public class BlockMyrmexResin extends Block {
 
     public BlockMyrmexResin(boolean sticky) {
         super(
-            Properties
-                .of(Material.CLAY)
+            IafBlockRegistry.id(Properties
+                .of().mapColor(MapColor.CLAY)
                 .strength(2.5F)
-                .sound(sticky ? SoundType.SLIME_BLOCK : SoundType.GRAVEL)
+                .sound(sticky ? SoundType.SLIME_BLOCK : SoundType.GRAVEL))
         );
 
         this.sticky = sticky;
@@ -40,7 +40,7 @@ public class BlockMyrmexResin extends Block {
     }
 
     @Override
-    public void entityInside(@NotNull BlockState state, @NotNull Level worldIn, @NotNull BlockPos pos, @NotNull Entity entity) {
+    protected void entityInside(@NotNull BlockState state, @NotNull Level worldIn, @NotNull BlockPos pos, @NotNull Entity entity, @NotNull net.minecraft.world.entity.InsideBlockEffectApplier applier, boolean unknown) {
         if (sticky) {
             if (!(entity instanceof EntityMyrmexBase)) {
                 entity.setDeltaMovement(entity.getDeltaMovement().multiply(0.4D, 0.4D, 0.4D));

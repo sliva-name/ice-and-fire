@@ -1,5 +1,9 @@
 package com.github.alexthe666.iceandfire.entity;
 
+import net.minecraft.server.level.ServerLevel;
+
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
 import com.github.alexthe666.citadel.animation.Animation;
 import com.github.alexthe666.iceandfire.IafConfig;
 import com.github.alexthe666.iceandfire.entity.ai.*;
@@ -10,7 +14,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -27,7 +31,7 @@ import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.monster.Enemy;
-import net.minecraft.world.entity.npc.VillagerTrades;
+import com.github.alexthe666.iceandfire.entity.util.IafItemListing;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
@@ -40,12 +44,12 @@ public class EntityMyrmexSentinel extends EntityMyrmexBase {
     public static final Animation ANIMATION_NIBBLE = Animation.create(10);
     public static final Animation ANIMATION_STING = Animation.create(25);
     public static final Animation ANIMATION_SLASH = Animation.create(25);
-    public static final ResourceLocation DESERT_LOOT = new ResourceLocation("iceandfire", "entities/myrmex_sentinel_desert");
-    public static final ResourceLocation JUNGLE_LOOT = new ResourceLocation("iceandfire", "entities/myrmex_sentinel_jungle");
-    private static final ResourceLocation TEXTURE_DESERT = new ResourceLocation("iceandfire:textures/models/myrmex/myrmex_desert_sentinel.png");
-    private static final ResourceLocation TEXTURE_JUNGLE = new ResourceLocation("iceandfire:textures/models/myrmex/myrmex_jungle_sentinel.png");
-    private static final ResourceLocation TEXTURE_DESERT_HIDDEN = new ResourceLocation("iceandfire:textures/models/myrmex/myrmex_desert_sentinel_hidden.png");
-    private static final ResourceLocation TEXTURE_JUNGLE_HIDDEN = new ResourceLocation("iceandfire:textures/models/myrmex/myrmex_jungle_sentinel_hidden.png");
+    public static final Identifier DESERT_LOOT = Identifier.fromNamespaceAndPath("iceandfire", "entities/myrmex_sentinel_desert");
+    public static final Identifier JUNGLE_LOOT = Identifier.fromNamespaceAndPath("iceandfire", "entities/myrmex_sentinel_jungle");
+    private static final Identifier TEXTURE_DESERT = Identifier.parse("iceandfire:textures/models/myrmex/myrmex_desert_sentinel.png");
+    private static final Identifier TEXTURE_JUNGLE = Identifier.parse("iceandfire:textures/models/myrmex/myrmex_jungle_sentinel.png");
+    private static final Identifier TEXTURE_DESERT_HIDDEN = Identifier.parse("iceandfire:textures/models/myrmex/myrmex_desert_sentinel_hidden.png");
+    private static final Identifier TEXTURE_JUNGLE_HIDDEN = Identifier.parse("iceandfire:textures/models/myrmex/myrmex_jungle_sentinel_hidden.png");
     private static final EntityDataAccessor<Boolean> HIDING = SynchedEntityData.defineId(EntityMyrmexSentinel.class, EntityDataSerializers.BOOLEAN);
     public float holdingProgress;
     public float hidingProgress;
@@ -57,23 +61,22 @@ public class EntityMyrmexSentinel extends EntityMyrmexBase {
     }
 
     @Override
-    protected VillagerTrades.ItemListing[] getLevel1Trades() {
+    protected IafItemListing[] getLevel1Trades() {
         return isJungle() ? MyrmexTrades.JUNGLE_SENTINEL.get(1) : MyrmexTrades.DESERT_SENTINEL.get(1);
     }
 
     @Override
-    protected VillagerTrades.ItemListing[] getLevel2Trades() {
+    protected IafItemListing[] getLevel2Trades() {
         return isJungle() ? MyrmexTrades.JUNGLE_SENTINEL.get(2) : MyrmexTrades.DESERT_SENTINEL.get(2);
     }
 
     @Override
-    @Nullable
-    protected ResourceLocation getDefaultLootTable() {
-        return isJungle() ? JUNGLE_LOOT : DESERT_LOOT;
+    protected void dropFromLootTable(@NotNull ServerLevel level, @NotNull DamageSource source, boolean causedByPlayer) {
+        this.dropFromLootTable(level, source, causedByPlayer, com.github.alexthe666.iceandfire.entity.util.IafLoot.table(isJungle() ? JUNGLE_LOOT : DESERT_LOOT));
     }
 
     @Override
-    protected int getExperienceReward(Player player) {
+    protected int getBaseExperienceReward(@NotNull ServerLevel level) {
         return 8;
     }
 
@@ -120,13 +123,13 @@ public class EntityMyrmexSentinel extends EntityMyrmexBase {
             this.setAnimation(ANIMATION_NIBBLE);
             if (this.getAnimationTick() == 5) {
                 this.playBiteSound();
-                this.getHeldEntity().hurt(DamageSource.mobAttack(this), ((int) this.getAttribute(Attributes.ATTACK_DAMAGE).getValue() / 6));
+                this.getHeldEntity().hurt(this.damageSources().mobAttack(this), ((int) this.getAttribute(Attributes.ATTACK_DAMAGE).getValue() / 6));
             }
         }
         if (this.getAnimation() == ANIMATION_GRAB && attackTarget != null && this.getAnimationTick() == 7) {
             this.playStingSound();
             if (this.getAttackBounds().intersects(attackTarget.getBoundingBox())) {
-                attackTarget.hurt(DamageSource.mobAttack(this), ((int) this.getAttribute(Attributes.ATTACK_DAMAGE).getValue() / 2));
+                attackTarget.hurt(this.damageSources().mobAttack(this), ((int) this.getAttribute(Attributes.ATTACK_DAMAGE).getValue() / 2));
                 //Make sure it doesn't grab a dead dragon
                 if (attackTarget instanceof EntityDragonBase) {
                     if (!((EntityDragonBase) attackTarget).isMobDead()) {
@@ -140,7 +143,7 @@ public class EntityMyrmexSentinel extends EntityMyrmexBase {
         if (this.getAnimation() == ANIMATION_SLASH && attackTarget != null && this.getAnimationTick() % 5 == 0 && this.getAnimationTick() <= 20) {
             this.playBiteSound();
             if (this.getAttackBounds().intersects(attackTarget.getBoundingBox())) {
-                attackTarget.hurt(DamageSource.mobAttack(this), ((int) this.getAttribute(Attributes.ATTACK_DAMAGE).getValue()) / 4);
+                attackTarget.hurt(this.damageSources().mobAttack(this), ((int) this.getAttribute(Attributes.ATTACK_DAMAGE).getValue()) / 4);
             }
         }
         if (this.getAnimation() == ANIMATION_STING && (this.getAnimationTick() == 0 || this.getAnimationTick() == 10)) {
@@ -149,7 +152,7 @@ public class EntityMyrmexSentinel extends EntityMyrmexBase {
         if (this.getAnimation() == ANIMATION_STING && attackTarget != null && (this.getAnimationTick() == 6 || this.getAnimationTick() == 16)) {
             double dist = this.distanceToSqr(attackTarget);
             if (dist < 18) {
-                attackTarget.hurt(DamageSource.mobAttack(this), ((int) this.getAttribute(Attributes.ATTACK_DAMAGE).getValue()));
+                attackTarget.hurt(this.damageSources().mobAttack(this), ((int) this.getAttribute(Attributes.ATTACK_DAMAGE).getValue()));
                 attackTarget.addEffect(new MobEffectInstance(MobEffects.POISON, 100, 3));
             }
         }
@@ -169,19 +172,15 @@ public class EntityMyrmexSentinel extends EntityMyrmexBase {
         this.targetSelector.addGoal(1, new MyrmexAIDefendHive(this));
         this.targetSelector.addGoal(3, new HurtByTargetGoal(this));
         this.targetSelector.addGoal(4, new MyrmexAIAttackPlayers(this));
-        this.targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(this, LivingEntity.class, 4, true, true, new Predicate<LivingEntity>() {
-            @Override
-            public boolean apply(@Nullable LivingEntity entity) {
-                return entity != null && !EntityMyrmexBase.haveSameHive(EntityMyrmexSentinel.this, entity) && DragonUtils.isAlive(entity) && !(entity instanceof Enemy);
-            }
-        }));
+        this.targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(this, LivingEntity.class, 4, true, true, (entity, serverLevel) ->
+            entity != null && !EntityMyrmexBase.haveSameHive(EntityMyrmexSentinel.this, entity) && DragonUtils.isAlive(entity) && !(entity instanceof Enemy)));
     }
 
 
     @Override
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(HIDING, Boolean.FALSE);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(HIDING, Boolean.FALSE);
     }
 
     public static AttributeSupplier.Builder bakeAttributes() {
@@ -204,7 +203,7 @@ public class EntityMyrmexSentinel extends EntityMyrmexBase {
     }
 
     @Override
-    public ResourceLocation getAdultTexture() {
+    public Identifier getAdultTexture() {
         if (isHiding()) {
             return isJungle() ? TEXTURE_JUNGLE_HIDDEN : TEXTURE_DESERT_HIDDEN;
 
@@ -224,17 +223,17 @@ public class EntityMyrmexSentinel extends EntityMyrmexBase {
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag tag) {
+    public void addAdditionalSaveData(ValueOutput tag) {
         super.addAdditionalSaveData(tag);
         tag.putBoolean("Hiding", this.isHiding());
         tag.putInt("DaylightTicks", daylightTicks);
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag tag) {
+    public void readAdditionalSaveData(ValueInput tag) {
         super.readAdditionalSaveData(tag);
-        this.setHiding(tag.getBoolean("Hiding"));
-        this.daylightTicks = tag.getInt("DaylightTicks");
+        this.setHiding(tag.getBooleanOr("Hiding", false));
+        this.daylightTicks = tag.getIntOr("DaylightTicks", 0);
     }
 
     @Override
@@ -248,8 +247,8 @@ public class EntityMyrmexSentinel extends EntityMyrmexBase {
     }
 
     @Override
-    public void positionRider(@NotNull Entity passenger) {
-        super.positionRider(passenger);
+    public void positionRider(@NotNull Entity passenger, @NotNull Entity.MoveFunction callback) {
+        super.positionRider(passenger, callback);
         if (this.hasPassenger(passenger)) {
             yBodyRot = getYRot();
             float radius = 1.25F;
@@ -270,7 +269,7 @@ public class EntityMyrmexSentinel extends EntityMyrmexBase {
     }
 
     @Override
-    public boolean hurt(DamageSource source, float amount) {
+    public boolean hurtServer(@NotNull ServerLevel level, @NotNull DamageSource source, float amount) {
         if (amount >= 1.0D && !this.getPassengers().isEmpty() && random.nextInt(2) == 0) {
             for (Entity entity : this.getPassengers()) {
                 entity.stopRiding();
@@ -278,11 +277,11 @@ public class EntityMyrmexSentinel extends EntityMyrmexBase {
         }
         visibleTicks = 300;
         this.setHiding(false);
-        return super.hurt(source, amount);
+        return super.hurtServer(level, source, amount);
     }
 
     @Override
-    public boolean doHurtTarget(@NotNull Entity entityIn) {
+    public boolean doHurtTarget(@NotNull ServerLevel level, @NotNull Entity entityIn) {
         if (this.getGrowthStage() < 2) {
             return false;
         }
@@ -339,6 +338,6 @@ public class EntityMyrmexSentinel extends EntityMyrmexBase {
 
     @Override
     public boolean isClientSide() {
-        return this.getLevel().isClientSide;
+        return this.getLevel().isClientSide();
     }
 }

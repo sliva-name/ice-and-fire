@@ -1,0 +1,7 @@
+{
+  "type": "iceandfire:gorgon_temple",
+  "biomes": "#iceandfire:has_structure/gorgon_temple",
+  "step": "surface_structures",
+  "spawn_overrides": {},
+  "terrain_adaptation": "none"
+}

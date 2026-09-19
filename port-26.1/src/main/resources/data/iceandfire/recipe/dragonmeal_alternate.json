@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "BMB",
+    "MBM",
+    "BMB"
+  ],
+  "key": {
+    "M": "#forge:meats",
+    "B": "#forge:bones"
+  },
+  "result": {
+    "id": "iceandfire:dragon_meal"
+  }
+}

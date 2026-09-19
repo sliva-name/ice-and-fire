@@ -16,7 +16,7 @@ import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -28,15 +28,19 @@ public class BlockPodium extends BaseEntityBlock {
 
     public BlockPodium() {
         super(
-            Properties
-                .of(Material.WOOD)
+            IafBlockRegistry.id(Properties
+                .of().mapColor(MapColor.WOOD)
                 .noOcclusion()
                 .dynamicShape()
                 .strength(2.0F)
-                .sound(SoundType.WOOD)
+                .sound(SoundType.WOOD))
         );
     }
 
+    @Override
+    protected com.mojang.serialization.MapCodec<? extends BaseEntityBlock> codec() {
+        return simpleCodec(properties -> new BlockPodium());
+    }
 
     @Override
     public @NotNull VoxelShape getShape(@NotNull BlockState state, @NotNull BlockGetter worldIn, @NotNull BlockPos pos, @NotNull CollisionContext context) {
@@ -49,19 +53,19 @@ public class BlockPodium extends BaseEntityBlock {
     }
 
     @Override
-    public void onRemove(@NotNull BlockState state, Level worldIn, @NotNull BlockPos pos, @NotNull BlockState newState, boolean isMoving) {
+    protected void affectNeighborsAfterRemoval(@NotNull BlockState state, @NotNull net.minecraft.server.level.ServerLevel worldIn, @NotNull BlockPos pos, boolean movedByPiston) {
         BlockEntity tileentity = worldIn.getBlockEntity(pos);
         if (tileentity instanceof TileEntityPodium) {
             Containers.dropContents(worldIn, pos, (TileEntityPodium) tileentity);
             worldIn.updateNeighbourForOutputSignal(pos, this);
         }
-        super.onRemove(state, worldIn, pos, newState, isMoving);
+        super.affectNeighborsAfterRemoval(state, worldIn, pos, movedByPiston);
     }
 
     @Override
-    public @NotNull InteractionResult use(@NotNull BlockState state, @NotNull Level worldIn, @NotNull BlockPos pos, Player player, @NotNull InteractionHand handIn, @NotNull BlockHitResult hit) {
+    protected @NotNull InteractionResult useWithoutItem(@NotNull BlockState state, @NotNull Level worldIn, @NotNull BlockPos pos, Player player, @NotNull BlockHitResult hit) {
         if (!player.isShiftKeyDown()) {
-            if (worldIn.isClientSide) {
+            if (worldIn.isClientSide()) {
                 IceAndFire.PROXY.setRefrencedTE(worldIn.getBlockEntity(pos));
             } else {
                 MenuProvider inamedcontainerprovider = this.getMenuProvider(state, worldIn, pos);

@@ -24,7 +24,7 @@ public class FrozenProperties {
     }
 
     private static CompoundTag getOrCreateFrozenData(CompoundTag entityData) {
-        if (entityData.contains(FROZEN_DATA, 10)) {
+        if (entityData.contains(FROZEN_DATA)) {
             return (CompoundTag) entityData.get(FROZEN_DATA);
         } else return createDefaultData();
     }
@@ -37,7 +37,7 @@ public class FrozenProperties {
     private static CompoundTag clearFrozenStatus(CompoundTag nbt, LivingEntity entity, boolean breakIce) {
         if (breakIce) {
             for (int i = 0; i < 15; i++) {
-                entity.level.addParticle(
+                entity.level().addParticle(
                     new BlockParticleOption(ParticleTypes.BLOCK,
                         IafBlockRegistry.DRAGON_ICE.get().defaultBlockState()),
                     entity.getX() + ((rand.nextDouble() - 0.5D) * entity.getBbWidth()),
@@ -60,7 +60,7 @@ public class FrozenProperties {
         if (!(entity instanceof EntityIceDragon)) {
             CompoundTag nbt = getOrCreateFrozenData(entity);
             if (nbt.contains(FROZEN_BOOL)) {
-                return nbt.getBoolean(FROZEN_BOOL);
+                return nbt.getBooleanOr(FROZEN_BOOL, false);
             }
         }
         return false;
@@ -70,7 +70,7 @@ public class FrozenProperties {
         if (!(entity instanceof EntityIceDragon)) {
             CompoundTag nbt = getOrCreateFrozenData(entity);
             if (nbt.contains(FROZEN_TIME)) {
-                return nbt.getInt(FROZEN_TIME);
+                return nbt.getIntOr(FROZEN_TIME, 0);
             }
         }
         return 0;
@@ -80,7 +80,7 @@ public class FrozenProperties {
         if (!(entity instanceof EntityIceDragon)) {
             CompoundTag entityData = CitadelEntityData.getOrCreateCitadelTag(entity);
             CompoundTag frozenData = getOrCreateFrozenData(entityData);
-            if (!frozenData.getBoolean(FROZEN_BOOL))
+            if (!frozenData.getBooleanOr(FROZEN_BOOL, false))
                 entity.playSound(SoundEvents.GLASS_PLACE, 1, 1);
             frozenData.putInt(FROZEN_TIME, duration);
             frozenData.putBoolean(FROZEN_BOOL, true);
@@ -96,8 +96,8 @@ public class FrozenProperties {
 
     private static void updateData(LivingEntity entity, CompoundTag nbt) {
         CitadelEntityData.setCitadelTag(entity, nbt);
-        if (!entity.level.isClientSide()) {
-            Citadel.sendMSGToAll(new PropertiesMessage("CitadelPatreonConfig", nbt, entity.getId()));
+        if (!entity.level().isClientSide()) {
+            com.github.alexthe666.citadel.network.PropertiesNetwork.send(entity);
         }
     }
 
@@ -107,10 +107,10 @@ public class FrozenProperties {
         if (entity instanceof EntityIceDragon) {
             frozenData.putBoolean(FROZEN_BOOL, false);
         }
-        if (entity.level.isClientSide())
+        if (entity.level().isClientSide())
             return;
         if (frozenData.contains(FROZEN_TIME)) {
-            int frozenTime = frozenData.getInt(FROZEN_TIME);
+            int frozenTime = frozenData.getIntOr(FROZEN_TIME, 0);
             // If burning extinguish
             if (entity.isOnFire()) {
                 clearFrozenStatus(frozenData, entity, true);

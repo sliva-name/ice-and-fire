@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "   ",
+    "  D",
+    "DD "
+  ],
+  "key": {
+    "D": "#forge:storage_blocks/gold"
+  },
+  "result": {
+    "id": "iceandfire:dragonarmor_gold_tail"
+  }
+}

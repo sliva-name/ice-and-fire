@@ -1,15 +1,13 @@
 package com.github.alexthe666.iceandfire.entity;
 
 import com.github.alexthe666.iceandfire.item.IafItemRegistry;
-import net.minecraft.network.protocol.Packet;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.projectile.AbstractArrow;
+import net.minecraft.world.entity.projectile.arrow.AbstractArrow;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.network.NetworkHooks;
-import net.minecraftforge.network.PlayMessages;
+import net.minecraftforge.network.packets.SpawnEntity;
 import org.jetbrains.annotations.NotNull;
 
 public class EntityStymphalianArrow extends AbstractArrow {
@@ -26,17 +24,11 @@ public class EntityStymphalianArrow extends AbstractArrow {
         this.setBaseDamage(3.5F);
     }
 
-    public EntityStymphalianArrow(PlayMessages.SpawnEntity spawnEntity, Level world) {
+    public EntityStymphalianArrow(SpawnEntity spawnEntity, Level world) {
         this(IafEntityRegistry.STYMPHALIAN_ARROW.get(), world);
     }
-
-    @Override
-    public @NotNull Packet<?> getAddEntityPacket() {
-        return NetworkHooks.getEntitySpawningPacket(this);
-    }
-
     public EntityStymphalianArrow(EntityType t, Level worldIn, LivingEntity shooter) {
-        super(t, shooter, worldIn);
+        super(t, shooter, worldIn, new ItemStack(IafItemRegistry.STYMPHALIAN_ARROW.get()), ItemStack.EMPTY);
         this.setBaseDamage(3.5F);
     }
 
@@ -57,5 +49,10 @@ public class EntityStymphalianArrow extends AbstractArrow {
     @Override
     protected @NotNull ItemStack getPickupItem() {
         return new ItemStack(IafItemRegistry.STYMPHALIAN_ARROW.get());
+    }
+
+    @Override
+    protected @NotNull ItemStack getDefaultPickupItem() {
+        return getPickupItem();
     }
 }

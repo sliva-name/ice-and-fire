@@ -3,9 +3,9 @@ package com.github.alexthe666.iceandfire.pathfinding.raycoms;
     All of this code is used with permission from Raycoms, one of the developers of the minecolonies project.
  */
 
+import com.github.alexthe666.iceandfire.block.IafMaterials;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.world.damagesource.EntityDamageSource;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -220,7 +220,7 @@ public class PathingStuckHandler implements IStuckHandler
      */
     private void completeStuckAction(final AbstractAdvancedPathNavigate navigator) {
         final BlockPos desired = navigator.getDesiredPos();
-        final Level world = navigator.getOurEntity().level;
+        final Level world = navigator.getOurEntity().level();
         final Mob entity = navigator.getOurEntity();
 
         if (canTeleportGoal) {
@@ -233,7 +233,7 @@ public class PathingStuckHandler implements IStuckHandler
             }
         }
         if (takeDamageOnCompleteStuck) {
-            entity.hurt(new EntityDamageSource("Stuck-damage", entity), entity.getMaxHealth() * damagePct);
+            entity.hurt(entity.damageSources().generic(), entity.getMaxHealth() * damagePct);
         }
 
         if (completeStuckBlockBreakRange > 0)
@@ -254,7 +254,7 @@ public class PathingStuckHandler implements IStuckHandler
     }
 
     /**
-     * Tries unstuck options depending on the level
+     * Tries unstuck options depending on the level()
      */
     private void tryUnstuck(final AbstractAdvancedPathNavigate navigator)
     {
@@ -324,12 +324,12 @@ public class PathingStuckHandler implements IStuckHandler
     }
 
     /**
-     * Random chance to decrease to a previous level of stuck
+     * Random chance to decrease to a previous level() of stuck
      */
     private void chanceStuckLevel()
     {
         stuckLevel++;
-        // 20 % to decrease to the previous level again
+        // 20 % to decrease to the previous level() again
         if (stuckLevel > 1 && rand.nextInt(6) == 0)
         {
             stuckLevel -= 2;
@@ -391,7 +391,7 @@ public class PathingStuckHandler implements IStuckHandler
      * @param navigator navigator to use
      */
     private void placeLadders(final AbstractAdvancedPathNavigate navigator) {
-        final Level world = navigator.getOurEntity().level;
+        final Level world = navigator.getOurEntity().level();
         final Mob entity = navigator.getOurEntity();
 
         BlockPos entityPos = entity.blockPosition();
@@ -411,7 +411,7 @@ public class PathingStuckHandler implements IStuckHandler
      * @param navigator navigator to use
      */
     private void placeLeaves(final AbstractAdvancedPathNavigate navigator) {
-        final Level world = navigator.getOurEntity().level;
+        final Level world = navigator.getOurEntity().level();
         final Mob entity = navigator.getOurEntity();
 
         final Direction badFacing = getFacing(entity.blockPosition(), navigator.getDesiredPos()).getOpposite();
@@ -430,7 +430,7 @@ public class PathingStuckHandler implements IStuckHandler
     public static Direction getFacing(final BlockPos pos, final BlockPos neighbor)
     {
         final BlockPos vector = neighbor.subtract(pos);
-        return Direction.getNearest(vector.getX(), vector.getY(), -vector.getZ());
+        return Direction.getNearest(vector.getX(), vector.getY(), -vector.getZ(), Direction.NORTH);
     }
 
     /**
@@ -439,7 +439,7 @@ public class PathingStuckHandler implements IStuckHandler
      * @param navigator navigator to use
      */
     private void breakBlocks(final AbstractAdvancedPathNavigate navigator) {
-        final Level world = navigator.getOurEntity().level;
+        final Level world = navigator.getOurEntity().level();
         final Mob entity = navigator.getOurEntity();
 
         final Direction facing = getFacing(entity.blockPosition(), navigator.getDesiredPos());
@@ -458,7 +458,7 @@ public class PathingStuckHandler implements IStuckHandler
         if (state.getBlock() != Blocks.LADDER && !state.canOcclude() && world.getFluidState(pos).isEmpty()) {
             for (final Direction dir : directions) {
                 final BlockState toPlace = Blocks.LADDER.defaultBlockState().setValue(LadderBlock.FACING, dir.getOpposite());
-                if (world.getBlockState(pos.relative(dir)).getMaterial().isSolid() && Blocks.LADDER.canSurvive(toPlace, world, pos)) {
+                if (IafMaterials.isSolid(world.getBlockState(pos.relative(dir))) && toPlace.canSurvive(world, pos)) {
                     world.setBlockAndUpdate(pos, toPlace);
                     break;
                 }
@@ -623,7 +623,7 @@ public class PathingStuckHandler implements IStuckHandler
             y_offset = y_offset > 0 ? y_offset + 1 : y_offset - 1;
             y_offset *= -1;
 
-            if (world.getMaxBuildHeight() <= start.getY() + y) {
+            if (world.getMaxY() + 1 <= start.getY() + y) {
                 return null;
             }
         }

@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "SPS",
+    " P ",
+    "SPS"
+  ],
+  "key": {
+    "S": "minecraft:acacia_slab",
+    "P": "minecraft:acacia_planks"
+  },
+  "result": {
+    "id": "iceandfire:podium_acacia"
+  }
+}

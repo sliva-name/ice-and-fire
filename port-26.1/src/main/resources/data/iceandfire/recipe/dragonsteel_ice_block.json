@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    "#forge:ingots/dragonsteel_ice",
+    "#forge:ingots/dragonsteel_ice",
+    "#forge:ingots/dragonsteel_ice",
+    "#forge:ingots/dragonsteel_ice",
+    "#forge:ingots/dragonsteel_ice",
+    "#forge:ingots/dragonsteel_ice",
+    "#forge:ingots/dragonsteel_ice",
+    "#forge:ingots/dragonsteel_ice",
+    "#forge:ingots/dragonsteel_ice"
+  ],
+  "result": {
+    "count": 1,
+    "id": "iceandfire:dragonsteel_ice_block"
+  }
+}

@@ -24,7 +24,7 @@ public class SpawnHippocampus extends Feature<NoneFeatureConfiguration> {
     @Override
     public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> context) {
         WorldGenLevel worldIn = context.level();
-        Random rand = context.random();
+        net.minecraft.util.RandomSource rand = context.random();
         BlockPos position = context.origin();
 
         position = worldIn.getHeightmapPos(Heightmap.Types.WORLD_SURFACE_WG, position.offset(8, 0, 8));
@@ -34,9 +34,9 @@ public class SpawnHippocampus extends Feature<NoneFeatureConfiguration> {
             for (int i = 0; i < rand.nextInt(5); i++) {
                 BlockPos pos = oceanPos.offset(rand.nextInt(10) - 5, rand.nextInt(30), rand.nextInt(10) - 5);
                 if (worldIn.getFluidState(pos).getType() == Fluids.WATER) {
-                    EntityHippocampus campus = IafEntityRegistry.HIPPOCAMPUS.get().create(worldIn.getLevel());
+                    EntityHippocampus campus = IafEntityRegistry.HIPPOCAMPUS.get().create(worldIn.getLevel(), net.minecraft.world.entity.EntitySpawnReason.STRUCTURE);
                     campus.setVariant(rand.nextInt(6));
-                    campus.moveTo(pos.getX() + 0.5F, pos.getY() + 0.5F, pos.getZ() + 0.5F, 0, 0);
+                    campus.snapTo(pos.getX() + 0.5F, pos.getY() + 0.5F, pos.getZ() + 0.5F, 0, 0);
                     worldIn.addFreshEntity(campus);
                 }
             }

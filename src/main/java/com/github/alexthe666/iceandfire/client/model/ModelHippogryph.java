@@ -4,15 +4,15 @@ import com.github.alexthe666.citadel.animation.IAnimatedEntity;
 import com.github.alexthe666.citadel.client.model.AdvancedModelBox;
 import com.github.alexthe666.citadel.client.model.ModelAnimator;
 import com.github.alexthe666.citadel.client.model.basic.BasicModelPart;
-import com.github.alexthe666.iceandfire.entity.EntityHippogryph;
-import com.github.alexthe666.iceandfire.enums.EnumHippogryphTypes;
+import com.github.alexthe666.iceandfire.client.render.entity.HippogryphRenderState;
 import com.google.common.collect.ImmutableList;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 
-public class ModelHippogryph extends ModelDragonBase<EntityHippogryph> {
+public class ModelHippogryph extends ModelDragonBase<HippogryphRenderState> {
     public AdvancedModelBox Body;
     public AdvancedModelBox Neck;
     public AdvancedModelBox HindThighR;
@@ -390,7 +390,7 @@ public class ModelHippogryph extends ModelDragonBase<EntityHippogryph> {
     @Override
     public void renderStatue(PoseStack matrixStackIn, VertexConsumer bufferIn, int packedLightIn, Entity living) {
         this.renderToBuffer(matrixStackIn, bufferIn, packedLightIn, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
-        if (this.young) {
+        if (living instanceof LivingEntity livingEntity && livingEntity.isBaby()) {
             this.Body.setShouldScaleChildren(true);
             this.Head.setShouldScaleChildren(false);
             this.Body.setScale(0.5F, 0.5F, 0.5F);
@@ -417,17 +417,18 @@ public class ModelHippogryph extends ModelDragonBase<EntityHippogryph> {
         this.StirrupR.showModel = false;
     }
 
-    public void animate(IAnimatedEntity entity, float f, float f1, float f2, float f3, float f4, float f5) {
+    public void animate(HippogryphRenderState state) {
         this.resetToDefaultPose();
-        animator.update(entity);
-        if (animator.setAnimation(EntityHippogryph.ANIMATION_SPEAK)) {
+        animator.update(state.animation != null ? state.animation : IAnimatedEntity.NO_ANIMATION,
+            state.animationTick, state.partialTick);
+        if (animator.setAnimation(HippogryphRenderState.SPEAK)) {
             animator.startKeyframe(10);
             this.rotate(animator, Head, -10, 0, 0);
             this.rotate(animator, Jaw, 20, 0, 0);
             animator.endKeyframe();
             animator.resetKeyframe(5);
         }
-        if (animator.setAnimation(EntityHippogryph.ANIMATION_EAT)) {
+        if (animator.setAnimation(HippogryphRenderState.EAT)) {
             animator.startKeyframe(10);
             this.rotate(animator, Body, 10, 0, 0);
             this.rotate(animator, Neck, 45, 0, 0);
@@ -469,7 +470,7 @@ public class ModelHippogryph extends ModelDragonBase<EntityHippogryph> {
             animator.endKeyframe();
             animator.resetKeyframe(5);
         }
-        if (animator.setAnimation(EntityHippogryph.ANIMATION_BITE)) {
+        if (animator.setAnimation(HippogryphRenderState.BITE)) {
             animator.startKeyframe(5);
             this.rotate(animator, Neck, -15, 0, 0);
             this.rotate(animator, Neck2, -15, 0, 0);
@@ -491,7 +492,7 @@ public class ModelHippogryph extends ModelDragonBase<EntityHippogryph> {
             animator.endKeyframe();
             animator.resetKeyframe(5);
         }
-        if (animator.setAnimation(EntityHippogryph.ANIMATION_SCRATCH)) {
+        if (animator.setAnimation(HippogryphRenderState.SCRATCH)) {
             animator.startKeyframe(5);
             this.rotate(animator, Body, -35, 0, 0);
             this.rotate(animator, HindThighR, 35, 0, 0);
@@ -537,10 +538,14 @@ public class ModelHippogryph extends ModelDragonBase<EntityHippogryph> {
     }
 
     @Override
-    public void setupAnim(EntityHippogryph entity, float f, float f1, float f2, float f3, float f4) {
-        animate(entity, f, f1, f2, f3, f4, 1);
-        EntityHippogryph hippo = entity;
-        if (this.young) {
+    public void setupAnim(HippogryphRenderState state) {
+        animate(state);
+        float f = state.walkAnimationPos;
+        float f1 = state.walkAnimationSpeed;
+        float f2 = state.ageInTicks;
+        float f3 = state.yRot;
+        float f4 = state.xRot;
+        if (state.isBaby) {
             this.Body.setShouldScaleChildren(true);
             this.Head.setShouldScaleChildren(false);
             this.Body.setScale(0.5F, 0.5F, 0.5F);
@@ -550,18 +555,21 @@ public class ModelHippogryph extends ModelDragonBase<EntityHippogryph> {
             this.Quill_R.setScale(2F, 2F, 2F);
             this.Body.setPos(0.0F, 18.0F, 4.0F);
         } else {
+            this.Body.setShouldScaleChildren(false);
+            this.Head.setShouldScaleChildren(false);
             this.Body.setScale(1, 1, 1);
             this.Head.setScale(1, 1, 1);
+            this.Beak.setScale(1, 1, 1);
             this.Quill_L.setScale(1, 1, 1);
             this.Quill_R.setScale(1, 1, 1);
         }
-        if (this.young) {
-            this.progressPosition(Body, hippo.sitProgress, 0, 16, 0);
+        if (state.isBaby) {
+            this.progressPosition(Body, state.sitProgress, 0, 16, 0);
         } else {
-            this.progressPosition(Body, hippo.sitProgress, 0, 18, 0);
+            this.progressPosition(Body, state.sitProgress, 0, 18, 0);
         }
         {
-            float sitProgress = Math.max(hippo.hoverProgress, hippo.flyProgress);
+            float sitProgress = Math.max(state.hoverProgress, state.flyProgress);
             progressRotation(Beak, sitProgress, 0.0F, 0.0F, 0.0F);
             progressRotation(HindLegR, sitProgress, -0.17453292519943295F, 0.0F, 0.0F);
             progressRotation(FingerR3, sitProgress, 0.40142572795869574F, 0.0F, 0.0F);
@@ -627,7 +635,7 @@ public class ModelHippogryph extends ModelDragonBase<EntityHippogryph> {
             progressPositionPrev(HindThighR, sitProgress, 0, -0.75F, 0);
         }
         {
-            float sitProgress = hippo.sitProgress;
+            float sitProgress = state.sitProgress;
             progressRotation(HeadPivot, sitProgress, -0.136659280431156F, 0.0F, 0.0F);
             progressRotation(HindLegR, sitProgress, 1.5481070465189704F, 0.0F, 0.0F);
             progressRotation(FingerL4, sitProgress, 0.0F, 0.0F, 0.0F);
@@ -698,10 +706,10 @@ public class ModelHippogryph extends ModelDragonBase<EntityHippogryph> {
 
         float speed_walk = 0.4F;
         float speed_idle = 0.05F;
-        float speed_fly = 0.35F + (hippo.getEnumVariant() == EnumHippogryphTypes.DODO ? 0.2f : 0);
+        float speed_fly = 0.35F + (state.dodo ? 0.2f : 0);
         float degree_walk = 0.5F;
         float degree_idle = 0.5F;
-        float degree_fly = 0.5F + (hippo.getEnumVariant() == EnumHippogryphTypes.DODO ? 1f : 0);
+        float degree_fly = 0.5F + (state.dodo ? 1f : 0);
         this.bob(Body, speed_idle, degree_idle, false, f2, 1);
         this.bob(BackLegR1, -speed_idle, degree_idle, false, f2, 1);
         this.bob(BackLegR1_1, -speed_idle, degree_idle, false, f2, 1);
@@ -710,8 +718,7 @@ public class ModelHippogryph extends ModelDragonBase<EntityHippogryph> {
         AdvancedModelBox[] NECK = new AdvancedModelBox[]{Neck, Neck2, Head};
         this.chainWave(NECK, speed_idle, degree_idle * 0.15F, -2, f2, 1);
 
-        if (hippo.isFlying() || hippo.airBorneCounter > 50 || hippo.isHovering()) {
-            //hippo.roll_buffer.applyChainFlapBuffer(Body);
+        if (state.flying || state.airBorneCounter > 50 || state.hovering) {
             this.flap(WingL, speed_fly, degree_fly, false, 0, 0, f2, 1);
             this.flap(WingR, speed_fly, -degree_fly, false, 0, 0, f2, 1);
             this.flap(WingL2, speed_fly, degree_fly, false, 0, 0, f2, 1);

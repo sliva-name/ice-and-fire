@@ -5,10 +5,8 @@ import com.github.alexthe666.iceandfire.item.IafItemRegistry;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
-import java.util.function.Supplier;
 
 public class MessageSpawnParticleAt {
     private double x;
@@ -41,15 +39,15 @@ public class MessageSpawnParticleAt {
         public Handler() {
         }
 
-        public static void handle(MessageSpawnParticleAt message, Supplier<NetworkEvent.Context> context) {
-            context.get().setPacketHandled(true);
-            Player player = context.get().getSender();
-            if(context.get().getDirection().getReceptionSide() == LogicalSide.CLIENT){
+        public static void handle(MessageSpawnParticleAt message, CustomPayloadEvent.Context context) {
+            context.setPacketHandled(true);
+            Player player = context.getSender();
+            if(context.isClientSide()){
                 player = IceAndFire.PROXY.getClientSidePlayer();
             }
             if (player != null) {
                 if (!player.getMainHandItem().isEmpty() && player.getMainHandItem().getItem() == IafItemRegistry.DRAGON_DEBUG_STICK.get()) {
-                    player.level.addParticle(ParticleTypes.SMOKE, message.x, message.y, message.z, 0, 0, 0);
+                    player.level().addParticle(ParticleTypes.SMOKE, message.x, message.y, message.z, 0, 0, 0);
                 }
             }
         }

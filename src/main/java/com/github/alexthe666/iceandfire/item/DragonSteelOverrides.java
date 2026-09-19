@@ -4,124 +4,119 @@ import com.github.alexthe666.iceandfire.IafConfig;
 import com.github.alexthe666.iceandfire.entity.EntityDeathWorm;
 import com.github.alexthe666.iceandfire.entity.props.FrozenProperties;
 import com.github.alexthe666.iceandfire.event.ServerEvents;
-import com.google.common.collect.Multimap;
 import net.minecraft.ChatFormatting;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
-import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.EntityTypeTags;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.MobType;
-import net.minecraft.world.entity.ai.attributes.Attribute;
-import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.*;
-import net.minecraft.world.level.Level;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ToolMaterial;
+import net.minecraft.world.item.component.ItemAttributeModifiers;
 
-import javax.annotation.Nullable;
-import java.util.List;
+import java.util.function.Consumer;
 
+public interface DragonSteelOverrides<T extends Item & DragonSteelOverrides<T>> {
 
-public interface DragonSteelOverrides<T extends TieredItem> {
+    ToolMaterial getTier();
 
-    /**
-     * Kept for compatibility
-     *
-     * @deprecated use data pack overrides instead
-     */
-    @Deprecated
-    Multimap<Attribute, AttributeModifier> bakeDragonsteel();
+    static ToolMaterial toolMaterial(ToolMaterial material) {
+        if (!DragonSteelTier.isDragonsteel(material)) {
+            return material;
+        }
+        // Vanilla applies durability and attribute modifiers while building the tool properties.
+        // Keep the original material on the item: elemental effects compare its identity.
+        return new ToolMaterial(material.incorrectBlocksForDrops(), IafConfig.dragonsteelBaseDurability,
+            material.speed(), 0.0F, material.enchantmentValue(), material.repairItems());
+    }
+
+    static float attackDamageBaseline(ToolMaterial material, float normalDamage, double dragonsteelDamage) {
+        return DragonSteelTier.isDragonsteel(material) ? (float) dragonsteelDamage : normalDamage;
+    }
 
     default float getAttackDamage(T item) {
-        if (item instanceof SwordItem) {
-            return ((SwordItem) item).getDamage();
-        }
-        if (item instanceof DiggerItem) {
-            return ((DiggerItem) item).getAttackDamage();
-        }
-        return item.getTier().getAttackDamageBonus();
-        //return item.getDamage(item.asItem().getDefaultInstance())
+        ItemAttributeModifiers modifiers = item.components().getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY);
+        return (float) modifiers.compute(Attributes.ATTACK_DAMAGE, 0.0D, EquipmentSlot.MAINHAND);
     }
 
-    default boolean isDragonsteel(Tier tier) {
-        return tier.getTag() == DragonSteelTier.DRAGONSTEEL_TIER_TAG;
+    default boolean isDragonsteel(ToolMaterial tier) {
+        return DragonSteelTier.isDragonsteel(tier);
     }
 
-    default boolean isDragonsteelFire(Tier tier) {
+    default boolean isDragonsteelFire(ToolMaterial tier) {
         return tier == DragonSteelTier.DRAGONSTEEL_TIER_FIRE;
     }
 
-    default boolean isDragonsteelIce(Tier tier) {
+    default boolean isDragonsteelIce(ToolMaterial tier) {
         return tier == DragonSteelTier.DRAGONSTEEL_TIER_ICE;
     }
 
-    default boolean isDragonsteelLightning(Tier tier) {
+    default boolean isDragonsteelLightning(ToolMaterial tier) {
         return tier == DragonSteelTier.DRAGONSTEEL_TIER_LIGHTNING;
     }
 
     default void hurtEnemy(T item, ItemStack stack, LivingEntity target, LivingEntity attacker) {
-        if (item.getTier() == IafItemRegistry.SILVER_TOOL_MATERIAL) {
-            if (target.getMobType() == MobType.UNDEAD) {
-                target.hurt(DamageSource.MAGIC, getAttackDamage(item) + 3.0F);
-            }
+        if (!(target.level() instanceof ServerLevel level)) {
+            return;
         }
-
+        if (item.getTier() == IafItemRegistry.SILVER_TOOL_MATERIAL && target.getType().builtInRegistryHolder().is(EntityTypeTags.UNDEAD)) {
+            target.hurtServer(level, target.damageSources().magic(), getAttackDamage(item) + 3.0F);
+        }
         if (item.getTier() == IafItemRegistry.MYRMEX_CHITIN_TOOL_MATERIAL) {
-            if (target.getMobType() != MobType.ARTHROPOD) {
-                target.hurt(DamageSource.GENERIC, getAttackDamage(item) + 5.0F);
+            if (!target.getType().builtInRegistryHolder().is(EntityTypeTags.ARTHROPOD)) {
+                target.hurtServer(level, target.damageSources().generic(), getAttackDamage(item) + 5.0F);
             }
             if (target instanceof EntityDeathWorm) {
-                target.hurt(DamageSource.GENERIC, getAttackDamage(item) + 5.0F);
+                target.hurtServer(level, target.damageSources().generic(), getAttackDamage(item) + 5.0F);
             }
         }
         if (isDragonsteelFire(item.getTier()) && IafConfig.dragonWeaponFireAbility) {
-            target.setSecondsOnFire(15);
+            target.igniteForSeconds(15.0F);
             target.knockback(1F, attacker.getX() - target.getX(), attacker.getZ() - target.getZ());
         }
         if (isDragonsteelIce(item.getTier()) && IafConfig.dragonWeaponIceAbility) {
             FrozenProperties.setFrozenFor(target, 300);
-            target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 300, 2));
+            target.addEffect(new MobEffectInstance(MobEffects.SLOWNESS, 300, 2));
             target.knockback(1F, attacker.getX() - target.getX(), attacker.getZ() - target.getZ());
         }
         if (isDragonsteelLightning(item.getTier()) && IafConfig.dragonWeaponLightningAbility) {
-            boolean flag = true;
-            if (attacker instanceof Player) {
-                if (attacker.attackAnim > 0.2) {
-                    flag = false;
-                }
-            }
-            if (!attacker.level.isClientSide && flag) {
-                LightningBolt lightningboltentity = EntityType.LIGHTNING_BOLT.create(target.level);
-                lightningboltentity.getTags().add(ServerEvents.BOLT_DONT_DESTROY_LOOT);
-                lightningboltentity.getTags().add(attacker.getStringUUID());
-                lightningboltentity.moveTo(target.position());
-                if (!target.level.isClientSide) {
-                    target.level.addFreshEntity(lightningboltentity);
+            if (!(attacker instanceof Player) || attacker.attackAnim <= 0.2F) {
+                LightningBolt bolt = EntityType.LIGHTNING_BOLT.create(level, EntitySpawnReason.TRIGGERED);
+                if (bolt != null) {
+                    bolt.addTag(ServerEvents.BOLT_DONT_DESTROY_LOOT);
+                    bolt.addTag(attacker.getStringUUID());
+                    bolt.snapTo(target.position());
+                    level.addFreshEntity(bolt);
                 }
             }
             target.knockback(1F, attacker.getX() - target.getX(), attacker.getZ() - target.getZ());
         }
-
     }
 
-    default void appendHoverText(Tier tier, ItemStack stack, @Nullable Level worldIn, List<Component> tooltip, TooltipFlag flagIn) {
+    default void appendHoverText(ToolMaterial tier, Consumer<Component> tooltip) {
         if (tier == IafItemRegistry.SILVER_TOOL_MATERIAL) {
-            tooltip.add(new TranslatableComponent("silvertools.hurt").withStyle(ChatFormatting.GREEN));
+            tooltip.accept(Component.translatable("silvertools.hurt").withStyle(ChatFormatting.GREEN));
         }
         if (tier == IafItemRegistry.MYRMEX_CHITIN_TOOL_MATERIAL) {
-            tooltip.add(new TranslatableComponent("myrmextools.hurt").withStyle(ChatFormatting.GREEN));
+            tooltip.accept(Component.translatable("myrmextools.hurt").withStyle(ChatFormatting.GREEN));
         }
         if (isDragonsteelFire(tier) && IafConfig.dragonWeaponFireAbility) {
-            tooltip.add(new TranslatableComponent("dragon_sword_fire.hurt2").withStyle(ChatFormatting.DARK_RED));
+            tooltip.accept(Component.translatable("dragon_sword_fire.hurt2").withStyle(ChatFormatting.DARK_RED));
         }
         if (isDragonsteelIce(tier) && IafConfig.dragonWeaponIceAbility) {
-            tooltip.add(new TranslatableComponent("dragon_sword_ice.hurt2").withStyle(ChatFormatting.AQUA));
+            tooltip.accept(Component.translatable("dragon_sword_ice.hurt2").withStyle(ChatFormatting.AQUA));
         }
         if (isDragonsteelLightning(tier) && IafConfig.dragonWeaponLightningAbility) {
-            tooltip.add(new TranslatableComponent("dragon_sword_lightning.hurt2").withStyle(ChatFormatting.DARK_PURPLE));
+            tooltip.accept(Component.translatable("dragon_sword_lightning.hurt2").withStyle(ChatFormatting.DARK_PURPLE));
         }
     }
 }

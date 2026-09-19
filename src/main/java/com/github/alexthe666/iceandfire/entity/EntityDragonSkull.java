@@ -1,5 +1,9 @@
 package com.github.alexthe666.iceandfire.entity;
 
+import com.github.alexthe666.iceandfire.entity.util.IafDrops;
+
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
 import com.github.alexthe666.iceandfire.entity.util.IBlacklistedFromStatues;
 import com.github.alexthe666.iceandfire.entity.util.IDeadMob;
 import com.github.alexthe666.iceandfire.item.IafItemRegistry;
@@ -39,7 +43,7 @@ public class EntityDragonSkull extends Animal implements IBlacklistedFromStatues
 
     public EntityDragonSkull(EntityType type, Level worldIn) {
         super(type, worldIn);
-        this.noCulling = true;
+        // 1.18 noCulling is renderer affectedByCulling() == false
         // setScale(this.getDragonAge());
     }
 
@@ -62,8 +66,8 @@ public class EntityDragonSkull extends Animal implements IBlacklistedFromStatues
     }
 
     @Override
-    public boolean isInvulnerableTo(DamageSource i) {
-        return i.getEntity() != null && super.isInvulnerableTo(i);
+    public boolean isInvulnerableTo(@NotNull ServerLevel level, @NotNull DamageSource i) {
+        return i.getEntity() != null && super.isInvulnerableTo(level, i);
     }
 
     @Override
@@ -72,7 +76,7 @@ public class EntityDragonSkull extends Animal implements IBlacklistedFromStatues
     }
 
     public boolean isOnWall() {
-        return this.level.isEmptyBlock(this.blockPosition().below());
+        return this.level().isEmptyBlock(this.blockPosition().below());
     }
 
     public void onUpdate() {
@@ -83,12 +87,12 @@ public class EntityDragonSkull extends Animal implements IBlacklistedFromStatues
     }
 
     @Override
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.getEntityData().define(DRAGON_TYPE, 0);
-        this.getEntityData().define(DRAGON_AGE, 0);
-        this.getEntityData().define(DRAGON_STAGE, 0);
-        this.getEntityData().define(DRAGON_DIRECTION, 0F);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DRAGON_TYPE, 0);
+        builder.define(DRAGON_AGE, 0);
+        builder.define(DRAGON_STAGE, 0);
+        builder.define(DRAGON_DIRECTION, 0F);
     }
 
     public float getYaw() {
@@ -129,9 +133,9 @@ public class EntityDragonSkull extends Animal implements IBlacklistedFromStatues
     }
 
     @Override
-    public boolean hurt(@NotNull DamageSource var1, float var2) {
+    public boolean hurtServer(@NotNull ServerLevel level, @NotNull DamageSource var1, float var2) {
         this.turnIntoItem();
-        return super.hurt(var1, var2);
+        return super.hurtServer(level, var1, var2);
     }
 
     public void turnIntoItem() {
@@ -139,11 +143,12 @@ public class EntityDragonSkull extends Animal implements IBlacklistedFromStatues
             return;
         this.remove(RemovalReason.DISCARDED);
         ItemStack stack = new ItemStack(getDragonSkullItem());
-        stack.setTag(new CompoundTag());
-        stack.getTag().putInt("Stage", this.getStage());
-        stack.getTag().putInt("DragonAge", this.getDragonAge());
-        if (!this.level.isClientSide)
-            this.spawnAtLocation(stack, 0.0F);
+        com.github.alexthe666.iceandfire.item.IafItemData.update(stack, tag -> {
+            tag.putInt("Stage", this.getStage());
+            tag.putInt("DragonAge", this.getDragonAge());
+        });
+        if (!this.level().isClientSide())
+            IafDrops.spawn(this, stack, 0.0F);
 
     }
 
@@ -175,16 +180,16 @@ public class EntityDragonSkull extends Animal implements IBlacklistedFromStatues
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag compound) {
-        this.setDragonType(compound.getInt("Type"));
-        this.setStage(compound.getInt("Stage"));
-        this.setDragonAge(compound.getInt("DragonAge"));
-        this.setYaw(compound.getFloat("DragonYaw"));
+    public void readAdditionalSaveData(ValueInput compound) {
+        this.setDragonType(compound.getIntOr("Type", 0));
+        this.setStage(compound.getIntOr("Stage", 0));
+        this.setDragonAge(compound.getIntOr("DragonAge", 0));
+        this.setYaw(compound.getFloatOr("DragonYaw", 0.0F));
         super.readAdditionalSaveData(compound);
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag compound) {
+    public void addAdditionalSaveData(ValueOutput compound) {
         compound.putInt("Type", this.getDragonType());
         compound.putInt("Stage", this.getStage());
         compound.putInt("DragonAge", this.getDragonAge());

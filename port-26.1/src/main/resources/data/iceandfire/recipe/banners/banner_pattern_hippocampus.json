@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    "iceandfire:hippocampus_fin",
+    "minecraft:paper"
+  ],
+  "result": {
+    "count": 1,
+    "id": "iceandfire:banner_pattern_hippocampus"
+  }
+}

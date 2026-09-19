@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:blasting",
+  "ingredient": "iceandfire:copper_ore",
+  "result": {
+    "id": "iceandfire:copper_ingot"
+  },
+  "experience": 0.35,
+  "cookingtime": 100
+}

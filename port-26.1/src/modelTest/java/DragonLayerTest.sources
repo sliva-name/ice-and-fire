@@ -1,0 +1,25 @@
+# Paths relative to the repository root. Compile these against Minecraft 26.1 / Forge 62.0.9
+# and its dependencies, plus the source-built port-26.1/citadel project.
+# Runtime resources: src/main/resources. Main class: DragonLayerTest.
+# This tests the model/texture subset only, not RenderDragonBase or layer integration.
+port-26.1/src/modelTest/java/DragonLayerTest.java
+src/main/java/com/github/alexthe666/iceandfire/client/render/entity/DragonRenderState.java
+src/main/java/com/github/alexthe666/iceandfire/client/render/entity/DragonEyeCropper.java
+src/main/java/com/github/alexthe666/iceandfire/client/texture/ArrayLayeredTexture.java
+src/main/java/com/github/alexthe666/iceandfire/client/model/animator/IceAndFireTabulaModelAnimator.java
+src/main/java/com/github/alexthe666/iceandfire/client/model/animator/DragonTabulaModelAnimator.java
+src/main/java/com/github/alexthe666/iceandfire/client/model/animator/FireDragonTabulaModelAnimator.java
+src/main/java/com/github/alexthe666/iceandfire/client/model/animator/IceDragonTabulaModelAnimator.java
+src/main/java/com/github/alexthe666/iceandfire/client/model/animator/LightningTabulaDragonAnimator.java
+src/main/java/com/github/alexthe666/iceandfire/client/model/util/DragonAnimationsLibrary.java
+src/main/java/com/github/alexthe666/iceandfire/client/model/util/TabulaModelHandlerHelper.java
+src/main/java/com/github/alexthe666/iceandfire/client/model/util/LegArticulator.java
+src/main/java/com/github/alexthe666/iceandfire/client/model/util/EnumDragonPoses.java
+src/main/java/com/github/alexthe666/iceandfire/client/model/util/IEnumDragonPoses.java
+src/main/java/com/github/alexthe666/iceandfire/client/model/util/EnumDragonModelTypes.java
+src/main/java/com/github/alexthe666/iceandfire/client/model/util/IEnumDragonModelTypes.java
+src/main/java/com/github/alexthe666/iceandfire/util/IAFMath.java
+# For a standalone source-only javac run instead of the source-built Citadel dependency,
+# also compile port-26.1/citadel/src/main/java/com/github/alexthe666/citadel/client/model/**/*.java
+# and citadel/animation/{Animation,IAnimatedEntity}.java from that same source root.
+# Do not add the legacy Ice & Fire or Citadel jars to the classpath.

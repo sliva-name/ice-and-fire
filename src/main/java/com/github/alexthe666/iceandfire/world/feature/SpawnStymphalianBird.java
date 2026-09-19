@@ -23,7 +23,7 @@ public class SpawnStymphalianBird extends Feature<NoneFeatureConfiguration> {
     @Override
     public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> context) {
         WorldGenLevel worldIn = context.level();
-        Random rand = context.random();
+        net.minecraft.util.RandomSource rand = context.random();
         BlockPos position = context.origin();
 
         position = worldIn.getHeightmapPos(Heightmap.Types.WORLD_SURFACE_WG, position.offset(8, 0, 8));
@@ -33,8 +33,8 @@ public class SpawnStymphalianBird extends Feature<NoneFeatureConfiguration> {
                 BlockPos pos = position.offset(rand.nextInt(10) - 5, 0, rand.nextInt(10) - 5);
                 pos = worldIn.getHeightmapPos(Heightmap.Types.WORLD_SURFACE_WG, pos);
                 if (worldIn.getBlockState(pos.below()).canOcclude()) {
-                    EntityStymphalianBird bird = IafEntityRegistry.STYMPHALIAN_BIRD.get().create(worldIn.getLevel());
-                    bird.moveTo(pos.getX() + 0.5F, pos.getY() + 1.5F, pos.getZ() + 0.5F, 0, 0);
+                    EntityStymphalianBird bird = IafEntityRegistry.STYMPHALIAN_BIRD.get().create(worldIn.getLevel(), net.minecraft.world.entity.EntitySpawnReason.STRUCTURE);
+                    bird.snapTo(pos.getX() + 0.5F, pos.getY() + 1.5F, pos.getZ() + 0.5F, 0, 0);
                     worldIn.addFreshEntity(bird);
 
                 }

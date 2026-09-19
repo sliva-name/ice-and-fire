@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "I I",
+    "I I"
+  ],
+  "key": {
+    "I": "iceandfire:dragon_ice"
+  },
+  "result": {
+    "count": 4,
+    "id": "iceandfire:dragon_ice_spikes"
+  }
+}

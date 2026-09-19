@@ -9,8 +9,7 @@ import mezz.jei.api.gui.ingredient.IGuiItemStackGroup;
 import mezz.jei.api.ingredients.IIngredients;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.crafting.Ingredient;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,7 +25,7 @@ public class IceDragonForgeCategory implements IRecipeCategory<DragonForgeRecipe
     }
 
     @Override
-    public @NotNull ResourceLocation getUid() {
+    public @NotNull Identifier getUid() {
         return IceAndFireJEIPlugin.ICE_DRAGON_FORGE_ID;
     }
 
@@ -37,7 +36,7 @@ public class IceDragonForgeCategory implements IRecipeCategory<DragonForgeRecipe
 
     @Override
     public @NotNull Component getTitle() {
-        return new TranslatableComponent("iceandfire.ice_dragon_forge");
+        return Component.translatable("iceandfire.ice_dragon_forge");
     }
 
     @Override

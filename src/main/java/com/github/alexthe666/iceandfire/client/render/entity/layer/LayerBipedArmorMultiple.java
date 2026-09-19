@@ -1,31 +1,26 @@
 package com.github.alexthe666.iceandfire.client.render.entity.layer;
 
-import com.github.alexthe666.citadel.animation.IAnimatedEntity;
 import com.github.alexthe666.iceandfire.client.model.ModelBipedBase;
-import com.github.alexthe666.iceandfire.entity.util.IHasArmorVariant;
-import net.minecraft.client.renderer.entity.MobRenderer;
-import net.minecraft.resources.ResourceLocation;
+import com.github.alexthe666.iceandfire.client.render.entity.DreadHumanoidRenderState;
+import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.renderer.entity.RenderLayerParent;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 
-import javax.annotation.Nullable;
+public class LayerBipedArmorMultiple<M extends EntityModel<DreadHumanoidRenderState>> extends LayerBipedArmor<M> {
+    private final IHasArmorVariantResource resources;
 
-public class LayerBipedArmorMultiple<R extends MobRenderer & IHasArmorVariantResource,
-    T extends LivingEntity & IHasArmorVariant & IAnimatedEntity,
-    M extends ModelBipedBase<T>,
-    A extends ModelBipedBase<T>> extends LayerBipedArmor<T, M, A> {
-
-    R mobRenderer;
-
-    public LayerBipedArmorMultiple(R mobRenderer, A modelLeggings, A modelArmor,
-                                   ResourceLocation defaultArmor, ResourceLocation defaultLegArmor) {
-        super(mobRenderer, modelLeggings, modelArmor, defaultArmor, defaultLegArmor);
-        this.mobRenderer = mobRenderer;
+    public LayerBipedArmorMultiple(RenderLayerParent<DreadHumanoidRenderState, M> renderer,
+                                   IHasArmorVariantResource resources, ModelBipedBase body,
+                                   ModelBipedBase modelLeggings, ModelBipedBase modelArmor,
+                                   Identifier defaultArmor, Identifier defaultLegArmor) {
+        super(renderer, body, modelLeggings, modelArmor, defaultArmor, defaultLegArmor);
+        this.resources = resources;
     }
 
     @Override
-    public ResourceLocation getArmorResource(T entity, ItemStack stack, EquipmentSlot slot, @Nullable String type) {
-        return this.mobRenderer.getArmorResource(entity.getBodyArmorVariant(), slot);
+    public Identifier getArmorResource(DreadHumanoidRenderState state, ItemStack stack, EquipmentSlot slot, String type) {
+        return this.resources.getArmorResource(state.armorVariant, slot);
     }
 }

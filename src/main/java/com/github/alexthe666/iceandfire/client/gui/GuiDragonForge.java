@@ -5,14 +5,13 @@ import com.github.alexthe666.iceandfire.entity.DragonType;
 import com.github.alexthe666.iceandfire.entity.tile.TileEntityDragonforge;
 import com.github.alexthe666.iceandfire.inventory.ContainerDragonForge;
 import com.github.alexthe666.iceandfire.recipe.DragonForgeRecipe;
-import com.github.alexthe666.iceandfire.recipe.IafRecipeRegistry;
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jetbrains.annotations.NotNull;
@@ -21,9 +20,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class GuiDragonForge extends AbstractContainerScreen<ContainerDragonForge> {
-    private static final ResourceLocation TEXTURE_FIRE = new ResourceLocation("iceandfire:textures/gui/dragonforge_fire.png");
-    private static final ResourceLocation TEXTURE_ICE = new ResourceLocation("iceandfire:textures/gui/dragonforge_ice.png");
-    private static final ResourceLocation TEXTURE_LIGHTNING = new ResourceLocation("iceandfire:textures/gui/dragonforge_lightning.png");
+    private static final Identifier TEXTURE_FIRE = Identifier.parse("iceandfire:textures/gui/dragonforge_fire.png");
+    private static final Identifier TEXTURE_ICE = Identifier.parse("iceandfire:textures/gui/dragonforge_ice.png");
+    private static final Identifier TEXTURE_LIGHTNING = Identifier.parse("iceandfire:textures/gui/dragonforge_lightning.png");
     private final ContainerDragonForge tileFurnace;
     private final int dragonType;
 
@@ -34,38 +33,30 @@ public class GuiDragonForge extends AbstractContainerScreen<ContainerDragonForge
     }
 
     @Override
-    protected void renderLabels(@NotNull PoseStack stack, int mouseX, int mouseY) {
-        Font font = this.getMinecraft().font;
+    protected void extractLabels(@NotNull GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
+        Font font = this.font;
         if (tileFurnace != null) {
             String s = I18n.get("block.iceandfire.dragonforge_" + DragonType.getNameFromInt(dragonType) + "_core");
-            font.draw(stack, s, this.imageWidth / 2 - font.width(s) / 2, 6, 4210752);
+            graphics.text(font, s, this.imageWidth / 2 - font.width(s) / 2, 6, 4210752);
         }
-        font.draw(stack, this.playerInventoryTitle, 8, this.imageHeight - 96 + 2, 4210752);
+        graphics.text(font, this.playerInventoryTitle, 8, this.imageHeight - 96 + 2, 4210752);
     }
 
     @Override
-    protected void renderBg(@NotNull PoseStack matrixStack, float partialTicks, int mouseX, int mouseY) {
-        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-        if (dragonType == 0) {
-            RenderSystem.setShaderTexture(0, TEXTURE_FIRE);
-        } else if (dragonType == 1) {
-            RenderSystem.setShaderTexture(0, TEXTURE_ICE);
-        } else {
-            RenderSystem.setShaderTexture(0, TEXTURE_LIGHTNING);
-        }
-        int k = (this.width - this.imageWidth) / 2;
-        int l = (this.height - this.imageHeight) / 2;
-        this.blit(matrixStack, k, l, 0, 0, this.imageWidth, this.imageHeight);
+    public void extractBackground(@NotNull GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTicks) {
+        Identifier texture = dragonType == 0 ? TEXTURE_FIRE : dragonType == 1 ? TEXTURE_ICE : TEXTURE_LIGHTNING;
+        int k = this.leftPos;
+        int l = this.topPos;
+        graphics.blit(RenderPipelines.GUI_TEXTURED, texture, k, l, 0, 0, this.imageWidth, this.imageHeight, 256, 256);
         int i1 = this.getCookTime(126);
-        this.blit(matrixStack, k + 12, l + 23, 0, 166, i1, 38);
+        graphics.blit(RenderPipelines.GUI_TEXTURED, texture, k + 12, l + 23, 0, 166, i1, 38, 256, 256);
     }
 
     private int getCookTime(int p_175381_1_) {
         BlockEntity te = IceAndFire.PROXY.getRefrencedTE();
         int j = 0;
-
-        List<DragonForgeRecipe> recipes = this.getMinecraft().level.getRecipeManager()
-            .getAllRecipesFor(IafRecipeRegistry.DRAGON_FORGE_TYPE.get())
+        var connection = this.minecraft.getConnection();
+        List<DragonForgeRecipe> recipes = connection == null ? java.util.List.of() : DragonForgeRecipe.allOfAccess(connection.recipes())
             .stream().filter(item ->
                 item.isValidInput(tileFurnace.getSlot(0).getItem()) && item.isValidBlood(tileFurnace.getSlot(1).getItem())).collect(Collectors.toList());
         int maxCookTime = recipes.isEmpty() ? 100 : recipes.get(0).getCookTime();
@@ -76,10 +67,8 @@ public class GuiDragonForge extends AbstractContainerScreen<ContainerDragonForge
     }
 
     @Override
-    public void render(@NotNull PoseStack matrixStack, int mouseX, int mouseY, float partialTicks) {
-        this.renderBackground(matrixStack);
-        super.render(matrixStack, mouseX, mouseY, partialTicks);
-        this.renderTooltip(matrixStack, mouseX, mouseY);
+    public void extractRenderState(@NotNull GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTicks) {
+        super.extractRenderState(graphics, mouseX, mouseY, partialTicks);
+        this.extractTooltip(graphics, mouseX, mouseY);
     }
-
 }

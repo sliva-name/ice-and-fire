@@ -7,7 +7,7 @@ import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.level.Level;
 
 import java.util.EnumSet;
@@ -28,7 +28,7 @@ public class HippogryphAIMate extends Goal {
 
     public HippogryphAIMate(EntityHippogryph hippogryph, double speed, Class<? extends Animal> mate) {
         this.hippo = hippogryph;
-        this.world = hippogryph.level;
+        this.world = hippogryph.level();
         this.moveSpeed = speed;
         this.setFlags(EnumSet.of(Flag.MOVE));
     }
@@ -89,11 +89,11 @@ public class HippogryphAIMate extends Goal {
         this.targetMate.setAge(6000);
         this.hippo.resetLove();
         this.targetMate.resetLove();
-        egg.moveTo(this.hippo.getX(), this.hippo.getY(), this.hippo.getZ(), 0.0F, 0.0F);
-        if (!world.isClientSide) {
+        egg.snapTo(this.hippo.getX(), this.hippo.getY(), this.hippo.getZ(), 0.0F, 0.0F);
+        if (!world.isClientSide()) {
             this.world.addFreshEntity(egg);
         }
-        Random random = this.hippo.getRandom();
+        net.minecraft.util.RandomSource random = this.hippo.getRandom();
 
         for (int i = 0; i < 7; ++i) {
             final double d0 = random.nextGaussian() * 0.02D;
@@ -106,8 +106,8 @@ public class HippogryphAIMate extends Goal {
                 this.hippo.getZ() + d5, d0, d1, d2);
         }
 
-        if (this.world.getGameRules().getBoolean(GameRules.RULE_DOMOBLOOT)) {
-            this.world.addFreshEntity(new ExperienceOrb(this.world, this.hippo.getX(), this.hippo.getY(),
+        if (this.world instanceof net.minecraft.server.level.ServerLevel server && server.getGameRules().get(GameRules.ENTITY_DROPS)) {
+            server.addFreshEntity(new ExperienceOrb(server, this.hippo.getX(), this.hippo.getY(),
                 this.hippo.getZ(), random.nextInt(7) + 1));
         }
     }

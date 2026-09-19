@@ -1,10 +1,10 @@
 package com.github.alexthe666.iceandfire.client.model;
 
-import com.github.alexthe666.citadel.animation.IAnimatedEntity;
+import com.github.alexthe666.citadel.client.model.AdvancedEntityModel;
 import com.github.alexthe666.citadel.client.model.AdvancedModelBox;
 import com.github.alexthe666.citadel.client.model.ModelAnimator;
 import com.github.alexthe666.citadel.client.model.basic.BasicModelPart;
-import com.github.alexthe666.iceandfire.entity.EntityGorgon;
+import com.github.alexthe666.iceandfire.client.render.entity.GorgonRenderState;
 import com.google.common.collect.ImmutableList;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -12,7 +12,7 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 
-public class ModelGorgon extends ModelDragonBase<EntityGorgon> {
+public class ModelGorgon extends AdvancedEntityModel<GorgonRenderState> implements ICustomStatueModel {
     private final ModelAnimator animator;
     public AdvancedModelBox Tail_1;
     public AdvancedModelBox Tail_2;
@@ -568,10 +568,10 @@ public class ModelGorgon extends ModelDragonBase<EntityGorgon> {
         this.updateDefaultPose();
     }
 
-    public void animate(IAnimatedEntity entity, float f, float f1, float f2, float f3, float f4, float f5) {
+    public void animate(GorgonRenderState state) {
         this.resetToDefaultPose();
-        animator.update(entity);
-        if (animator.setAnimation(EntityGorgon.ANIMATION_SCARE)) {
+        animator.update(state.animation, state.animationTick, state.partialTick);
+        if (state.scaring && animator.setAnimation(state.animation)) {
             animator.startKeyframe(5);
             this.rotate(animator, Head, 0, 20, 0);
             this.rotate(animator, Left_Arm, 0, -12.5F, -70F);
@@ -594,7 +594,7 @@ public class ModelGorgon extends ModelDragonBase<EntityGorgon> {
             animator.endKeyframe();
             animator.resetKeyframe(10);
         }
-        if (animator.setAnimation(EntityGorgon.ANIMATION_HIT)) {
+        if (state.hitting && animator.setAnimation(state.animation)) {
             animator.startKeyframe(5);
             this.rotate(animator, Body, 10F, 0F, 0F);
 
@@ -606,8 +606,13 @@ public class ModelGorgon extends ModelDragonBase<EntityGorgon> {
     }
 
     @Override
-    public void setupAnim(EntityGorgon entity, float f, float f1, float f2, float f3, float f4) {
-        animate(entity, f, f1, f2, f3, f4, 1);
+    public void setupAnim(GorgonRenderState state) {
+        animate(state);
+        float f = state.walkAnimationPos;
+        float f1 = state.walkAnimationSpeed;
+        float f2 = state.ageInTicks;
+        float f3 = state.yRot;
+        float f4 = state.xRot;
         float speed_walk = 0.6F;
         float speed_idle = 0.05F;
         float degree_walk = 1F;
@@ -692,15 +697,20 @@ public class ModelGorgon extends ModelDragonBase<EntityGorgon> {
         this.chainSwing(SNAKEL7, speed_idle, degree_idle * 0.75F, -3, f2, 1);
         this.faceTarget(f3, f4, 1, this.Head);
 
-        float deathProg = Math.min(40, (float) entity.deathTime) / 2;
+        float deathProg = state.deathProgress;
 
-        this.progressRotation(Tail_1, deathProg, (float) Math.toRadians(5), (float) Math.toRadians(57), 0);
-        this.progressPosition(Tail_1, deathProg, -5, 22, -4);
-        this.progressRotation(Tail_2, deathProg, (float) Math.toRadians(18), (float) Math.toRadians(-54), 0);
-        this.progressRotation(Body, deathProg, (float) Math.toRadians(-9), (float) Math.toRadians(36), 0);
-        this.progressRotation(Right_Arm, deathProg, 0, 0, (float) Math.toRadians(20));
-        this.progressRotation(Left_Arm, deathProg, 0, 0, (float) Math.toRadians(-20));
+        this.progressRotation(Tail_1, deathProg, (float) Math.toRadians(5), (float) Math.toRadians(57), 0, 20);
+        this.progressPosition(Tail_1, deathProg, -5, 22, -4, 20);
+        this.progressRotation(Tail_2, deathProg, (float) Math.toRadians(18), (float) Math.toRadians(-54), 0, 20);
+        this.progressRotation(Body, deathProg, (float) Math.toRadians(-9), (float) Math.toRadians(36), 0, 20);
+        this.progressRotation(Right_Arm, deathProg, 0, 0, (float) Math.toRadians(20), 20);
+        this.progressRotation(Left_Arm, deathProg, 0, 0, (float) Math.toRadians(-20), 20);
         this.Neck.showModel = deathProg <= 0;
+    }
+
+    // The original ModelDragonBase keyframes specify degrees, not animator radians.
+    private void rotate(ModelAnimator animator, AdvancedModelBox model, float x, float y, float z) {
+        animator.rotate(model, (float) Math.toRadians(x), (float) Math.toRadians(y), (float) Math.toRadians(z));
     }
 
     @Override

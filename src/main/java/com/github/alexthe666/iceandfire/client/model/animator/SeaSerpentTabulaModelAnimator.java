@@ -4,44 +4,43 @@ import com.github.alexthe666.citadel.client.model.AdvancedModelBox;
 import com.github.alexthe666.citadel.client.model.ITabulaModelAnimator;
 import com.github.alexthe666.citadel.client.model.TabulaModel;
 import com.github.alexthe666.iceandfire.client.model.util.EnumSeaSerpentAnimations;
-import com.github.alexthe666.iceandfire.entity.EntitySeaSerpent;
-import net.minecraft.client.Minecraft;
+import com.github.alexthe666.iceandfire.client.render.entity.SeaSerpentRenderState;
+import com.github.alexthe666.iceandfire.client.render.entity.SeaSerpentRenderState.AnimationKind;
 
-public class SeaSerpentTabulaModelAnimator extends IceAndFireTabulaModelAnimator implements ITabulaModelAnimator<EntitySeaSerpent> {
+public class SeaSerpentTabulaModelAnimator extends IceAndFireTabulaModelAnimator implements ITabulaModelAnimator<SeaSerpentRenderState> {
 
-    public TabulaModel[] swimPose = {EnumSeaSerpentAnimations.SWIM1.seaserpent_model, EnumSeaSerpentAnimations.SWIM3.seaserpent_model, EnumSeaSerpentAnimations.SWIM4.seaserpent_model, EnumSeaSerpentAnimations.SWIM6.seaserpent_model};
+    public final TabulaModel<?>[] swimPose = {EnumSeaSerpentAnimations.SWIM1.seaserpent_model, EnumSeaSerpentAnimations.SWIM3.seaserpent_model, EnumSeaSerpentAnimations.SWIM4.seaserpent_model, EnumSeaSerpentAnimations.SWIM6.seaserpent_model};
 
     public SeaSerpentTabulaModelAnimator() {
         super(EnumSeaSerpentAnimations.T_POSE.seaserpent_model);
     }
 
     @Override
-    public void setRotationAngles(TabulaModel model, EntitySeaSerpent entity, float limbSwing, float limbSwingAmount, float ageInTicks, float rotationYaw, float rotationPitch, float scale) {
+    public void setRotationAngles(TabulaModel<SeaSerpentRenderState> model, SeaSerpentRenderState state) {
         model.resetToDefaultPose();
         model.getCube("BodyUpper").rotationPointY += 9;//model was made too high
-        model.llibAnimator.update(entity);
-        animate(model, entity, limbSwing, limbSwingAmount, ageInTicks, rotationYaw, rotationPitch, scale);
-        int currentIndex = entity.swimCycle / 10;
+        model.llibAnimator.update(state.animation.token(), state.animationTick, state.partialTick);
+        animate(model);
+        int currentIndex = state.swimCycle / 10;
         int prevIndex = currentIndex - 1;
         if (prevIndex < 0) {
             prevIndex = 3;
         }
-        TabulaModel prevPosition = swimPose[prevIndex];
-        TabulaModel currentPosition = swimPose[currentIndex];
-        float partialTicks = Minecraft.getInstance().getFrameTime();
-        float delta = ((entity.swimCycle) / 10.0F) % 1.0F + (partialTicks / 10.0F);
+        TabulaModel<?> prevPosition = swimPose[prevIndex];
+        TabulaModel<?> currentPosition = swimPose[currentIndex];
+        float delta = (state.swimCycle / 10.0F) % 1.0F + (state.partialTick / 10.0F);
         // AdvancedModelBox[] tailParts = {model.getCube("Tail1"), model.getCube("Tail2"), model.getCube("Tail3"), model.getCube("Tail4"), model.getCube("Tail5"), model.getCube("Tail6")};
         // AdvancedModelBox[] neckParts = {model.getCube("Neck1"), model.getCube("Neck2"), model.getCube("Neck3"), model.getCube("Head")};
 
         for (AdvancedModelBox cube : model.getCubes().values()) {
-            if (entity.jumpProgress > 0.0F) {
+            if (state.jumpProgress > 0.0F) {
                 if (!isRotationEqual(cube, EnumSeaSerpentAnimations.JUMPING2.seaserpent_model.getCube(cube.boxName))) {
-                    transitionTo(cube, EnumSeaSerpentAnimations.JUMPING2.seaserpent_model.getCube(cube.boxName), entity.jumpProgress, 5, false);
+                    transitionTo(cube, EnumSeaSerpentAnimations.JUMPING2.seaserpent_model.getCube(cube.boxName), state.jumpProgress, 5, false);
                 }
             }
-            if (entity.wantJumpProgress > 0.0F) {
+            if (state.wantJumpProgress > 0.0F) {
                 if (!isRotationEqual(cube, EnumSeaSerpentAnimations.JUMPING1.seaserpent_model.getCube(cube.boxName))) {
-                    transitionTo(cube, EnumSeaSerpentAnimations.JUMPING1.seaserpent_model.getCube(cube.boxName), entity.wantJumpProgress, 10, false);
+                    transitionTo(cube, EnumSeaSerpentAnimations.JUMPING1.seaserpent_model.getCube(cube.boxName), state.wantJumpProgress, 10, false);
                 }
             }
             AdvancedModelBox prevPositionCube = prevPosition.getCube(cube.boxName);
@@ -52,35 +51,35 @@ public class SeaSerpentTabulaModelAnimator extends IceAndFireTabulaModelAnimator
             float x = currPositionCube.rotateAngleX;
             float y = currPositionCube.rotateAngleY;
             float z = currPositionCube.rotateAngleZ;
-            this.addToRotateAngle(cube, limbSwingAmount, prevX + delta * distance(prevX, x), prevY + delta * distance(prevY, y), prevZ + delta * distance(prevZ, z));
+            this.addToRotateAngle(cube, state.walkAnimationSpeed, prevX + delta * distance(prevX, x), prevY + delta * distance(prevY, y), prevZ + delta * distance(prevZ, z));
 
         }
-        if (entity.breathProgress > 0.0F) {
-            progressRotation(model.getCube("Head"), entity.breathProgress, (float) Math.toRadians(-15F), 0, 0);
-            progressRotation(model.getCube("HeadFront"), entity.breathProgress, (float) Math.toRadians(-20F), 0, 0);
-            progressRotation(model.getCube("Jaw"), entity.breathProgress, (float) Math.toRadians(60F), 0, 0);
+        if (state.breathProgress > 0.0F) {
+            progressRotation(model.getCube("Head"), state.breathProgress, (float) Math.toRadians(-15F), 0, 0);
+            progressRotation(model.getCube("HeadFront"), state.breathProgress, (float) Math.toRadians(-20F), 0, 0);
+            progressRotation(model.getCube("Jaw"), state.breathProgress, (float) Math.toRadians(60F), 0, 0);
         }
-        if (entity.jumpRot > 0.0F) {
-            float jumpRot = entity.prevJumpRot + (entity.jumpRot - entity.prevJumpRot) * partialTicks;
-            float turn = (float) entity.getDeltaMovement().y * -4F;
+        if (state.hasJumpRotation) {
+            float jumpRot = state.jumpRotation;
+            float turn = state.verticalVelocity * -4F;
             model.getCube("BodyUpper").rotateAngleX += (float) Math.toRadians(22.5F * turn) * jumpRot;
             model.getCube("Tail1").rotateAngleX -= (float) Math.toRadians(turn) * jumpRot;
             model.getCube("Tail2").rotateAngleX -= (float) Math.toRadians(turn) * jumpRot;
             model.getCube("Tail3").rotateAngleX -= (float) Math.toRadians(turn) * jumpRot;
             model.getCube("Tail4").rotateAngleX -= (float) Math.toRadians(turn) * jumpRot;
         }
-        float prevRenderOffset = entity.yBodyRotO + (entity.yBodyRot - entity.yBodyRotO) * partialTicks;
+        float prevRenderOffset = state.tailBodyYaw;
 
-        model.getCube("Tail1").rotateAngleY += (entity.getPieceYaw(1, partialTicks) - prevRenderOffset) * ((float) Math.PI / 180F);
-        model.getCube("Tail2").rotateAngleY += (entity.getPieceYaw(2, partialTicks) - prevRenderOffset) * ((float) Math.PI / 180F);
-        model.getCube("Tail3").rotateAngleY += (entity.getPieceYaw(3, partialTicks) - prevRenderOffset) * ((float) Math.PI / 180F);
-        model.getCube("Tail4").rotateAngleY += (entity.getPieceYaw(4, partialTicks) - prevRenderOffset) * ((float) Math.PI / 180F);
-        model.getCube("BodyUpper").rotateAngleX -= rotationPitch * ((float) Math.PI / 180F);
-        if (!entity.isJumpingOutOfWater() || entity.isInWater()) {
-            model.getCube("Tail1").rotateAngleX -= (entity.getPiecePitch(1, partialTicks) - 0) * ((float) Math.PI / 180F);
-            model.getCube("Tail2").rotateAngleX -= (entity.getPiecePitch(2, partialTicks) - 0) * ((float) Math.PI / 180F);
-            model.getCube("Tail3").rotateAngleX -= (entity.getPiecePitch(3, partialTicks) - 0) * ((float) Math.PI / 180F);
-            model.getCube("Tail4").rotateAngleX -= (entity.getPiecePitch(4, partialTicks) - 0) * ((float) Math.PI / 180F);
+        model.getCube("Tail1").rotateAngleY += (state.pieceYaw[0] - prevRenderOffset) * ((float) Math.PI / 180F);
+        model.getCube("Tail2").rotateAngleY += (state.pieceYaw[1] - prevRenderOffset) * ((float) Math.PI / 180F);
+        model.getCube("Tail3").rotateAngleY += (state.pieceYaw[2] - prevRenderOffset) * ((float) Math.PI / 180F);
+        model.getCube("Tail4").rotateAngleY += (state.pieceYaw[3] - prevRenderOffset) * ((float) Math.PI / 180F);
+        model.getCube("BodyUpper").rotateAngleX -= state.xRot * ((float) Math.PI / 180F);
+        if (!state.jumpingOutOfWater || state.inWater) {
+            model.getCube("Tail1").rotateAngleX -= (state.piecePitch[0] - 0) * ((float) Math.PI / 180F);
+            model.getCube("Tail2").rotateAngleX -= (state.piecePitch[1] - 0) * ((float) Math.PI / 180F);
+            model.getCube("Tail3").rotateAngleX -= (state.piecePitch[2] - 0) * ((float) Math.PI / 180F);
+            model.getCube("Tail4").rotateAngleX -= (state.piecePitch[3] - 0) * ((float) Math.PI / 180F);
         }
     }
 
@@ -90,15 +89,15 @@ public class SeaSerpentTabulaModelAnimator extends IceAndFireTabulaModelAnimator
         model.rotateAngleZ += progress * (rotZ - model.defaultRotationZ) / 20.0F;
     }
 
-    private void animate(TabulaModel model, EntitySeaSerpent entity, float limbSwing, float limbSwingAmount, float ageInTicks, float rotationYaw, float rotationPitch, float scale) {
-        if (model.llibAnimator.setAnimation(EntitySeaSerpent.ANIMATION_SPEAK)) {
+    private void animate(TabulaModel<SeaSerpentRenderState> model) {
+        if (model.llibAnimator.setAnimation(AnimationKind.SPEAK.token())) {
             model.llibAnimator.startKeyframe(5);
             this.rotate(model.llibAnimator, model.getCube("Jaw"), 25, 0, 0);
             model.llibAnimator.endKeyframe();
             model.llibAnimator.setStaticKeyframe(5);
             model.llibAnimator.resetKeyframe(5);
         }
-        if (model.llibAnimator.setAnimation(EntitySeaSerpent.ANIMATION_BITE)) {
+        if (model.llibAnimator.setAnimation(AnimationKind.BITE.token())) {
             model.llibAnimator.startKeyframe(5);
             moveToPose(model, EnumSeaSerpentAnimations.BITE1.seaserpent_model);
             model.llibAnimator.endKeyframe();
@@ -108,7 +107,7 @@ public class SeaSerpentTabulaModelAnimator extends IceAndFireTabulaModelAnimator
             model.llibAnimator.setStaticKeyframe(2);
             model.llibAnimator.resetKeyframe(3);
         }
-        if (model.llibAnimator.setAnimation(EntitySeaSerpent.ANIMATION_ROAR)) {
+        if (model.llibAnimator.setAnimation(AnimationKind.ROAR.token())) {
             model.llibAnimator.startKeyframe(10);
             moveToPose(model, EnumSeaSerpentAnimations.ROAR1.seaserpent_model);
             model.llibAnimator.endKeyframe();

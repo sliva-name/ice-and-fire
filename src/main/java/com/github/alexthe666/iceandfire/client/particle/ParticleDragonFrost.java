@@ -3,23 +3,25 @@ package com.github.alexthe666.iceandfire.client.particle;
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
-import com.mojang.math.Quaternion;
-import com.mojang.math.Vector3f;
+import org.joml.Quaternionf;
+import com.mojang.math.Axis;
+import org.joml.Vector3f;
 import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.ParticleRenderType;
-import net.minecraft.client.particle.TextureSheetParticle;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.particle.SingleQuadParticle;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 
-public class ParticleDragonFrost extends TextureSheetParticle {
+public class ParticleDragonFrost extends SingleQuadParticle {
 
-    private static final ResourceLocation SNOWFLAKE = new ResourceLocation("iceandfire:textures/particles/snowflake_0.png");
-    private static final ResourceLocation SNOWFLAKE_BIG = new ResourceLocation("iceandfire:textures/particles/snowflake_1.png");
+    private static final Identifier SNOWFLAKE = Identifier.parse("iceandfire:textures/particles/snowflake_0.png");
+    private static final Identifier SNOWFLAKE_BIG = Identifier.parse("iceandfire:textures/particles/snowflake_1.png");
     private final float dragonSize;
     private final double initialX;
     private final double initialY;
@@ -35,7 +37,7 @@ public class ParticleDragonFrost extends TextureSheetParticle {
 
 
     public ParticleDragonFrost(ClientLevel worldIn, double xCoordIn, double yCoordIn, double zCoordIn, double xSpeedIn, double ySpeedIn, double zSpeedIn, float dragonSize) {
-        super(worldIn, xCoordIn, yCoordIn, zCoordIn, xSpeedIn, ySpeedIn, zSpeedIn);
+        super(worldIn, xCoordIn, yCoordIn, zCoordIn, xSpeedIn, ySpeedIn, zSpeedIn, IafParticleSprites.missing());
         this.lifetime = 30;
         this.initialX = xCoordIn;
         this.initialY = yCoordIn;
@@ -62,73 +64,12 @@ public class ParticleDragonFrost extends TextureSheetParticle {
     }
 
 
-    @Override
-    public void render(@NotNull VertexConsumer buffer, Camera renderInfo, float partialTicks) {
-        Vec3 inerp = renderInfo.getPosition();
-        if (age > this.getLifetime()) {
-            this.remove();
-        }
-
-        Vec3 Vector3d = renderInfo.getPosition();
-        float f = (float) (Mth.lerp(partialTicks, this.xo, this.x) - Vector3d.x());
-        float f1 = (float) (Mth.lerp(partialTicks, this.yo, this.y) - Vector3d.y());
-        float f2 = (float) (Mth.lerp(partialTicks, this.zo, this.z) - Vector3d.z());
-        Quaternion quaternion;
-        if (this.roll == 0.0F) {
-            quaternion = renderInfo.rotation();
-        } else {
-            quaternion = new Quaternion(renderInfo.rotation());
-            float f3 = Mth.lerp(partialTicks, this.oRoll, this.roll);
-            quaternion.mul(Vector3f.ZP.rotation(f3));
-        }
-
-        Vector3f vector3f1 = new Vector3f(-1.0F, -1.0F, 0.0F);
-        vector3f1.transform(quaternion);
-        Vector3f[] avector3f = new Vector3f[]{new Vector3f(-1.0F, -1.0F, 0.0F), new Vector3f(-1.0F, 1.0F, 0.0F), new Vector3f(1.0F, 1.0F, 0.0F), new Vector3f(1.0F, -1.0F, 0.0F)};
-        float f4 = this.getQuadSize(partialTicks);
-
-        for (int i = 0; i < 4; ++i) {
-            Vector3f vector3f = avector3f[i];
-            vector3f.transform(quaternion);
-            vector3f.mul(f4);
-            vector3f.add(f, f1, f2);
-        }
-        float f7 = 0;
-        float f8 = 1;
-        float f5 = 0;
-        float f6 = 1;
-        RenderSystem.setShaderTexture(0, big ? SNOWFLAKE_BIG : SNOWFLAKE);
-        int j = this.getLightColor(partialTicks);
-        Tesselator tessellator = Tesselator.getInstance();
-        BufferBuilder vertexbuffer = tessellator.getBuilder();
-        vertexbuffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.PARTICLE);
-        vertexbuffer.vertex(avector3f[0].x(), avector3f[0].y(), avector3f[0].z()).uv(f8, f6).color(this.rCol, this.gCol, this.bCol, this.alpha).uv2(j).endVertex();
-        vertexbuffer.vertex(avector3f[1].x(), avector3f[1].y(), avector3f[1].z()).uv(f8, f5).color(this.rCol, this.gCol, this.bCol, this.alpha).uv2(j).endVertex();
-        vertexbuffer.vertex(avector3f[2].x(), avector3f[2].y(), avector3f[2].z()).uv(f7, f5).color(this.rCol, this.gCol, this.bCol, this.alpha).uv2(j).endVertex();
-        vertexbuffer.vertex(avector3f[3].x(), avector3f[3].y(), avector3f[3].z()).uv(f7, f6).color(this.rCol, this.gCol, this.bCol, this.alpha).uv2(j).endVertex();
-        Tesselator.getInstance().end();
-    }
 
     @Override
     public int getLifetime() {
         return dragon == null ? 10 : 30;
     }
 
-    @Override
-    public int getLightColor(float partialTick) {
-        float f = 0;
-        f = Mth.clamp(f, 0.0F, 1.0F);
-        int i = super.getLightColor(partialTick);
-        int j = i & 255;
-        int k = i >> 16 & 255;
-        j = j + (int) (f * 15.0F * 16.0F);
-
-        if (j > 240) {
-            j = 240;
-        }
-
-        return j | k << 16;
-    }
 
     @Override
     public void tick() {
@@ -156,8 +97,33 @@ public class ParticleDragonFrost extends TextureSheetParticle {
     }
 
     @Override
-    public @NotNull ParticleRenderType getRenderType() {
-        return ParticleRenderType.CUSTOM;
+    public @NotNull ParticleRenderType getGroup() {
+        return ParticleRenderType.SINGLE_QUADS;
+    }
+
+    @Override
+    protected SingleQuadParticle.Layer getLayer() {
+        return IafParticleSprites.layer(SNOWFLAKE);
+    }
+
+    @Override
+    protected float getU0() {
+        return 0.0F;
+    }
+
+    @Override
+    protected float getU1() {
+        return 1.0F;
+    }
+
+    @Override
+    protected float getV0() {
+        return 0.0F;
+    }
+
+    @Override
+    protected float getV1() {
+        return 1.0F;
     }
 
 }

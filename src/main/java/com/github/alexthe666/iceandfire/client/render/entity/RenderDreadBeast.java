@@ -3,31 +3,44 @@ package com.github.alexthe666.iceandfire.client.render.entity;
 import com.github.alexthe666.iceandfire.client.model.ModelDreadBeast;
 import com.github.alexthe666.iceandfire.client.render.entity.layer.LayerGenericGlowing;
 import com.github.alexthe666.iceandfire.entity.EntityDreadBeast;
-import com.mojang.blaze3d.vertex.PoseStack;
+import com.github.alexthe666.iceandfire.client.render.entity.DreadBeastRenderState.AnimationKind;
+import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.NotNull;
 
-public class RenderDreadBeast extends MobRenderer<EntityDreadBeast, ModelDreadBeast> {
+public class RenderDreadBeast extends MobRenderer<EntityDreadBeast, DreadBeastRenderState, EntityModel<DreadBeastRenderState>> {
 
-    public static final ResourceLocation TEXTURE_EYES = new ResourceLocation("iceandfire:textures/models/dread/dread_beast_eyes.png");
-    public static final ResourceLocation TEXTURE_0 = new ResourceLocation("iceandfire:textures/models/dread/dread_beast_1.png");
-    public static final ResourceLocation TEXTURE_1 = new ResourceLocation("iceandfire:textures/models/dread/dread_beast_2.png");
+    public static final Identifier TEXTURE_EYES = Identifier.fromNamespaceAndPath("iceandfire", "textures/models/dread/dread_beast_eyes.png");
+    public static final Identifier TEXTURE_0 = Identifier.fromNamespaceAndPath("iceandfire", "textures/models/dread/dread_beast_1.png");
+    public static final Identifier TEXTURE_1 = Identifier.fromNamespaceAndPath("iceandfire", "textures/models/dread/dread_beast_2.png");
 
     public RenderDreadBeast(EntityRendererProvider.Context context) {
-        super(context, new ModelDreadBeast(), 0.5F);
-        this.addLayer(new LayerGenericGlowing(this, TEXTURE_EYES));
+        super(context, new ModelDreadBeast().asEntityModel(), 0.5F);
+        this.addLayer(new LayerGenericGlowing<>(this, TEXTURE_EYES));
     }
 
     @Override
-    protected void scale(EntityDreadBeast entity, PoseStack matrixStackIn, float partialTickTime) {
-        matrixStackIn.scale(entity.getSize(), entity.getSize(), entity.getSize());
+    public DreadBeastRenderState createRenderState() {
+        return new DreadBeastRenderState();
     }
 
     @Override
-    public @NotNull ResourceLocation getTextureLocation(EntityDreadBeast beast) {
-        return beast.getVariant() == 1 ? TEXTURE_1 : TEXTURE_0;
+    public void extractRenderState(EntityDreadBeast entity, DreadBeastRenderState state, float partialTick) {
+        // The native renderer applies entity.getScale() once through the living render state.
+        super.extractRenderState(entity, state, partialTick);
+        state.variant = entity.getVariant();
+        var animation = entity.getAnimation();
+        state.animation = animation == EntityDreadBeast.ANIMATION_BITE ? AnimationKind.BITE
+            : animation == EntityDreadBeast.ANIMATION_SPAWN ? AnimationKind.SPAWN : AnimationKind.NONE;
+        state.animationTick = entity.getAnimationTick();
+        state.partialTick = partialTick;
+    }
+
+    @Override
+    public @NotNull Identifier getTextureLocation(DreadBeastRenderState state) {
+        return state.variant == 1 ? TEXTURE_1 : TEXTURE_0;
 
     }
 

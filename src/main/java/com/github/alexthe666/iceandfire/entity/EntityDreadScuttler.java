@@ -1,5 +1,9 @@
 package com.github.alexthe666.iceandfire.entity;
 
+import net.minecraft.server.level.ServerLevel;
+
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
 import com.github.alexthe666.citadel.animation.Animation;
 import com.github.alexthe666.citadel.animation.AnimationHandler;
 import com.github.alexthe666.citadel.animation.IAnimatedEntity;
@@ -64,18 +68,8 @@ public class EntityDreadScuttler extends EntityDreadMob implements IAnimatedEnti
         this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(7, new RandomLookAroundGoal(this));
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this, IDreadMob.class));
-        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false, new Predicate<LivingEntity>() {
-            @Override
-            public boolean apply(@Nullable LivingEntity entity) {
-                return DragonUtils.canHostilesTarget(entity);
-            }
-        }));
-        this.targetSelector.addGoal(3, new DreadAITargetNonDread(this, LivingEntity.class, false, new Predicate<LivingEntity>() {
-            @Override
-            public boolean apply(LivingEntity entity) {
-                return entity instanceof LivingEntity && DragonUtils.canHostilesTarget(entity);
-            }
-        }));
+        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false, (entity, serverLevel) -> DragonUtils.canHostilesTarget(entity)));
+        this.targetSelector.addGoal(3, new DreadAITargetNonDread(this, LivingEntity.class, false, (entity, serverLevel) -> DragonUtils.canHostilesTarget(entity)));
     }
 
     public static AttributeSupplier.Builder bakeAttributes() {
@@ -94,10 +88,10 @@ public class EntityDreadScuttler extends EntityDreadMob implements IAnimatedEnti
 
 
     @Override
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(CLIMBING, Byte.valueOf((byte) 0));
-        this.entityData.define(SCALE, Float.valueOf(1F));
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(CLIMBING, Byte.valueOf((byte) 0));
+        builder.define(SCALE, Float.valueOf(1F));
     }
 
     public float getSize() {
@@ -109,19 +103,19 @@ public class EntityDreadScuttler extends EntityDreadMob implements IAnimatedEnti
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag compound) {
+    public void addAdditionalSaveData(ValueOutput compound) {
         super.addAdditionalSaveData(compound);
         compound.putFloat("Scale", this.getSize());
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag compound) {
+    public void readAdditionalSaveData(ValueInput compound) {
         super.readAdditionalSaveData(compound);
-        this.setSize(compound.getFloat("Scale"));
+        this.setSize(compound.getFloatOr("Scale", 0.0F));
     }
 
     @Override
-    public boolean doHurtTarget(@NotNull Entity entityIn) {
+    public boolean doHurtTarget(@NotNull ServerLevel level, @NotNull Entity entityIn) {
         if (this.getAnimation() == NO_ANIMATION) {
             this.setAnimation(ANIMATION_BITE);
         }
@@ -136,14 +130,14 @@ public class EntityDreadScuttler extends EntityDreadMob implements IAnimatedEnti
             firstWidth = INITIAL_WIDTH * getSize();
             firstHeight = INITIAL_HEIGHT * getSize();
         }
-        if (!this.level.isClientSide) {
+        if (!this.level().isClientSide()) {
             this.setBesideClimbableBlock(this.horizontalCollision);
         }
         if (this.getAnimation() == ANIMATION_SPAWN && this.getAnimationTick() < 30) {
-            BlockState belowBlock = level.getBlockState(this.blockPosition().below());
+            BlockState belowBlock = this.level().getBlockState(this.blockPosition().below());
             if (belowBlock.getBlock() != Blocks.AIR) {
                 for (int i = 0; i < 5; i++) {
-                    this.level.addParticle(new BlockParticleOption(ParticleTypes.BLOCK, belowBlock), this.getX() + (double) (this.random.nextFloat() * this.getBbWidth() * 2.0F) - (double) this.getBbWidth(), this.getBoundingBox().minY, this.getZ() + (double) (this.random.nextFloat() * this.getBbWidth() * 2.0F) - (double) this.getBbWidth(), this.random.nextGaussian() * 0.02D, this.random.nextGaussian() * 0.02D, this.random.nextGaussian() * 0.02D);
+                    this.level().addParticle(new BlockParticleOption(ParticleTypes.BLOCK, belowBlock), this.getX() + (double) (this.random.nextFloat() * this.getBbWidth() * 2.0F) - (double) this.getBbWidth(), this.getBoundingBox().minY, this.getZ() + (double) (this.random.nextFloat() * this.getBbWidth() * 2.0F) - (double) this.getBbWidth(), this.random.nextGaussian() * 0.02D, this.random.nextGaussian() * 0.02D, this.random.nextGaussian() * 0.02D);
                 }
             }
             this.setDeltaMovement(0, this.getDeltaMovement().y, 0);
@@ -154,7 +148,7 @@ public class EntityDreadScuttler extends EntityDreadMob implements IAnimatedEnti
             }
             this.lookAt(attackTarget, 360, 80);
             if (this.getAnimation() == ANIMATION_BITE && this.getAnimationTick() == 6) {
-                attackTarget.hurt(DamageSource.mobAttack(this), (float) this.getAttribute(Attributes.ATTACK_DAMAGE).getValue());
+                attackTarget.hurt(this.damageSources().mobAttack(this), (float) this.getAttribute(Attributes.ATTACK_DAMAGE).getValue());
                 attackTarget.knockback(0.25F, this.getX() - attackTarget.getX(), this.getZ() - attackTarget.getZ());
             }
         }
@@ -169,12 +163,6 @@ public class EntityDreadScuttler extends EntityDreadMob implements IAnimatedEnti
 
     public void setInWeb() {
     }
-
-    @Override
-    public MobType getMobType() {
-        return MobType.ARTHROPOD;
-    }
-
     @Override
     public boolean canBeAffected(MobEffectInstance potioneffectIn) {
         return potioneffectIn.getEffect() != MobEffects.POISON && super.canBeAffected(potioneffectIn);
@@ -198,8 +186,8 @@ public class EntityDreadScuttler extends EntityDreadMob implements IAnimatedEnti
 
     @Override
     @Nullable
-    public SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor worldIn, @NotNull DifficultyInstance difficultyIn, @NotNull MobSpawnType reason, @Nullable SpawnGroupData spawnDataIn, @Nullable CompoundTag dataTag) {
-        SpawnGroupData data = super.finalizeSpawn(worldIn, difficultyIn, reason, spawnDataIn, dataTag);
+    public SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor worldIn, @NotNull DifficultyInstance difficultyIn, @NotNull EntitySpawnReason reason, @Nullable SpawnGroupData spawnDataIn) {
+        SpawnGroupData data = super.finalizeSpawn(worldIn, difficultyIn, reason, spawnDataIn);
         this.setAnimation(ANIMATION_SPAWN);
         this.setSize(0.5F + random.nextFloat() * 1.15F);
         return data;
@@ -245,8 +233,7 @@ public class EntityDreadScuttler extends EntityDreadMob implements IAnimatedEnti
         return null;
     }
 
-    @Override
-    public boolean isAlliedTo(Entity entityIn) {
+    public boolean iafIsAlliedTo(@NotNull Entity entityIn) {
         return entityIn instanceof IDreadMob || super.isAlliedTo(entityIn);
     }
 
@@ -278,7 +265,7 @@ public class EntityDreadScuttler extends EntityDreadMob implements IAnimatedEnti
     }
 
     @Override
-    public float getScale() {
+    public float getAgeScale() {
         return getSize();
     }
 

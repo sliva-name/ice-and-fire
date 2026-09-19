@@ -65,8 +65,8 @@ public class DragonAITargetItems<T extends ItemEntity> extends TargetGoal {
     }
 
     private boolean updateList() {
-        if (this.mob.level.getGameTime() % 4 == 0) // only update the list every 4 ticks
-            list = this.mob.level.getEntitiesOfClass(ItemEntity.class,
+        if (this.mob.level().getGameTime() % 4 == 0) // only update the list every 4 ticks
+            list = this.mob.level().getEntitiesOfClass(ItemEntity.class,
                     this.getTargetableArea(this.getFollowDistance()), this.targetEntitySelector);
 
         if (list.isEmpty()) {
@@ -98,7 +98,7 @@ public class DragonAITargetItems<T extends ItemEntity> extends TargetGoal {
             (this.mob instanceof EntityDragonBase &&
                 ((EntityDragonBase) this.mob).getHeadPosition().distanceToSqr(this.targetEntity.position()) < this.mob.getBbHeight())) {
 
-            this.mob.playSound(SoundEvents.GENERIC_EAT, 1, 1);
+            this.mob.playSound(SoundEvents.GENERIC_EAT.value(), 1, 1);
             final int hunger = FoodUtils.getFoodPoints(this.targetEntity.getItem(), true, isIce);
             final EntityDragonBase dragon = ((EntityDragonBase) this.mob);
             dragon.setHunger(Math.min(100, ((EntityDragonBase) this.mob).getHunger() + hunger));

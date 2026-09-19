@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "HHH",
+    "HBH",
+    "HHH"
+  ],
+  "key": {
+    "B": "iceandfire:dragonbone",
+    "H": "minecraft:hay_block"
+  },
+  "result": {
+    "count": 8,
+    "id": "iceandfire:nest"
+  }
+}

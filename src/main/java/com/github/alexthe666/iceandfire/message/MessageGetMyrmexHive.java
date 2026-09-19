@@ -6,10 +6,8 @@ import com.github.alexthe666.iceandfire.world.MyrmexWorldData;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
-import java.util.function.Supplier;
 
 public class MessageGetMyrmexHive {
 
@@ -34,19 +32,19 @@ public class MessageGetMyrmexHive {
         public Handler() {
         }
 
-        public static void handle(MessageGetMyrmexHive message, Supplier<NetworkEvent.Context> context) {
-            Player player = context.get().getSender();
+        public static void handle(MessageGetMyrmexHive message, CustomPayloadEvent.Context context) {
+            Player player = context.getSender();
             MyrmexHive serverHive = MyrmexHive.fromNBT(message.hive);
             CompoundTag tag = new CompoundTag();
             serverHive.writeVillageDataToNBT(tag);
             serverHive.readVillageDataFromNBT(tag);
             IceAndFire.PROXY.setReferencedHive(serverHive);
-            context.get().setPacketHandled(true);
-            if(context.get().getDirection().getReceptionSide() == LogicalSide.CLIENT){
+            context.setPacketHandled(true);
+            if(context.isClientSide()){
                 player = IceAndFire.PROXY.getClientSidePlayer();
             }else {
-                if (MyrmexWorldData.get(player.level) != null) {
-                    MyrmexHive realHive = MyrmexWorldData.get(player.level).getHiveFromUUID(serverHive.hiveUUID);
+                if (MyrmexWorldData.get(player.level()) != null) {
+                    MyrmexHive realHive = MyrmexWorldData.get(player.level()).getHiveFromUUID(serverHive.hiveUUID);
                     realHive.readVillageDataFromNBT(serverHive.toNBT());
                 }
             }

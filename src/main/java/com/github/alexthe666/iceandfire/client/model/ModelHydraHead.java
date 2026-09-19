@@ -1,20 +1,19 @@
 package com.github.alexthe666.iceandfire.client.model;
 
-import com.github.alexthe666.citadel.animation.IAnimatedEntity;
+import com.github.alexthe666.citadel.client.model.AdvancedEntityModel;
 import com.github.alexthe666.citadel.client.model.AdvancedModelBox;
 import com.github.alexthe666.citadel.client.model.ModelAnimator;
 import com.github.alexthe666.citadel.client.model.basic.BasicModelPart;
-import com.github.alexthe666.iceandfire.entity.EntityGorgon;
-import com.github.alexthe666.iceandfire.entity.EntityHydra;
+import com.github.alexthe666.iceandfire.client.render.entity.HydraRenderState;
+
 import com.google.common.collect.ImmutableList;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 
-public class ModelHydraHead extends ModelDragonBase<EntityHydra> {
+public class ModelHydraHead extends AdvancedEntityModel<HydraRenderState> implements ICustomStatueModel {
     public AdvancedModelBox Neck1;
     public AdvancedModelBox Neck2;
     public AdvancedModelBox Neck3;
@@ -30,9 +29,12 @@ public class ModelHydraHead extends ModelDragonBase<EntityHydra> {
     public AdvancedModelBox TeethR1;
     public AdvancedModelBox TeethTL1;
     private final ModelAnimator animator;
-    private int headIndex = 0;
+    private final int headIndex;
 
     public ModelHydraHead(int headIndex) {
+        if (headIndex < 0 || headIndex >= HydraRenderState.MAX_HEADS) {
+            throw new IllegalArgumentException("Hydra head index must be between 0 and 8");
+        }
         this.headIndex = headIndex;
         this.texWidth = 256;
         this.texHeight = 128;
@@ -111,61 +113,59 @@ public class ModelHydraHead extends ModelDragonBase<EntityHydra> {
     }
 
 
-    public void animate(IAnimatedEntity entity, float f, float f1, float f2, float f3, float f4, float f5) {
+    public void animate(HydraRenderState state) {
         this.resetToDefaultPose();
-        animator.update(entity);
+        animator.update(state.animation, state.animationTick, state.partialTick);
     }
 
     @Override
-    public void setupAnim(EntityHydra entity, float f, float f1, float f2, float f3, float f4) {
-        animate(entity, f, f1, f2, f3, f4, 1);
+    public void setupAnim(HydraRenderState state) {
+        animate(state);
+        // Visibility is not part of Citadel's default pose; overwrite it even for stone.
+        this.Neck1.showModel = headIndex < state.headCount;
+        this.Neck2.showModel = state.severedHead != headIndex && state.alive;
+        if (state.stone) {
+            return;
+        }
+        float f = state.walkAnimationPos;
+        float f1 = state.walkAnimationSpeed;
+        float f2 = state.ageInTicks;
         float speed_walk = 0.6F;
         float speed_idle = 0.05F;
         float degree_walk = 0.2F;
         float degree_idle = 0.5F;
-        if (EntityGorgon.isStoneMob(entity)) {
-            return;
-        }
-        float partialTicks = Minecraft.getInstance().getFrameTime();
+
         AdvancedModelBox[] ENTIRE_HEAD = new AdvancedModelBox[]{Neck1, Neck2, Neck3, Neck4};
         this.chainFlap(ENTIRE_HEAD, speed_idle, degree_idle * 0.15F, -3 + headIndex % 4, f2, 1);
         this.chainSwing(ENTIRE_HEAD, speed_idle, degree_idle * 0.05F, -3 + headIndex % 3, f2, 1);
         this.chainWave(ENTIRE_HEAD, speed_idle * 1.5F, degree_idle * 0.05F, -2 + headIndex % 3, f2, 1);
-        this.faceTarget(f3, f4, 1, Head1);
+        this.faceTarget(state.yRot, state.xRot, 1, Head1);
         this.walk(neckSpike1, speed_idle * 1.5F, degree_idle * 0.4F, false, 2, -0.1F, f2, 1);
         this.walk(neckSpike2, speed_idle * 1.5F, degree_idle * 0.4F, false, 3, -0.1F, f2, 1);
         this.chainSwing(ENTIRE_HEAD, speed_walk, degree_walk * 0.75F, -3, f, f1);
-        float speakProgress = entity.prevSpeakingProgress[headIndex] + partialTicks * (entity.speakingProgress[headIndex] - entity.prevSpeakingProgress[headIndex]);
-        this.progressRotationInterp(LowerJaw1, Mth.sin((float) (speakProgress * Math.PI)) * 10F, (float) Math.toRadians(25), 0.0F, 0.0F, 10F);
-        float limbSwingProgress = f1;
-        /*
-        this.progressRotationInterp(Neck1, (float)limbSwingProgress, (float) Math.toRadians(5), 0.0F, 0.0F, 1F);
-        this.progressRotationInterp(Neck2, (float)limbSwingProgress, (float) Math.toRadians(-5), 0.0F, 0.0F, 1F);
-        this.progressRotationInterp(Neck3, (float)limbSwingProgress, (float) Math.toRadians(-5), 0.0F, 0.0F, 1F);
-        this.progressRotationInterp(Neck4, (float)limbSwingProgress, (float) Math.toRadians(-5), 0.0F, 0.0F, 1F);
-        this.progressRotationInterp(Head1, (float)limbSwingProgress, (float) Math.toRadians(-5), 0.0F, 0.0F, 1F);*/
-        float strikeProgress = entity.prevStrikeProgress[headIndex] + partialTicks * (entity.strikingProgress[headIndex] - entity.prevStrikeProgress[headIndex]);
-        this.progressRotationInterp(Neck2, strikeProgress, (float) Math.toRadians(5), 0.0F, 0.0F, 10F);
-        this.progressRotationInterp(Neck3, strikeProgress, (float) Math.toRadians(5), 0.0F, 0.0F, 10F);
-        this.progressRotationInterp(Neck4, strikeProgress, (float) Math.toRadians(5), 0.0F, 0.0F, 10F);
-        this.progressRotationInterp(Head1, strikeProgress, (float) Math.toRadians(-15), 0.0F, 0.0F, 10F);
-        this.progressRotationInterp(LowerJaw1, strikeProgress, (float) Math.toRadians(45), 0.0F, 0.0F, 10F);
-        this.progressPositionInterp(TeethTR1, strikeProgress, 0.5F, 0.0F, 0.0F, 10F);
-        float breathProgress = entity.prevBreathProgress[headIndex] + partialTicks * (entity.breathProgress[headIndex] - entity.prevBreathProgress[headIndex]);
-        this.progressRotationInterp(Neck4, breathProgress, (float) Math.toRadians(15), 0.0F, 0.0F, 10F);
-        this.progressRotationInterp(Neck3, breathProgress, (float) Math.toRadians(15), 0.0F, 0.0F, 10F);
-        this.progressPositionInterp(TeethTR1, breathProgress, 0.5F, 0.0F, 0.0F, 10F);
-        this.progressRotationInterp(Head1, breathProgress, (float) Math.toRadians(15), 0.0F, 0.0F, 10F);
-        this.progressRotationInterp(UpperJaw1, breathProgress, (float) Math.toRadians(-10), 0.0F, 0.0F, 10F);
-        this.progressRotationInterp(LowerJaw1, breathProgress, (float) Math.toRadians(50), 0.0F, 0.0F, 10F);
-
-
-        this.Neck2.showModel = entity.getSeveredHead() != headIndex && entity.isAlive();
+        float speakProgress = state.speakingProgress[headIndex];
+        this.progressRotation(LowerJaw1, Mth.sin((float) (speakProgress * Math.PI)) * 10F, (float) Math.toRadians(25), 0.0F, 0.0F, 10F);
+        float strikeProgress = state.strikingProgress[headIndex];
+        this.progressRotation(Neck2, strikeProgress, (float) Math.toRadians(5), 0.0F, 0.0F, 10F);
+        this.progressRotation(Neck3, strikeProgress, (float) Math.toRadians(5), 0.0F, 0.0F, 10F);
+        this.progressRotation(Neck4, strikeProgress, (float) Math.toRadians(5), 0.0F, 0.0F, 10F);
+        this.progressRotation(Head1, strikeProgress, (float) Math.toRadians(-15), 0.0F, 0.0F, 10F);
+        this.progressRotation(LowerJaw1, strikeProgress, (float) Math.toRadians(45), 0.0F, 0.0F, 10F);
+        // Legacy progressPositionInterp adds an offset, not an absolute default-relative target.
+        this.progressPositionPrev(TeethTR1, strikeProgress, 0.5F, 0.0F, 0.0F, 10F);
+        float breathProgress = state.breathProgress[headIndex];
+        this.progressRotation(Neck4, breathProgress, (float) Math.toRadians(15), 0.0F, 0.0F, 10F);
+        this.progressRotation(Neck3, breathProgress, (float) Math.toRadians(15), 0.0F, 0.0F, 10F);
+        this.progressPositionPrev(TeethTR1, breathProgress, 0.5F, 0.0F, 0.0F, 10F);
+        this.progressRotation(Head1, breathProgress, (float) Math.toRadians(15), 0.0F, 0.0F, 10F);
+        this.progressRotation(UpperJaw1, breathProgress, (float) Math.toRadians(-10), 0.0F, 0.0F, 10F);
+        this.progressRotation(LowerJaw1, breathProgress, (float) Math.toRadians(50), 0.0F, 0.0F, 10F);
     }
 
     @Override
     public void renderStatue(PoseStack matrixStackIn, VertexConsumer bufferIn, int packedLightIn, Entity living) {
-        this.renderToBuffer(matrixStackIn, bufferIn, packedLightIn, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
+        // The statue caller prepares the pose/visibility before drawing, as in the legacy model.
+        this.renderToBuffer(matrixStackIn, bufferIn, packedLightIn, OverlayTexture.NO_OVERLAY, -1);
     }
 
 

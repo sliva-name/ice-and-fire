@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "DD",
+    "DD"
+  ],
+  "key": {
+    "D": "iceandfire:dread_stone"
+  },
+  "result": {
+    "count": 4,
+    "id": "iceandfire:dread_stone_bricks"
+  }
+}

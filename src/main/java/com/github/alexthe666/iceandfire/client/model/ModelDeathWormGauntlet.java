@@ -8,11 +8,12 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 
-public class ModelDeathWormGauntlet extends ModelDragonBase {
+public class ModelDeathWormGauntlet extends ModelDragonBase<EntityRenderState> {
     public AdvancedModelBox Head;
     public AdvancedModelBox JawExtender;
     public AdvancedModelBox HeadInner;
@@ -91,7 +92,7 @@ public class ModelDeathWormGauntlet extends ModelDragonBase {
     }
 
     @Override
-    public void setupAnim(Entity entityIn, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+    public void setupAnim(EntityRenderState state) {
 
     }
 
@@ -107,8 +108,8 @@ public class ModelDeathWormGauntlet extends ModelDragonBase {
 
     public void animate(ItemStack stack, float partialTick) {
         this.resetToDefaultPose();
-        if (stack.getTag() != null) {
-            Entity holder = Minecraft.getInstance().level.getEntity(stack.getTag().getInt("HolderID"));
+        if (com.github.alexthe666.iceandfire.item.IafItemData.has(stack)) {
+            Entity holder = Minecraft.getInstance().level.getEntity(com.github.alexthe666.iceandfire.item.IafItemData.copy(stack).getIntOr("HolderID", 0));
             if (!(holder instanceof LivingEntity))
                 return;
             float lungeTicks = MiscProperties.getLungeTicks((LivingEntity) holder) + partialTick;

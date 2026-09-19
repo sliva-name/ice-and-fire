@@ -6,6 +6,6 @@ import net.minecraft.world.item.Item;
 public class ItemDreadQueenStaff extends Item {
 
     public ItemDreadQueenStaff() {
-        super(new Item.Properties().tab(IceAndFire.TAB_ITEMS).stacksTo(1));
+        super(IafItemRegistry.defaultBuilder().stacksTo(1));
     }
 }

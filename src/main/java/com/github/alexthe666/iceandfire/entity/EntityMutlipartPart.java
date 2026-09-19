@@ -1,9 +1,14 @@
 package com.github.alexthe666.iceandfire.entity;
 
+import net.minecraft.world.damagesource.DamageTypes;
+
+import net.minecraft.tags.DamageTypeTags;
+
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
 import com.github.alexthe666.iceandfire.IceAndFire;
 import com.github.alexthe666.iceandfire.message.MessageMultipartInteract;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -17,7 +22,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.network.NetworkHooks;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
@@ -27,7 +32,7 @@ import java.util.UUID;
 
 public abstract class EntityMutlipartPart extends Entity {
 
-    private static final EntityDataAccessor<Optional<UUID>> PARENT_UUID = SynchedEntityData.defineId(EntityMutlipartPart.class, EntityDataSerializers.OPTIONAL_UUID);
+    private static final EntityDataAccessor<String> PARENT_UUID = SynchedEntityData.defineId(EntityMutlipartPart.class, EntityDataSerializers.STRING);
     private static final EntityDataAccessor<Float> SCALE_WIDTH = SynchedEntityData.defineId(EntityMutlipartPart.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> SCALE_HEIGHT = SynchedEntityData.defineId(EntityMutlipartPart.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> PART_YAW = SynchedEntityData.defineId(EntityMutlipartPart.class, EntityDataSerializers.FLOAT);
@@ -43,12 +48,12 @@ public abstract class EntityMutlipartPart extends Entity {
     }
 
     @Override
-    protected void readAdditionalSaveData(@NotNull CompoundTag compound) {
+    protected void readAdditionalSaveData(@NotNull ValueInput compound) {
 
     }
 
     @Override
-    protected void addAdditionalSaveData(@NotNull CompoundTag compound) {
+    protected void addAdditionalSaveData(@NotNull ValueOutput compound) {
 
     }
 
@@ -59,7 +64,7 @@ public abstract class EntityMutlipartPart extends Entity {
 
     public EntityMutlipartPart(EntityType<?> t, Entity parent, float radius, float angleYaw, float offsetY, float sizeX,
         float sizeY, float damageMultiplier) {
-        super(t, parent.level);
+        super(t, parent.level());
         this.setParent(parent);
         this.setScaleX(sizeX);
         this.setScaleY(sizeY);
@@ -79,26 +84,26 @@ public abstract class EntityMutlipartPart extends Entity {
             .add(Attributes.MOVEMENT_SPEED, 0.1D);
     }
 
-    @Override
-    public @NotNull EntityDimensions getDimensions(@NotNull Pose poseIn) {
-        return new EntityDimensions(getScaleX(), getScaleY(), false);
+    public EntityDimensions getDimensions(@NotNull Pose poseIn) {
+        return EntityDimensions.scalable(getScaleX(), getScaleY());
     }
 
     @Override
-    protected void defineSynchedData() {
-        this.entityData.define(PARENT_UUID, Optional.empty());
-        this.entityData.define(SCALE_WIDTH, 0.5F);
-        this.entityData.define(SCALE_HEIGHT, 0.5F);
-        this.entityData.define(PART_YAW, 0F);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        builder.define(PARENT_UUID, "");
+        builder.define(SCALE_WIDTH, 0.5F);
+        builder.define(SCALE_HEIGHT, 0.5F);
+        builder.define(PART_YAW, 0F);
     }
 
     @Nullable
     public UUID getParentId() {
-        return this.entityData.get(PARENT_UUID).orElse(null);
+        String id = this.entityData.get(PARENT_UUID);
+        return id == null || id.isEmpty() ? null : UUID.fromString(id);
     }
 
     public void setParentId(@Nullable UUID uniqueId) {
-        this.entityData.set(PARENT_UUID, Optional.ofNullable(uniqueId));
+        this.entityData.set(PARENT_UUID, uniqueId == null ? "" : uniqueId.toString());
     }
 
     private float getScaleX() {
@@ -131,7 +136,7 @@ public abstract class EntityMutlipartPart extends Entity {
         if (this.tickCount > 10) {
             Entity parent = getParent();
             refreshDimensions();
-            if (parent != null && !level.isClientSide) {
+            if (parent != null && !this.level().isClientSide()) {
                 float renderYawOffset = parent.getYRot();
                 if (parent instanceof LivingEntity) {
                     renderYawOffset = ((LivingEntity) parent).yBodyRot;
@@ -146,20 +151,20 @@ public abstract class EntityMutlipartPart extends Entity {
                     this.markHurt();
                     this.setYRot(renderYawOffset);
                     this.setPartYaw(getYRot());
-                    if (!this.level.isClientSide) {
+                    if (!this.level().isClientSide()) {
                         this.collideWithNearbyEntities();
                     }
                 } else {
                     this.setPos(parent.getX() + this.radius * Mth.cos((float) (renderYawOffset * (Math.PI / 180.0F) + this.angleYaw)), parent.getY() + this.offsetY, parent.getZ() + this.radius * Mth.sin((float) (renderYawOffset * (Math.PI / 180.0F) + this.angleYaw)));
                     this.markHurt();
                 }
-                if (!this.level.isClientSide) {
+                if (!this.level().isClientSide()) {
                     this.collideWithNearbyEntities();
                 }
-                if (parent.isRemoved() && !level.isClientSide) {
+                if (parent.isRemoved() && !this.level().isClientSide()) {
                     this.remove(RemovalReason.DISCARDED);
                 }
-            } else if (tickCount > 20 && !level.isClientSide) {
+            } else if (tickCount > 20 && !this.level().isClientSide()) {
                 remove(RemovalReason.DISCARDED);
             }
         }
@@ -198,8 +203,8 @@ public abstract class EntityMutlipartPart extends Entity {
 
     public Entity getParent() {
         UUID id = getParentId();
-        if (id != null && !level.isClientSide) {
-            return ((ServerLevel) level).getEntity(id);
+        if (id != null && !this.level().isClientSide()) {
+            return ((ServerLevel) level()).getEntity(id);
         }
         return null;
     }
@@ -217,18 +222,12 @@ public abstract class EntityMutlipartPart extends Entity {
     public boolean isPickable() {
         return true;
     }
-
-    @Override
-    public @NotNull Packet<?> getAddEntityPacket() {
-        return NetworkHooks.getEntitySpawningPacket(this);
-    }
-
     public boolean canBreatheUnderwater() {
         return true;
     }
 
     public void collideWithNearbyEntities() {
-        List<Entity> entities = this.level.getEntities(this, this.getBoundingBox().expandTowards(0.20000000298023224D, 0.0D, 0.20000000298023224D));
+        List<Entity> entities = this.level().getEntities(this, this.getBoundingBox().expandTowards(0.20000000298023224D, 0.0D, 0.20000000298023224D));
         Entity parent = this.getParent();
         if (parent != null) {
             entities.stream().filter(entity -> entity != parent && !sharesRider(parent, entity) && !(entity instanceof EntityMutlipartPart) && entity.isPushable()).forEach(entity -> entity.push(parent));
@@ -251,26 +250,29 @@ public abstract class EntityMutlipartPart extends Entity {
     }
 
     @Override
-    public @NotNull InteractionResult interact(@NotNull Player player, @NotNull InteractionHand hand) {
+    public @NotNull InteractionResult interact(@NotNull Player player, @NotNull InteractionHand hand, @NotNull Vec3 pos) {
         Entity parent = getParent();
-        if (level.isClientSide && parent != null) {
-            IceAndFire.NETWORK_WRAPPER.sendToServer(new MessageMultipartInteract(parent.getId(), 0));
+        if (this.level().isClientSide() && parent != null) {
+            IceAndFire.sendMSGToServer(new MessageMultipartInteract(parent.getId(), 0));
         }
-        return parent != null ? parent.interact(player, hand) : InteractionResult.PASS;
+        return parent != null ? parent.interact(player, hand, pos) : InteractionResult.PASS;
     }
 
     @Override
-    public boolean hurt(@NotNull DamageSource source, float damage) {
+    public boolean hurtServer(@NotNull ServerLevel level, @NotNull DamageSource source, float damage) {
         Entity parent = getParent();
-        if (level.isClientSide && source.getEntity() instanceof Player && parent != null) {
-            IceAndFire.NETWORK_WRAPPER.sendToServer(new MessageMultipartInteract(parent.getId(), damage * damageMultiplier));
+        if (this.level().isClientSide() && source.getEntity() instanceof Player && parent != null) {
+            IceAndFire.sendMSGToServer(new MessageMultipartInteract(parent.getId(), damage * damageMultiplier));
         }
-        return parent != null && parent.hurt(source, damage * this.damageMultiplier);
+        if (parent == null) {
+            return false;
+        }
+        parent.hurt(source, damage * this.damageMultiplier);
+        return true;
     }
 
-    @Override
-    public boolean isInvulnerableTo(@NotNull DamageSource source) {
-        return source == DamageSource.FALL || source == DamageSource.DROWN || source == DamageSource.IN_WALL || source == DamageSource.FALLING_BLOCK || source == DamageSource.LAVA || source.isFire() || super.isInvulnerableTo(source);
+    public boolean isInvulnerableTo(@NotNull ServerLevel level, @NotNull DamageSource source) {
+        return source.is(DamageTypes.FALL) || source.is(DamageTypes.DROWN) || source.is(DamageTypes.IN_WALL) || source.is(DamageTypes.FALLING_BLOCK) || source.is(DamageTypes.LAVA) || source.is(DamageTypeTags.IS_FIRE) || isInvulnerableToBase(source);
     }
 
     public boolean shouldNotExist() {
@@ -279,6 +281,6 @@ public abstract class EntityMutlipartPart extends Entity {
     }
 
     public boolean shouldContinuePersisting() {
-        return isAddedToWorld() || this.isRemoved();
+        return isAddedToLevel() || this.isRemoved();
     }
 }

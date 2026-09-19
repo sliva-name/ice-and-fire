@@ -1,28 +1,31 @@
 package com.github.alexthe666.iceandfire.entity;
 
+import net.minecraft.server.level.ServerLevel;
+
 import com.github.alexthe666.iceandfire.IceAndFire;
 import com.github.alexthe666.iceandfire.entity.util.IDragonProjectile;
 import com.github.alexthe666.iceandfire.enums.EnumParticles;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.network.protocol.Packet;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.projectile.Fireball;
+import net.minecraft.world.entity.projectile.hurtingprojectile.Fireball;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
-import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.network.NetworkHooks;
-import net.minecraftforge.network.PlayMessages;
+import net.minecraftforge.network.packets.SpawnEntity;
 import org.jetbrains.annotations.NotNull;
 
 public class EntityHydraBreath extends Fireball implements IDragonProjectile {
+
+    public double xPower;
+    public double yPower;
+    public double zPower;
 
     public EntityHydraBreath(EntityType<? extends Fireball> t, Level worldIn) {
         super(t, worldIn);
@@ -30,34 +33,28 @@ public class EntityHydraBreath extends Fireball implements IDragonProjectile {
 
     public EntityHydraBreath(EntityType<? extends Fireball> t, Level worldIn, double posX, double posY,
                              double posZ, double accelX, double accelY, double accelZ) {
-        super(t, posX, posY, posZ, accelX, accelY, accelZ, worldIn);
+        super(t, posX, posY, posZ, new Vec3(accelX, accelY, accelZ), worldIn);
     }
 
-    public EntityHydraBreath(PlayMessages.SpawnEntity spawnEntity, Level worldIn) {
+    public EntityHydraBreath(SpawnEntity spawnEntity, Level worldIn) {
         this(IafEntityRegistry.HYDRA_BREATH.get(), worldIn);
     }
 
     public EntityHydraBreath(EntityType<? extends Fireball> t, Level worldIn, EntityHydra shooter,
                              double accelX, double accelY, double accelZ) {
-        super(t, shooter, accelX, accelY, accelZ, worldIn);
+        super(t, shooter, new Vec3(accelX, accelY, accelZ), worldIn);
         double d0 = Math.sqrt(accelX * accelX + accelY * accelY + accelZ * accelZ);
         this.xPower = accelX / d0 * 0.02D;
         this.yPower = accelY / d0 * 0.02D;
         this.zPower = accelZ / d0 * 0.02D;
     }
-
-    @Override
-    public @NotNull Packet<?> getAddEntityPacket() {
-        return NetworkHooks.getEntitySpawningPacket(this);
-    }
-
     @Override
     protected boolean shouldBurn() {
         return false;
     }
 
     @Override
-    public boolean hurt(@NotNull DamageSource source, float amount) {
+    public boolean hurtServer(@NotNull ServerLevel level, @NotNull DamageSource source, float amount) {
         return false;
     }
 
@@ -79,13 +76,13 @@ public class EntityHydraBreath extends Fireball implements IDragonProjectile {
             this.remove(RemovalReason.DISCARDED);
         }
         Entity shootingEntity = this.getOwner();
-        if (this.level.isClientSide || (shootingEntity == null || shootingEntity.isAlive()) && this.level.hasChunkAt(this.blockPosition())) {
+        if (this.level().isClientSide() || (shootingEntity == null || shootingEntity.isAlive()) && this.level().hasChunkAt(this.blockPosition())) {
             this.baseTick();
             if (this.shouldBurn()) {
-                this.setSecondsOnFire(1);
+                this.igniteForSeconds(1);
             }
 
-            HitResult raytraceresult = ProjectileUtil.getHitResult(this, this::canHitEntity);
+            HitResult raytraceresult = ProjectileUtil.getHitResultOnMoveVector(this, this::canHitEntity);
             if (raytraceresult.getType() != HitResult.Type.MISS && !net.minecraftforge.event.ForgeEventFactory.onProjectileImpact(this, raytraceresult)) {
                 this.onHit(raytraceresult);
             }
@@ -96,7 +93,7 @@ public class EntityHydraBreath extends Fireball implements IDragonProjectile {
             double d2 = this.getZ() + Vector3d.z;
             ProjectileUtil.rotateTowardsMovement(this, 0.2F);
             float f = this.getInertia();
-            if (this.level.isClientSide) {
+            if (this.level().isClientSide()) {
                 for (int i = 0; i < 15; ++i) {
                     IceAndFire.PROXY.spawnParticle(EnumParticles.Hydra, this.getX() + (double) (this.random.nextFloat() * this.getBbWidth()) - (double) this.getBbWidth() * 0.5F, this.getY() - 0.5D, this.getZ() + (double) (this.random.nextFloat() * this.getBbWidth()) - (double) this.getBbWidth() * 0.5F, 0.1D, 1.0D, 0.1D);
                 }
@@ -111,7 +108,7 @@ public class EntityHydraBreath extends Fireball implements IDragonProjectile {
 
             if (this.isInWater()) {
                 for (int i = 0; i < 4; ++i) {
-                    this.level.addParticle(ParticleTypes.BUBBLE, this.getX() - this.getDeltaMovement().x * 0.25D, this.getY() - this.getDeltaMovement().y * 0.25D, this.getZ() - this.getDeltaMovement().z * 0.25D, this.getDeltaMovement().x, this.getDeltaMovement().y, this.getDeltaMovement().z);
+                    this.level().addParticle(ParticleTypes.BUBBLE, this.getX() - this.getDeltaMovement().x * 0.25D, this.getY() - this.getDeltaMovement().y * 0.25D, this.getZ() - this.getDeltaMovement().z * 0.25D, this.getDeltaMovement().x, this.getDeltaMovement().y, this.getDeltaMovement().z);
                 }
             }
             this.setPos(d0, d1, d2);
@@ -126,9 +123,8 @@ public class EntityHydraBreath extends Fireball implements IDragonProjectile {
 
     @Override
     protected void onHit(@NotNull HitResult movingObject) {
-        this.level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING);
         Entity shootingEntity = this.getOwner();
-        if (!this.level.isClientSide) {
+        if (!this.level().isClientSide()) {
             if (movingObject.getType() == HitResult.Type.ENTITY) {
                 Entity entity = ((EntityHitResult) movingObject).getEntity();
 
@@ -140,7 +136,7 @@ public class EntityHydraBreath extends Fireball implements IDragonProjectile {
                     if (dragon.isAlliedTo(entity) || dragon.is(entity)) {
                         return;
                     }
-                    entity.hurt(DamageSource.mobAttack(dragon), 2.0F);
+                    entity.hurt(this.damageSources().mobAttack(dragon), 2.0F);
                     if (entity instanceof LivingEntity) {
                         ((LivingEntity) entity).addEffect(new MobEffectInstance(MobEffects.POISON, 60, 0));
                     }

@@ -3,7 +3,6 @@ package com.github.alexthe666.iceandfire.item;
 import com.github.alexthe666.iceandfire.IceAndFire;
 import com.github.alexthe666.iceandfire.enums.EnumDragonEgg;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
@@ -17,18 +16,18 @@ public class ItemDragonScales extends Item {
     EnumDragonEgg type;
 
     public ItemDragonScales(EnumDragonEgg type) {
-        super(new Item.Properties().tab(IceAndFire.TAB_ITEMS));
+        super(IafItemRegistry.defaultBuilder());
         this.type = type;
     }
 
     @Override
-    public @NotNull String getDescriptionId() {
-        return "item.iceandfire.dragonscales";
+    public @NotNull Component getName(@NotNull ItemStack stack) {
+        return Component.translatable("item.iceandfire.dragonscales");
     }
 
     @Override
-    public void appendHoverText(@NotNull ItemStack stack, @Nullable Level worldIn, List<Component> tooltip, @NotNull TooltipFlag flagIn) {
-        tooltip.add(new TranslatableComponent("dragon." + type.toString().toLowerCase()).withStyle(type.color));
+    public void appendHoverText(@NotNull ItemStack stack, Item.TooltipContext context, net.minecraft.world.item.component.TooltipDisplay display, java.util.function.Consumer<Component> tooltip, @NotNull TooltipFlag flagIn) {
+        tooltip.accept(Component.translatable("dragon." + type.toString().toLowerCase()).withStyle(type.color));
     }
 
 }

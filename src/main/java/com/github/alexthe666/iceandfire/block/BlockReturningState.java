@@ -9,23 +9,22 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.material.MapColor;
+import net.minecraft.util.RandomSource;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Random;
 
 public class BlockReturningState extends Block {
     public static final BooleanProperty REVERTS = BooleanProperty.create("revert");
     public Item itemBlock;
     private final BlockState returnState;
 
-    public BlockReturningState(Material materialIn, float hardness, float resistance, SoundType sound, BlockState returnToState) {
+    public BlockReturningState(MapColor color, float hardness, float resistance, SoundType sound, BlockState returnToState) {
         super(
-            BlockBehaviour.Properties
-                .of(materialIn)
+            IafBlockRegistry.id(BlockBehaviour.Properties
+                .of().mapColor(color)
                 .sound(sound)
                 .strength(hardness, resistance)
-                .randomTicks()
+                .randomTicks())
         );
 
         this.returnState = returnToState;
@@ -33,15 +32,15 @@ public class BlockReturningState extends Block {
     }
 
     @SuppressWarnings("deprecation")
-    public BlockReturningState(Material materialIn, float hardness, float resistance, SoundType sound, boolean slippery, BlockState returnToState) {
-        super(BlockBehaviour.Properties.of(materialIn).sound(sound).strength(hardness, resistance).friction(0.98F).randomTicks());
+    public BlockReturningState(MapColor color, float hardness, float resistance, SoundType sound, boolean slippery, BlockState returnToState) {
+        super(IafBlockRegistry.id(BlockBehaviour.Properties.of().mapColor(color).sound(sound).strength(hardness, resistance).friction(0.98F).randomTicks()));
         this.returnState = returnToState;
         this.registerDefaultState(this.stateDefinition.any().setValue(REVERTS, Boolean.FALSE));
     }
 
     @Override
-    public void tick(@NotNull BlockState state, ServerLevel worldIn, @NotNull BlockPos pos, @NotNull Random rand) {
-        if (!worldIn.isClientSide) {
+    public void tick(@NotNull BlockState state, ServerLevel worldIn, @NotNull BlockPos pos, @NotNull RandomSource rand) {
+        if (!worldIn.isClientSide()) {
             if (!worldIn.isAreaLoaded(pos, 3))
                 return;
             if (state.getValue(REVERTS) && rand.nextInt(3) == 0) {

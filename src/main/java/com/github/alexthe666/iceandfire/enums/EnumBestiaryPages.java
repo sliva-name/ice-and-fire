@@ -57,7 +57,7 @@ public enum EnumBestiaryPages {
     }
 
     public static boolean hasAllPages(ItemStack book) {
-        return Ints.asList(book.getTag().getIntArray("Pages")).containsAll(ALL_INDEXES);
+        return Ints.asList(pagesOf(book)).containsAll(ALL_INDEXES);
     }
 
     public static List<Integer> enumToInt(List<EnumBestiaryPages> pages) {
@@ -80,8 +80,7 @@ public enum EnumBestiaryPages {
 
     public static List<EnumBestiaryPages> possiblePages(ItemStack book) {
         if (book.getItem() instanceof ItemBestiary) {
-            CompoundTag tag = book.getTag();
-            Collection<EnumBestiaryPages> containedPages = containedPages(Ints.asList(tag.getIntArray("Pages")));
+            Collection<EnumBestiaryPages> containedPages = containedPages(Ints.asList(pagesOf(book)));
             List<EnumBestiaryPages> possiblePages = new ArrayList<>(ALL_PAGES);
             possiblePages.removeAll(containedPages);
             return possiblePages;
@@ -93,15 +92,21 @@ public enum EnumBestiaryPages {
     public static boolean addPage(EnumBestiaryPages page, ItemStack book) {
         boolean flag = false;
         if (book.getItem() instanceof ItemBestiary) {
-            CompoundTag tag = book.getTag();
-            final List<Integer> already = new ArrayList<>(Ints.asList(tag.getIntArray("Pages")));
+            final List<Integer> already = new ArrayList<>(Ints.asList(pagesOf(book)));
             if (!already.contains(page.ordinal())) {
                 already.add(page.ordinal());
                 flag = true;
             }
-            tag.putIntArray("Pages", Ints.toArray(already));
+            com.github.alexthe666.iceandfire.item.IafItemData.update(book, tag -> tag.putIntArray("Pages", Ints.toArray(already)));
         }
         return flag;
+    }
+
+    private static int[] pagesOf(ItemStack book) {
+        if (!com.github.alexthe666.iceandfire.item.IafItemData.has(book)) {
+            return new int[0];
+        }
+        return com.github.alexthe666.iceandfire.item.IafItemData.copy(book).getIntArray("Pages").orElse(new int[0]);
     }
 
 

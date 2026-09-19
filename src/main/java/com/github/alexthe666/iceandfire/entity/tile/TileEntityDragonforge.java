@@ -1,5 +1,8 @@
 package com.github.alexthe666.iceandfire.entity.tile;
 
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
 import com.github.alexthe666.iceandfire.IceAndFire;
 import com.github.alexthe666.iceandfire.block.BlockDragonforgeBricks;
 import com.github.alexthe666.iceandfire.block.BlockDragonforgeCore;
@@ -15,7 +18,7 @@ import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
+
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.util.Mth;
 import net.minecraft.world.ContainerHelper;
@@ -24,10 +27,15 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.SimpleContainerData;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.item.crafting.RecipeInput;
+import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -39,7 +47,7 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Optional;
 
-public class TileEntityDragonforge extends BaseContainerBlockEntity implements WorldlyContainer {
+public class TileEntityDragonforge extends BaseContainerBlockEntity implements WorldlyContainer, RecipeInput, DragonForgeRecipe.DragonForgeTypeSource {
 
     private static final int[] SLOTS_TOP = new int[]{0, 1};
     private static final int[] SLOTS_BOTTOM = new int[]{2};
@@ -73,7 +81,7 @@ public class TileEntityDragonforge extends BaseContainerBlockEntity implements W
             entityDragonforge.lastDragonFlameTimer--;
         }
         entityDragonforge.updateGrills(entityDragonforge.assembled());
-        if (!level.isClientSide) {
+        if (!level.isClientSide()) {
             if (entityDragonforge.prevAssembled != entityDragonforge.assembled()) {
                 BlockDragonforgeCore.setState(entityDragonforge.fireType, entityDragonforge.prevAssembled, level, pos);
             }
@@ -84,10 +92,10 @@ public class TileEntityDragonforge extends BaseContainerBlockEntity implements W
         if (entityDragonforge.cookTime > 0 && entityDragonforge.canSmelt() && entityDragonforge.lastDragonFlameTimer == 0) {
             entityDragonforge.cookTime--;
         }
-        if (entityDragonforge.getItem(0).isEmpty() && !level.isClientSide) {
+        if (entityDragonforge.getItem(0).isEmpty() && !level.isClientSide()) {
             entityDragonforge.cookTime = 0;
         }
-        if (!entityDragonforge.level.isClientSide) {
+        if (!level.isClientSide()) {
             if (entityDragonforge.isBurning()) {
                 if (entityDragonforge.canSmelt()) {
                     ++entityDragonforge.cookTime;
@@ -189,8 +197,7 @@ public class TileEntityDragonforge extends BaseContainerBlockEntity implements W
     @Override
     public void setItem(int index, ItemStack stack) {
         ItemStack itemstack = this.forgeItemStacks.get(index);
-        boolean flag = !stack.isEmpty() && stack.sameItem(itemstack)
-                && ItemStack.tagMatches(stack, itemstack);
+        boolean flag = !stack.isEmpty() && ItemStack.isSameItemSameComponents(stack, itemstack);
         this.forgeItemStacks.set(index, stack);
 
         if (stack.getCount() > this.getMaxStackSize()) {
@@ -205,15 +212,15 @@ public class TileEntityDragonforge extends BaseContainerBlockEntity implements W
     }
 
     @Override
-    public void load(@NotNull CompoundTag compound) {
-        super.load(compound);
+    public void loadAdditional(@NotNull ValueInput compound) {
+        super.loadAdditional(compound);
         this.forgeItemStacks = NonNullList.withSize(this.getContainerSize(), ItemStack.EMPTY);
         ContainerHelper.loadAllItems(compound, this.forgeItemStacks);
-        this.cookTime = compound.getInt("CookTime");
+        this.cookTime = compound.getIntOr("CookTime", 0);
     }
 
     @Override
-    public void saveAdditional(CompoundTag compound) {
+    public void saveAdditional(ValueOutput compound) {
         compound.putInt("CookTime", (short) this.cookTime);
         ContainerHelper.saveAllItems(compound, this.forgeItemStacks);
     }
@@ -271,11 +278,40 @@ public class TileEntityDragonforge extends BaseContainerBlockEntity implements W
     }
 
     public Optional<DragonForgeRecipe> getCurrentRecipe() {
-        return level.getRecipeManager().getRecipeFor(IafRecipeRegistry.DRAGON_FORGE_TYPE.get(), this, level);
+        RecipeManager manager = recipeManager();
+        if (manager == null || getLevel() == null) {
+            return Optional.empty();
+        }
+        return manager.getRecipeFor(IafRecipeRegistry.DRAGON_FORGE_TYPE.get(), this, getLevel()).map(RecipeHolder::value);
     }
 
     public List<DragonForgeRecipe> getRecipes() {
-        return level.getRecipeManager().getAllRecipesFor(IafRecipeRegistry.DRAGON_FORGE_TYPE.get());
+        RecipeManager manager = recipeManager();
+        if (manager == null) {
+            return List.of();
+        }
+        return DragonForgeRecipe.allOf(manager);
+    }
+
+    private RecipeManager recipeManager() {
+        return getLevel() instanceof net.minecraft.server.level.ServerLevel server
+            ? server.getServer().getRecipeManager()
+            : null;
+    }
+
+    @Override
+    public int size() {
+        return this.getContainerSize();
+    }
+
+    @Override
+    protected @NotNull NonNullList<ItemStack> getItems() {
+        return this.forgeItemStacks;
+    }
+
+    @Override
+    protected void setItems(@NotNull NonNullList<ItemStack> items) {
+        this.forgeItemStacks = items;
     }
 
     public boolean canSmelt() {
@@ -289,7 +325,7 @@ public class TileEntityDragonforge extends BaseContainerBlockEntity implements W
             return false;
 
         ItemStack outputStack = this.forgeItemStacks.get(2);
-        if (!outputStack.isEmpty() && !outputStack.sameItem(forgeRecipeOutput))
+        if (!outputStack.isEmpty() && !ItemStack.isSameItem(outputStack, forgeRecipeOutput))
             return false;
 
         int calculatedOutputCount = outputStack.getCount() + forgeRecipeOutput.getCount();
@@ -373,7 +409,7 @@ public class TileEntityDragonforge extends BaseContainerBlockEntity implements W
     public <T> net.minecraftforge.common.util.@NotNull LazyOptional<T> getCapability(
             net.minecraftforge.common.capabilities.@NotNull Capability<T> capability, @Nullable Direction facing) {
         if (!this.remove && facing != null
-                && capability == net.minecraftforge.items.CapabilityItemHandler.ITEM_HANDLER_CAPABILITY) {
+                && capability == net.minecraftforge.common.capabilities.ForgeCapabilities.ITEM_HANDLER) {
             if (facing == Direction.UP)
                 return handlers[0].cast();
             if (facing == Direction.DOWN)
@@ -386,11 +422,11 @@ public class TileEntityDragonforge extends BaseContainerBlockEntity implements W
 
     @Override
     protected @NotNull Component getDefaultName() {
-        return new TranslatableComponent("container.dragonforge_fire" + DragonType.getNameFromInt(fireType));
+        return Component.translatable("container.dragonforge_fire" + DragonType.getNameFromInt(fireType));
     }
 
     public void transferPower(int i) {
-        if (!level.isClientSide) {
+        if (!level.isClientSide()) {
             if (this.canSmelt()) {
                 if (canAddFlameAgain) {
                     cookTime = Math.min(this.getMaxCookTime() + 1,
@@ -431,14 +467,15 @@ public class TileEntityDragonforge extends BaseContainerBlockEntity implements W
         return ClientboundBlockEntityDataPacket.create(this);
     }
 
-    @Override
     public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
-        load(packet.getTag());
+        if (packet.getTag() != null && getLevel() != null) {
+            this.loadWithComponents(TagValueInput.create(ProblemReporter.DISCARDING, getLevel().registryAccess(), packet.getTag()));
+        }
     }
 
     @Override
-    public @NotNull CompoundTag getUpdateTag() {
-        return this.saveWithFullMetadata();
+    public @NotNull CompoundTag getUpdateTag(net.minecraft.core.HolderLookup.Provider registries) {
+        return this.saveWithFullMetadata(registries);
     }
 
     public boolean assembled() {

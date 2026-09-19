@@ -6,10 +6,8 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
-import java.util.function.Supplier;
 
 public class MessageStartRidingMob {
 
@@ -40,23 +38,23 @@ public class MessageStartRidingMob {
         public Handler() {
         }
 
-        public static void handle(MessageStartRidingMob message, Supplier<NetworkEvent.Context> context) {
-            context.get().setPacketHandled(true);
-            Player player = context.get().getSender();
-            if(context.get().getDirection().getReceptionSide() == LogicalSide.CLIENT){
+        public static void handle(MessageStartRidingMob message, CustomPayloadEvent.Context context) {
+            context.setPacketHandled(true);
+            Player player = context.getSender();
+            if(context.isClientSide()){
                 player = IceAndFire.PROXY.getClientSidePlayer();
             }
             if (player != null) {
-                if (player.level != null) {
-                    Entity entity = player.level.getEntity(message.dragonId);
+                if (player.level() != null) {
+                    Entity entity = player.level().getEntity(message.dragonId);
                     if (entity != null && entity instanceof ISyncMount && entity instanceof TamableAnimal) {
                         TamableAnimal dragon = (TamableAnimal) entity;
                         if (dragon.isOwnedBy(player) && dragon.distanceTo(player) < 14) {
                             if (message.ride) {
                                 if (message.baby) {
-                                    dragon.startRiding(player, true);
+                                    dragon.startRiding(player, true, true);
                                 } else {
-                                    player.startRiding(dragon, true);
+                                    player.startRiding(dragon, true, true);
                                 }
                             } else {
                                 if (message.baby) {

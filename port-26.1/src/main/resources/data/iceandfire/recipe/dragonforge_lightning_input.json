@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "BIB",
+    "I I",
+    "BIB"
+  ],
+  "key": {
+    "B": "iceandfire:dragonforge_lightning_brick",
+    "I": "#forge:ingots/iron"
+  },
+  "result": {
+    "id": "iceandfire:dragonforge_lightning_input"
+  }
+}

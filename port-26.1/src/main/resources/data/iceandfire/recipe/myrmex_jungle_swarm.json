@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "EEE",
+    "ERE",
+    "RSR"
+  ],
+  "key": {
+    "R": "iceandfire:myrmex_jungle_resin_block",
+    "S": "#forge:rods/wooden",
+    "E": "iceandfire:myrmex_jungle_egg"
+  },
+  "result": {
+    "id": "iceandfire:myrmex_jungle_swarm"
+  }
+}

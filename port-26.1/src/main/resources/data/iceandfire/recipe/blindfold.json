@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "SLS"
+  ],
+  "key": {
+    "L": "minecraft:leather",
+    "S": "#forge:string"
+  },
+  "result": {
+    "id": "iceandfire:blindfold"
+  }
+}

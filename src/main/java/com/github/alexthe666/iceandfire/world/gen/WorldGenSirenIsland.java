@@ -18,7 +18,7 @@ import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
 import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
 
-import java.util.Random;
+import net.minecraft.util.RandomSource;
 
 public class WorldGenSirenIsland extends Feature<NoneFeatureConfiguration> implements TypedFeature {
 
@@ -30,7 +30,7 @@ public class WorldGenSirenIsland extends Feature<NoneFeatureConfiguration> imple
     @Override
     public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> context) {
         WorldGenLevel worldIn = context.level();
-        Random rand = context.random();
+        net.minecraft.util.RandomSource rand = context.random();
         BlockPos position = context.origin();
 
         if (rand.nextInt(IafConfig.generateSirenChance) != 0 || !IafWorldRegistry.isFarEnoughFromSpawn(worldIn, position) || !IafWorldRegistry.isFarEnoughFromDangerousGen(worldIn, position, "siren_island", IafWorldData.FeatureType.OCEAN)) {
@@ -42,11 +42,11 @@ public class WorldGenSirenIsland extends Feature<NoneFeatureConfiguration> imple
         int layer = 0;
         int sirens = 0;
         int sirensMax = 1 + rand.nextInt(3);
-        while (!worldIn.getBlockState(center).canOcclude() && center.getY() >= worldIn.getMinBuildHeight()) {
+        while (!worldIn.getBlockState(center).canOcclude() && center.getY() >= worldIn.getMinY()) {
             layer++;
             for (float i = 0; i < getRadius(layer, up); i += 0.5) {
                 for (float j = 0; j < 2 * Math.PI * i + rand.nextInt(2); j += 0.5) {
-                    BlockPos stonePos = new BlockPos(Math.floor(center.getX() + Mth.sin(j) * i + rand.nextInt(2)), center.getY(), Math.floor(center.getZ() + Mth.cos(j) * i + rand.nextInt(2)));
+                    BlockPos stonePos = BlockPos.containing(Math.floor(center.getX() + Mth.sin(j) * i + rand.nextInt(2)), center.getY(), Math.floor(center.getZ() + Mth.cos(j) * i + rand.nextInt(2)));
                     worldIn.setBlock(stonePos, getStone(rand), 3);
                     BlockPos upPos = stonePos.above();
                     if (worldIn.isEmptyBlock(upPos) && worldIn.isEmptyBlock(upPos.east()) && worldIn.isEmptyBlock(upPos.north()) && worldIn.isEmptyBlock(upPos.north().east()) && rand.nextInt(3) == 0 && sirens < sirensMax) {
@@ -60,7 +60,7 @@ public class WorldGenSirenIsland extends Feature<NoneFeatureConfiguration> imple
         layer++;
         for (float i = 0; i < getRadius(layer, up); i += 0.5) {
             for (float j = 0; j < 2 * Math.PI * i + rand.nextInt(2); j += 0.5) {
-                BlockPos stonePos = new BlockPos(Math.floor(center.getX() + Mth.sin(j) * i + rand.nextInt(2)), center.getY(), Math.floor(center.getZ() + Mth.cos(j) * i + rand.nextInt(2)));
+                BlockPos stonePos = BlockPos.containing(Math.floor(center.getX() + Mth.sin(j) * i + rand.nextInt(2)), center.getY(), Math.floor(center.getZ() + Mth.cos(j) * i + rand.nextInt(2)));
                 while (!worldIn.getBlockState(stonePos).canOcclude() && stonePos.getY() >= 0) {
                     worldIn.setBlock(stonePos, getStone(rand), 3);
                     stonePos = stonePos.below();
@@ -74,7 +74,7 @@ public class WorldGenSirenIsland extends Feature<NoneFeatureConfiguration> imple
         return layer > up ? (int) (layer * 0.25) + up : Math.min(layer, MAX_ISLAND_RADIUS);
     }
 
-    private BlockState getStone(Random random) {
+    private BlockState getStone(RandomSource random) {
         int chance = random.nextInt(100);
         if (chance > 90) {
             return Blocks.MOSSY_COBBLESTONE.defaultBlockState();
@@ -87,12 +87,12 @@ public class WorldGenSirenIsland extends Feature<NoneFeatureConfiguration> imple
         }
     }
 
-    private void spawnSiren(ServerLevelAccessor worldIn, Random rand, BlockPos position) {
+    private void spawnSiren(ServerLevelAccessor worldIn, RandomSource rand, BlockPos position) {
         EntitySiren siren = new EntitySiren(IafEntityRegistry.SIREN.get(), worldIn.getLevel());
         siren.setSinging(true);
         siren.setHairColor(rand.nextInt(2));
         siren.setSingingPose(rand.nextInt(2));
-        siren.absMoveTo(position.getX() + 0.5D, position.getY() + 1, position.getZ() + 0.5D, rand.nextFloat() * 360, 0);
+        siren.snapTo(position.getX() + 0.5D, position.getY() + 1, position.getZ() + 0.5D, rand.nextFloat() * 360, 0);
         worldIn.addFreshEntity(siren);
     }
 

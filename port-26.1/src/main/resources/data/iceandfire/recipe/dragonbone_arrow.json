@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    "iceandfire:dragonbone",
+    "iceandfire:wither_shard"
+  ],
+  "result": {
+    "count": 5,
+    "id": "iceandfire:dragonbone_arrow"
+  }
+}

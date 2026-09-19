@@ -9,7 +9,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.BushBlock;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.NotNull;
@@ -22,13 +22,13 @@ public class BlockElementalFlower extends BushBlock {
 
     public BlockElementalFlower() {
         super(
-            Properties
-                .of(Material.REPLACEABLE_PLANT)
+            IafBlockRegistry.id(Properties
+                .of().mapColor(MapColor.PLANT)
                 .noOcclusion()
-                .noCollission()
+                .noCollision()
                 .dynamicShape()
                 .randomTicks()
-                .sound(SoundType.GRASS)
+                .sound(SoundType.GRASS))
         );
     }
 
@@ -40,17 +40,17 @@ public class BlockElementalFlower extends BushBlock {
     @Override
     protected boolean mayPlaceOn(BlockState state, @NotNull BlockGetter worldIn, @NotNull BlockPos pos) {
         Block block = state.getBlock();
-        return block == Blocks.GRASS_BLOCK || block == Blocks.DIRT || block == Blocks.COARSE_DIRT || block == Blocks.PODZOL || block == Blocks.FARMLAND || state.getMaterial() == Material.SAND;
+        return block == Blocks.GRASS_BLOCK || block == Blocks.DIRT || block == Blocks.COARSE_DIRT || block == Blocks.PODZOL || block == Blocks.FARMLAND || IafMaterials.isSand(state);
     }
 
     public boolean canStay(Level worldIn, BlockPos pos) {
         BlockState soil = worldIn.getBlockState(pos.below());
         if (this == IafBlockRegistry.FIRE_LILY.get()) {
-            return soil.getMaterial() == Material.SAND || soil.getBlock() == Blocks.NETHERRACK;
+            return IafMaterials.isSand(soil) || soil.getBlock() == Blocks.NETHERRACK;
         } else if (this == IafBlockRegistry.LIGHTNING_LILY.get()) {
-            return soil.getMaterial() == Material.DIRT || soil.getBlock() == Blocks.GRASS;
+            return IafMaterials.isDirt(soil) || soil.getBlock() == Blocks.GRASS_BLOCK;
         } else {
-            return soil.getMaterial() == Material.ICE_SOLID || soil.getMaterial() == Material.ICE;
+            return IafMaterials.isIceSolid(soil) || IafMaterials.isIce(soil);
         }
     }
 

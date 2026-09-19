@@ -17,7 +17,7 @@ public class DeathWormAITarget<T extends LivingEntity> extends NearestAttackable
     private final EntityDeathWorm deathworm;
 
     public DeathWormAITarget(EntityDeathWorm entityIn, Class<T> classTarget, boolean checkSight, Predicate<LivingEntity> targetPredicate) {
-        super(entityIn, classTarget, 20, checkSight, false, targetPredicate);
+        super(entityIn, classTarget, 20, checkSight, false, IafSelectors.ofGuava(targetPredicate));
         this.deathworm = entityIn;
         this.setFlags(EnumSet.of(Flag.TARGET));
     }

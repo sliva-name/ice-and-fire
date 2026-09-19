@@ -1,21 +1,17 @@
 package com.github.alexthe666.iceandfire.client.model;
 
+import com.github.alexthe666.citadel.client.model.AdvancedEntityModel;
 import com.github.alexthe666.citadel.client.model.AdvancedModelBox;
 import com.github.alexthe666.citadel.client.model.basic.BasicModelPart;
-import com.github.alexthe666.iceandfire.entity.EntityPixie;
-import com.github.alexthe666.iceandfire.entity.tile.TileEntityJar;
-import com.github.alexthe666.iceandfire.entity.tile.TileEntityPixieHouse;
+import com.github.alexthe666.iceandfire.client.render.entity.PixieRenderState;
 import com.google.common.collect.ImmutableList;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.util.Mth;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.item.ItemStack;
 
-public class ModelPixie extends ModelDragonBase<EntityPixie> {
+public class ModelPixie extends AdvancedEntityModel<PixieRenderState> {
     public AdvancedModelBox Body;
     public AdvancedModelBox Left_Arm;
     public AdvancedModelBox Head;
@@ -103,94 +99,45 @@ public class ModelPixie extends ModelDragonBase<EntityPixie> {
     }
 
     @Override
-    public void setupAnim(EntityPixie entity, float f, float f1, float f2, float f3, float f4) {
-        this.resetToDefaultPose();
-        float speed_fly = 1.1F;
-        float speed_idle = 0.05F;
-        float degree_fly = 1F;
-        float degree_idle = 0.5F;
-        AdvancedModelBox[] LEFT_WINGS = new AdvancedModelBox[]{Left_Wing, Left_Wing2};
-        AdvancedModelBox[] RIGHT_WINGS = new AdvancedModelBox[]{Right_Wing, Right_Wing2};
-
-        this.Left_Leg.rotateAngleX = Mth.cos(f * 0.6662F + (float) Math.PI) * 1.0F * f1 * 0.5F;
-        this.Right_Leg.rotateAngleX = Mth.cos(f * 0.6662F) * 1.0F * f1 * 0.5F;
-
-        float f12 = f1;
-        if (f12 < 0.0F) {
-            f12 = 0.0F;
+    public void setupAnim(PixieRenderState state) {
+        super.setupAnim(state);
+        if (state.mode == PixieRenderState.Mode.ENTITY) {
+            float swing = state.walkAnimationPos;
+            float amount = state.walkAnimationSpeed;
+            this.Left_Leg.rotateAngleX = Mth.cos(swing * 0.6662F + (float) Math.PI) * amount * 0.5F;
+            this.Right_Leg.rotateAngleX = Mth.cos(swing * 0.6662F) * amount * 0.5F;
+            float lean = Mth.clamp(amount, 0.0F, (float) Math.toRadians(20));
+            this.Body.rotateAngleX = lean;
+            this.Head.rotateAngleX -= lean;
+            if (state.holdingItem) {
+                this.faceTarget(state.yRot, state.xRot, 1, this.Head);
+                this.Left_Arm.rotateAngleX += (float) Math.toRadians(-35);
+                this.Right_Arm.rotateAngleX += (float) Math.toRadians(-35);
+                this.Body.rotateAngleX += (float) Math.toRadians(10);
+                this.Left_Leg.rotateAngleX += (float) Math.toRadians(-10);
+                this.Right_Leg.rotateAngleX += (float) Math.toRadians(-10);
+                this.Head.rotateAngleX += (float) Math.toRadians(-10);
+            } else {
+                this.Right_Arm.rotateAngleX = Mth.cos(swing * 0.6662F + (float) Math.PI) * amount * 0.5F;
+                this.Left_Arm.rotateAngleX = Mth.cos(swing * 0.6662F) * amount * 0.5F;
+            }
         }
-        if (f12 > Math.toRadians(20)) {
-            f12 = (float) Math.toRadians(20);
-        }
-        this.Body.rotateAngleX = f12;
-        this.Head.rotateAngleX -= f12;
-        ItemStack itemstack = entity.getItemInHand(InteractionHand.MAIN_HAND);
-        if (!itemstack.isEmpty()) {
-
-            this.faceTarget(f3, f4, 1, this.Head);
-            this.Left_Arm.rotateAngleX += (float) Math.toRadians(-35);
-            this.Right_Arm.rotateAngleX += (float) Math.toRadians(-35);
-            this.Body.rotateAngleX += (float) Math.toRadians(10);
-            this.Left_Leg.rotateAngleX += (float) Math.toRadians(-10);
-            this.Right_Leg.rotateAngleX += (float) Math.toRadians(-10);
-            this.Head.rotateAngleX += (float) Math.toRadians(-10);
+        if (state.sitting || state.mode == PixieRenderState.Mode.HOUSE) {
+            applySittingPose();
         } else {
-            this.Right_Arm.rotateAngleX = Mth.cos(f * 0.6662F + (float) Math.PI) * 1.0F * f1 * 0.5F;
-            this.Left_Arm.rotateAngleX = Mth.cos(f * 0.6662F) * 1.0F * f1 * 0.5F;
+            this.chainWave(new AdvancedModelBox[]{Left_Wing, Left_Wing2}, 1.1F, 0.75F, 1, state.ageInTicks, 1);
+            this.chainWave(new AdvancedModelBox[]{Right_Wing, Right_Wing2}, 1.1F, 0.75F, 1, state.ageInTicks, 1);
         }
-
-        if (entity.isPixieSitting()) {
-            this.Right_Arm.rotateAngleX += -((float) Math.PI / 5F);
-            this.Left_Arm.rotateAngleX += -((float) Math.PI / 5F);
-            this.Right_Leg.rotateAngleX = -1.4137167F;
-            this.Right_Leg.rotateAngleY = ((float) Math.PI / 10F);
-            this.Right_Leg.rotateAngleZ = 0.07853982F;
-            this.Left_Leg.rotateAngleX = -1.4137167F;
-            this.Left_Leg.rotateAngleY = -((float) Math.PI / 10F);
-            this.Left_Leg.rotateAngleZ = -0.07853982F;
-            this.Dress.rotateAngleX += (float) Math.toRadians(-50);
-            this.Dress.rotationPointZ += 0.25F;
-            this.Dress.rotationPointY += 0.35F;
-            this.Left_Wing.rotateAngleZ = (float) Math.toRadians(-28);
-            this.Right_Wing.rotateAngleZ = (float) Math.toRadians(28);
-            this.Left_Wing2.rotateAngleZ = (float) Math.toRadians(-8);
-            this.Right_Wing2.rotateAngleZ = (float) Math.toRadians(8);
-        } else {
-            this.chainWave(LEFT_WINGS, speed_fly, degree_fly * 0.75F, 1, f2, 1);
-            this.chainWave(RIGHT_WINGS, speed_fly, degree_fly * 0.75F, 1, f2, 1);
-        }
-
     }
 
-    public void animateInHouse(TileEntityPixieHouse house) {
-        this.resetToDefaultPose();
-        float speed_fly = 1.1F;
-        float speed_idle = 0.05F;
-        float degree_fly = 1F;
-        float degree_idle = 0.5F;
-        AdvancedModelBox[] LEFT_WINGS = new AdvancedModelBox[]{Left_Wing, Left_Wing2};
-        AdvancedModelBox[] RIGHT_WINGS = new AdvancedModelBox[]{Right_Wing, Right_Wing2};
-        // this.chainWave(LEFT_WINGS, speed_fly, degree_fly * 0.75F, 1, house.ticksExisted, 1);
-        // this.chainWave(RIGHT_WINGS, speed_fly, degree_fly * 0.75F, 1, house.ticksExisted, 1);
-
-        //this.Left_Leg.rotateAngleX = MathHelper.cos(f * 0.6662F + (float)Math.PI) * 1.0F * f1 * 0.5F / 1;
-        //this.Right_Leg.rotateAngleX = MathHelper.cos(f * 0.6662F) * 1.0F * f1 * 0.5F / 1;
-
-        float f12 = 0;//f1;
-        if (f12 < 0.0F) {
-            f12 = 0.0F;
-        }
-        if (f12 > Math.toRadians(20)) {
-            f12 = (float) Math.toRadians(20);
-        }
-
-        this.Right_Arm.rotateAngleX += -((float) Math.PI / 5F);
-        this.Left_Arm.rotateAngleX += -((float) Math.PI / 5F);
+    private void applySittingPose() {
+        this.Right_Arm.rotateAngleX -= (float) Math.PI / 5F;
+        this.Left_Arm.rotateAngleX -= (float) Math.PI / 5F;
         this.Right_Leg.rotateAngleX = -1.4137167F;
-        this.Right_Leg.rotateAngleY = ((float) Math.PI / 10F);
+        this.Right_Leg.rotateAngleY = (float) Math.PI / 10F;
         this.Right_Leg.rotateAngleZ = 0.07853982F;
         this.Left_Leg.rotateAngleX = -1.4137167F;
-        this.Left_Leg.rotateAngleY = -((float) Math.PI / 10F);
+        this.Left_Leg.rotateAngleY = -(float) Math.PI / 10F;
         this.Left_Leg.rotateAngleZ = -0.07853982F;
         this.Dress.rotateAngleX += (float) Math.toRadians(-50);
         this.Dress.rotationPointZ += 0.25F;
@@ -199,83 +146,10 @@ public class ModelPixie extends ModelDragonBase<EntityPixie> {
         this.Right_Wing.rotateAngleZ = (float) Math.toRadians(28);
         this.Left_Wing2.rotateAngleZ = (float) Math.toRadians(-8);
         this.Right_Wing2.rotateAngleZ = (float) Math.toRadians(8);
-		/*ItemStack itemstack = entity.getHeldItem(Hand.MAIN_HAND);
-		if (!itemstack.isEmpty()) {
-            this.Body.rotateAngleX = f12;
-            this.Head.rotateAngleX -= f12;
-            this.faceTarget(f3, f4, 1, this.Head);
-            this.Left_Arm.rotateAngleX += (float)Math.toRadians(-35);
-            this.Right_Arm.rotateAngleX += (float)Math.toRadians(-35);
-            this.Body.rotateAngleX += (float)Math.toRadians(10);
-            this.Left_Leg.rotateAngleX += (float)Math.toRadians(-10);
-            this.Right_Leg.rotateAngleX += (float)Math.toRadians(-10);
-            this.Head.rotateAngleX += (float)Math.toRadians(-10);
-        }else{
-            this.Right_Arm.rotateAngleX = MathHelper.cos(f * 0.6662F + (float)Math.PI) * 1.0F * f1 * 0.5F / 1;
-            this.Left_Arm.rotateAngleX = MathHelper.cos(f * 0.6662F) * 1.0F * f1 * 0.5F / 1;
-        }
-        */
     }
 
-    public void animateInJar(boolean sitting, TileEntityJar jar, float headRot) {
-        this.resetToDefaultPose();
-        float speed_fly = 1.1F;
-        float speed_idle = 0.05F;
-        float degree_fly = 1F;
-        float degree_idle = 0.5F;
-        AdvancedModelBox[] LEFT_WINGS = new AdvancedModelBox[]{Left_Wing, Left_Wing2};
-        AdvancedModelBox[] RIGHT_WINGS = new AdvancedModelBox[]{Right_Wing, Right_Wing2};
-        //this.Left_Leg.rotateAngleX = MathHelper.cos(f * 0.6662F + (float)Math.PI) * 1.0F * f1 * 0.5F / 1;
-        //this.Right_Leg.rotateAngleX = MathHelper.cos(f * 0.6662F) * 1.0F * f1 * 0.5F / 1;
-
-        float f12 = 0;//f1;
-        if (f12 < 0.0F) {
-            f12 = 0.0F;
-        }
-        if (f12 > Math.toRadians(20)) {
-            f12 = (float) Math.toRadians(20);
-        }
-        if (sitting) {
-            this.Right_Arm.rotateAngleX += -((float) Math.PI / 5F);
-            this.Left_Arm.rotateAngleX += -((float) Math.PI / 5F);
-            this.Right_Leg.rotateAngleX = -1.4137167F;
-            this.Right_Leg.rotateAngleY = ((float) Math.PI / 10F);
-            this.Right_Leg.rotateAngleZ = 0.07853982F;
-            this.Left_Leg.rotateAngleX = -1.4137167F;
-            this.Left_Leg.rotateAngleY = -((float) Math.PI / 10F);
-            this.Left_Leg.rotateAngleZ = -0.07853982F;
-            this.Dress.rotateAngleX += (float) Math.toRadians(-50);
-            this.Dress.rotationPointZ += 0.25F;
-            this.Dress.rotationPointY += 0.35F;
-            this.Left_Wing.rotateAngleZ = (float) Math.toRadians(-28);
-            this.Right_Wing.rotateAngleZ = (float) Math.toRadians(28);
-            this.Left_Wing2.rotateAngleZ = (float) Math.toRadians(-8);
-            this.Right_Wing2.rotateAngleZ = (float) Math.toRadians(8);
-        } else if (jar != null) {
-            float partialTicks = Minecraft.getInstance().getFrameTime();
-            this.chainWave(LEFT_WINGS, speed_fly, degree_fly * 0.75F, 1, jar.ticksExisted + partialTicks, 1);
-            this.chainWave(RIGHT_WINGS, speed_fly, degree_fly * 0.75F, 1, jar.ticksExisted + partialTicks, 1);
-        }
-		/*ItemStack itemstack = entity.getHeldItem(Hand.MAIN_HAND);
-		if (!itemstack.isEmpty()) {
-            this.Body.rotateAngleX = f12;
-            this.Head.rotateAngleX -= f12;
-            this.faceTarget(f3, f4, 1, this.Head);
-            this.Left_Arm.rotateAngleX += (float)Math.toRadians(-35);
-            this.Right_Arm.rotateAngleX += (float)Math.toRadians(-35);
-            this.Body.rotateAngleX += (float)Math.toRadians(10);
-            this.Left_Leg.rotateAngleX += (float)Math.toRadians(-10);
-            this.Right_Leg.rotateAngleX += (float)Math.toRadians(-10);
-            this.Head.rotateAngleX += (float)Math.toRadians(-10);
-        }else{
-            this.Right_Arm.rotateAngleX = MathHelper.cos(f * 0.6662F + (float)Math.PI) * 1.0F * f1 * 0.5F / 1;
-            this.Left_Arm.rotateAngleX = MathHelper.cos(f * 0.6662F) * 1.0F * f1 * 0.5F / 1;
-        }
-        */
-    }
-
-    @Override
+    /** Direct statue entry point retained; the shared statue renderer still needs an adapter bridge. */
     public void renderStatue(PoseStack matrixStackIn, VertexConsumer bufferIn, int packedLightIn, Entity living) {
-        this.renderToBuffer(matrixStackIn, bufferIn, packedLightIn, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
+        this.renderToBuffer(matrixStackIn, bufferIn, packedLightIn, OverlayTexture.NO_OVERLAY, -1);
     }
 }

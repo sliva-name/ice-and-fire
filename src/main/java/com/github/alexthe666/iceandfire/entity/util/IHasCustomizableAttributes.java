@@ -15,7 +15,7 @@ public interface IHasCustomizableAttributes {
     Map<EntityType<? extends LivingEntity>, AttributeSupplier> ATTRIBUTE_MODIFIER_MAP = new HashMap<>();
 
     static <T extends LivingEntity & IHasCustomizableAttributes, M extends LivingEntity & IHasCustomizableAttributes> void applyAttributesForEntity(EntityType<T> type, M entity) {
-        entity.attributes = new AttributeMap(getAttributesForEntity(type, entity));
+        entity.getAttributes().assignBaseValues(new AttributeMap(getAttributesForEntity(type, entity)));
         entity.setHealth(entity.getMaxHealth());
     }
 

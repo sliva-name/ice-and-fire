@@ -8,6 +8,8 @@
     "MuteSetBlockFarChunk"
   ],
   "client": [
+    "DragonRiderStateMixin",
+    "DragonRiderDispatcherMixin"
   ],
   "injectors": {
     "defaultRequire": 1

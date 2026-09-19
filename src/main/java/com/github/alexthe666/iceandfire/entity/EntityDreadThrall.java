@@ -1,5 +1,7 @@
 package com.github.alexthe666.iceandfire.entity;
 
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
 import com.github.alexthe666.citadel.animation.Animation;
 import com.github.alexthe666.citadel.animation.AnimationHandler;
 import com.github.alexthe666.citadel.animation.IAnimatedEntity;
@@ -60,18 +62,8 @@ public class EntityDreadThrall extends EntityDreadMob implements IAnimatedEntity
         this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(7, new RandomLookAroundGoal(this));
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this, IDreadMob.class));
-        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false, new Predicate<LivingEntity>() {
-            @Override
-            public boolean apply(@Nullable LivingEntity entity) {
-                return DragonUtils.canHostilesTarget(entity);
-            }
-        }));
-        this.targetSelector.addGoal(3, new DreadAITargetNonDread(this, LivingEntity.class, false, new Predicate<LivingEntity>() {
-            @Override
-            public boolean apply(LivingEntity entity) {
-                return entity instanceof LivingEntity && DragonUtils.canHostilesTarget(entity);
-            }
-        }));
+        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false, (entity, serverLevel) -> DragonUtils.canHostilesTarget(entity)));
+        this.targetSelector.addGoal(3, new DreadAITargetNonDread(this, LivingEntity.class, false, (entity, serverLevel) -> DragonUtils.canHostilesTarget(entity)));
     }
 
     public static AttributeSupplier.Builder bakeAttributes() {
@@ -89,23 +81,23 @@ public class EntityDreadThrall extends EntityDreadMob implements IAnimatedEntity
     }
 
     @Override
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(CUSTOM_ARMOR_INDEX, Integer.valueOf(0));
-        this.entityData.define(CUSTOM_ARMOR_HEAD, Boolean.valueOf(false));
-        this.entityData.define(CUSTOM_ARMOR_CHEST, Boolean.valueOf(false));
-        this.entityData.define(CUSTOM_ARMOR_LEGS, Boolean.valueOf(false));
-        this.entityData.define(CUSTOM_ARMOR_FEET, Boolean.valueOf(false));
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(CUSTOM_ARMOR_INDEX, Integer.valueOf(0));
+        builder.define(CUSTOM_ARMOR_HEAD, Boolean.valueOf(false));
+        builder.define(CUSTOM_ARMOR_CHEST, Boolean.valueOf(false));
+        builder.define(CUSTOM_ARMOR_LEGS, Boolean.valueOf(false));
+        builder.define(CUSTOM_ARMOR_FEET, Boolean.valueOf(false));
     }
 
     @Override
     public void aiStep() {
         super.aiStep();
         if (this.getAnimation() == ANIMATION_SPAWN && this.getAnimationTick() < 30) {
-            BlockState belowBlock = level.getBlockState(this.blockPosition().below());
+            BlockState belowBlock = this.level().getBlockState(this.blockPosition().below());
             if (belowBlock.getBlock() != Blocks.AIR) {
                 for (int i = 0; i < 5; i++) {
-                    this.level.addParticle(new BlockParticleOption(ParticleTypes.BLOCK, belowBlock), this.getX() + (double) (this.random.nextFloat() * this.getBbWidth() * 2.0F) - (double) this.getBbWidth(), this.getBoundingBox().minY, this.getZ() + (double) (this.random.nextFloat() * this.getBbWidth() * 2.0F) - (double) this.getBbWidth(), this.random.nextGaussian() * 0.02D, this.random.nextGaussian() * 0.02D, this.random.nextGaussian() * 0.02D);
+                    this.level().addParticle(new BlockParticleOption(ParticleTypes.BLOCK, belowBlock), this.getX() + (double) (this.random.nextFloat() * this.getBbWidth() * 2.0F) - (double) this.getBbWidth(), this.getBoundingBox().minY, this.getZ() + (double) (this.random.nextFloat() * this.getBbWidth() * 2.0F) - (double) this.getBbWidth(), this.random.nextGaussian() * 0.02D, this.random.nextGaussian() * 0.02D, this.random.nextGaussian() * 0.02D);
                 }
             }
             this.setDeltaMovement(0, this.getDeltaMovement().y, 0);
@@ -117,8 +109,8 @@ public class EntityDreadThrall extends EntityDreadMob implements IAnimatedEntity
     }
 
     @Override
-    protected void populateDefaultEquipmentSlots(@NotNull DifficultyInstance difficulty) {
-        super.populateDefaultEquipmentSlots(difficulty);
+    protected void populateDefaultEquipmentSlots(@NotNull net.minecraft.util.RandomSource random, @NotNull DifficultyInstance difficulty) {
+        super.populateDefaultEquipmentSlots(random, difficulty);
         if (random.nextFloat() < 0.75F) {
             double chance = random.nextFloat();
             if (chance < 0.0025F) {
@@ -155,10 +147,10 @@ public class EntityDreadThrall extends EntityDreadMob implements IAnimatedEntity
 
     @Override
     @Nullable
-    public SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor worldIn, @NotNull DifficultyInstance difficultyIn, @NotNull MobSpawnType reason, @Nullable SpawnGroupData spawnDataIn, @Nullable CompoundTag dataTag) {
-        SpawnGroupData data = super.finalizeSpawn(worldIn, difficultyIn, reason, spawnDataIn, dataTag);
+    public SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor worldIn, @NotNull DifficultyInstance difficultyIn, @NotNull EntitySpawnReason reason, @Nullable SpawnGroupData spawnDataIn) {
+        SpawnGroupData data = super.finalizeSpawn(worldIn, difficultyIn, reason, spawnDataIn);
         this.setAnimation(ANIMATION_SPAWN);
-        this.populateDefaultEquipmentSlots(difficultyIn);
+        this.populateDefaultEquipmentSlots(this.random, difficultyIn);
         return data;
     }
 
@@ -173,7 +165,7 @@ public class EntityDreadThrall extends EntityDreadMob implements IAnimatedEntity
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag compound) {
+    public void addAdditionalSaveData(ValueOutput compound) {
         super.addAdditionalSaveData(compound);
         compound.putInt("ArmorVariant", getBodyArmorVariant());
         compound.putBoolean("HasCustomHelmet", hasCustomArmorHead());
@@ -183,13 +175,13 @@ public class EntityDreadThrall extends EntityDreadMob implements IAnimatedEntity
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag compound) {
+    public void readAdditionalSaveData(ValueInput compound) {
         super.readAdditionalSaveData(compound);
-        setBodyArmorVariant(compound.getInt("ArmorVariant"));
-        setCustomArmorHead(compound.getBoolean("HasCustomHelmet"));
-        setCustomArmorChest(compound.getBoolean("HasCustomChestplate"));
-        setCustomArmorLegs(compound.getBoolean("HasCustomLeggings"));
-        setCustomArmorFeet(compound.getBoolean("HasCustomBoots"));
+        setBodyArmorVariant(compound.getIntOr("ArmorVariant", 0));
+        setCustomArmorHead(compound.getBooleanOr("HasCustomHelmet", false));
+        setCustomArmorChest(compound.getBooleanOr("HasCustomChestplate", false));
+        setCustomArmorLegs(compound.getBooleanOr("HasCustomLeggings", false));
+        setCustomArmorFeet(compound.getBooleanOr("HasCustomBoots", false));
     }
 
     @Override

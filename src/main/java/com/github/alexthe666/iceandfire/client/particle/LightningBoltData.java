@@ -1,6 +1,6 @@
 package com.github.alexthe666.iceandfire.client.particle;
 
-import com.mojang.math.Vector4f;
+import org.joml.Vector4f;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import org.apache.commons.lang3.tuple.Pair;

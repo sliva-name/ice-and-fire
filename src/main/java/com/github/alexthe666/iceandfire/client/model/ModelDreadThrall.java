@@ -3,12 +3,14 @@ package com.github.alexthe666.iceandfire.client.model;
 import com.github.alexthe666.citadel.animation.Animation;
 import com.github.alexthe666.citadel.client.model.ModelAnimator;
 import com.github.alexthe666.iceandfire.client.model.util.HideableModelRenderer;
-import com.github.alexthe666.iceandfire.entity.EntityDreadThrall;
+import com.github.alexthe666.iceandfire.client.render.entity.DreadHumanoidRenderState;
 import net.minecraft.client.model.HumanoidModel;
 
-public class ModelDreadThrall extends ModelDreadBase<EntityDreadThrall> {
+public class ModelDreadThrall extends ModelDreadBase {
+    private final boolean bodyArmorModel;
 
     public ModelDreadThrall(float modelScale, boolean bodyArmorModel) {
+        this.bodyArmorModel = bodyArmorModel;
         this.texHeight = 32;
         this.texWidth = 64;
         this.leftArmPose = HumanoidModel.ArmPose.EMPTY;
@@ -72,21 +74,17 @@ public class ModelDreadThrall extends ModelDreadBase<EntityDreadThrall> {
     }
 
     @Override
-    public void prepareMobModel(EntityDreadThrall LivingEntityIn, float limbSwing, float limbSwingAmount, float partialTickTime) {
-        this.rightArmPose = HumanoidModel.ArmPose.EMPTY;
-        this.leftArmPose = HumanoidModel.ArmPose.EMPTY;
-        super.prepareMobModel(LivingEntityIn, limbSwing, limbSwingAmount, partialTickTime);
-    }
-
-    @Override
-    public void setupAnim(EntityDreadThrall entityIn, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
-        super.setupAnim(entityIn, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch);
-        this.flap(body, 0.5F, 0.15F, false, 1, 0F, limbSwing, limbSwingAmount);
+    public void setupAnim(DreadHumanoidRenderState state) {
+        if (bodyArmorModel) {
+            return;
+        }
+        super.setupAnim(state);
+        this.flap(body, 0.5F, 0.15F, false, 1, 0F, state.walkAnimationPos, state.walkAnimationSpeed);
     }
 
     @Override
     public Animation getSpawnAnimation() {
-        return EntityDreadThrall.ANIMATION_SPAWN;
+        return DreadHumanoidRenderState.SPAWN;
     }
 
 }

@@ -7,7 +7,7 @@ public class CockatriceAIFollowOwner extends FollowOwnerGoal {
     EntityCockatrice cockatrice;
 
     public CockatriceAIFollowOwner(EntityCockatrice cockatrice, double speed, float minDist, float maxDist) {
-        super(cockatrice, speed, minDist, maxDist, true);
+        super(cockatrice, speed, minDist, maxDist);
         this.cockatrice = cockatrice;
     }
 

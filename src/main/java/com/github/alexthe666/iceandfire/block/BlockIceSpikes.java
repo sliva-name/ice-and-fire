@@ -15,7 +15,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.NotNull;
@@ -26,20 +26,20 @@ public class BlockIceSpikes extends Block {
 
     public BlockIceSpikes() {
         super(
-            Properties
-                .of(Material.ICE_SOLID)
+            IafBlockRegistry.id(Properties
+                .of().mapColor(MapColor.ICE)
                 .noOcclusion()
                 .dynamicShape()
                 .randomTicks()
                 .sound(SoundType.GLASS)
                 .strength(2.5F)
-                .requiresCorrectToolForDrops()
+                .requiresCorrectToolForDrops())
         );
     }
 
     @Override
-    public @NotNull BlockState updateShape(BlockState stateIn, @NotNull Direction facing, @NotNull BlockState facingState, @NotNull LevelAccessor worldIn, @NotNull BlockPos currentPos, @NotNull BlockPos facingPos) {
-        return !stateIn.canSurvive(worldIn, currentPos) ? Blocks.AIR.defaultBlockState() : super.updateShape(stateIn, facing, facingState, worldIn, currentPos, facingPos);
+    protected @NotNull BlockState updateShape(@NotNull BlockState stateIn, @NotNull LevelReader worldIn, net.minecraft.world.level.ScheduledTickAccess ticks, @NotNull BlockPos currentPos, @NotNull Direction facing, @NotNull BlockPos facingPos, @NotNull BlockState facingState, @NotNull net.minecraft.util.RandomSource random) {
+        return !stateIn.canSurvive(worldIn, currentPos) ? Blocks.AIR.defaultBlockState() : super.updateShape(stateIn, worldIn, ticks, currentPos, facing, facingPos, facingState, random);
     }
 
     @Override
@@ -48,7 +48,6 @@ public class BlockIceSpikes extends Block {
         return this.isValidGround(worldIn.getBlockState(blockpos), worldIn, blockpos);
     }
 
-    @Override
     public boolean propagatesSkylightDown(@NotNull BlockState state, @NotNull BlockGetter reader, @NotNull BlockPos pos) {
         return true;
     }
@@ -70,7 +69,7 @@ public class BlockIceSpikes extends Block {
     @Override
     public void stepOn(Level worldIn, BlockPos pos, BlockState pState, Entity entityIn) {
         if (!(entityIn instanceof EntityIceDragon)) {
-            entityIn.hurt(DamageSource.CACTUS, 1);
+            entityIn.hurt(worldIn.damageSources().cactus(), 1);
             if (entityIn instanceof LivingEntity && entityIn.getDeltaMovement().x != 0 && entityIn.getDeltaMovement().z != 0) {
                 ((LivingEntity) entityIn).knockback(0.5F, entityIn.getDeltaMovement().x, entityIn.getDeltaMovement().z);
             }

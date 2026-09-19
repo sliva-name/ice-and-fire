@@ -2,137 +2,156 @@ package com.github.alexthe666.iceandfire.client.render.entity;
 
 import com.github.alexthe666.iceandfire.client.model.ModelHippocampus;
 import com.github.alexthe666.iceandfire.entity.EntityHippocampus;
+import com.mojang.blaze3d.pipeline.BlendFunction;
+import com.mojang.blaze3d.pipeline.ColorTargetState;
+import com.mojang.blaze3d.pipeline.DepthStencilState;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.blaze3d.platform.CompareOp;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
+import net.minecraft.client.renderer.rendertype.RenderSetup;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.animal.Sheep;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.ARGB;
 import net.minecraft.world.item.DyeColor;
-import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nullable;
+public class RenderHippocampus extends MobRenderer<EntityHippocampus, HippocampusRenderState, EntityModel<HippocampusRenderState>> {
+    private static final RenderPipeline NO_OUTLINE = RenderPipeline.builder(RenderPipelines.ENTITY_SNIPPET)
+        .withLocation(Identifier.fromNamespaceAndPath("iceandfire", "pipeline/hippocampus_no_outline"))
+        .withShaderDefine("ALPHA_CUTOUT", 0.1F).withShaderDefine("PER_FACE_LIGHTING")
+        .withSampler("Sampler1").withCull(false)
+        .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
+        .withDepthStencilState(new DepthStencilState(CompareOp.LESS_THAN_OR_EQUAL, false))
+        .build();
 
+    private static RenderType noOutline(Identifier texture) {
+        // Legacy entityNoOutline writes color, not depth, and never contributes an outline.
+        return RenderType.create("hippocampus_no_outline", RenderSetup.builder(NO_OUTLINE)
+            .withTexture("Sampler0", texture).useLightmap().useOverlay().sortOnUpload()
+            .setOutline(RenderSetup.OutlineProperty.NONE).createRenderSetup());
+    }
 
-public class RenderHippocampus extends MobRenderer<EntityHippocampus, ModelHippocampus> {
+    private static final Identifier[] TEXTURES = new Identifier[6];
+    private static final Identifier[] BLINK_TEXTURES = new Identifier[6];
 
-    private static final ResourceLocation VARIANT_0 = new ResourceLocation("iceandfire:textures/models/hippocampus/hippocampus_0.png");
-    private static final ResourceLocation VARIANT_0_BLINK = new ResourceLocation("iceandfire:textures/models/hippocampus/hippocampus_0_blinking.png");
-    private static final ResourceLocation VARIANT_1 = new ResourceLocation("iceandfire:textures/models/hippocampus/hippocampus_1.png");
-    private static final ResourceLocation VARIANT_1_BLINK = new ResourceLocation("iceandfire:textures/models/hippocampus/hippocampus_1_blinking.png");
-    private static final ResourceLocation VARIANT_2 = new ResourceLocation("iceandfire:textures/models/hippocampus/hippocampus_2.png");
-    private static final ResourceLocation VARIANT_2_BLINK = new ResourceLocation("iceandfire:textures/models/hippocampus/hippocampus_2_blinking.png");
-    private static final ResourceLocation VARIANT_3 = new ResourceLocation("iceandfire:textures/models/hippocampus/hippocampus_3.png");
-    private static final ResourceLocation VARIANT_3_BLINK = new ResourceLocation("iceandfire:textures/models/hippocampus/hippocampus_3_blinking.png");
-    private static final ResourceLocation VARIANT_4 = new ResourceLocation("iceandfire:textures/models/hippocampus/hippocampus_4.png");
-    private static final ResourceLocation VARIANT_4_BLINK = new ResourceLocation("iceandfire:textures/models/hippocampus/hippocampus_4_blinking.png");
-    private static final ResourceLocation VARIANT_5 = new ResourceLocation("iceandfire:textures/models/hippocampus/hippocampus_5.png");
-    private static final ResourceLocation VARIANT_5_BLINK = new ResourceLocation("iceandfire:textures/models/hippocampus/hippocampus_5_blinking.png");
-
+    static {
+        for (int i = 0; i < TEXTURES.length; i++) {
+            TEXTURES[i] = texture("hippocampus_" + i);
+            BLINK_TEXTURES[i] = texture("hippocampus_" + i + "_blinking");
+        }
+    }
 
     public RenderHippocampus(EntityRendererProvider.Context context) {
-        super(context, new ModelHippocampus(), 0.8F);
-        this.layers.add(new RenderHippocampus.LayerHippocampusRainbow(this));
-        this.layers.add(new RenderHippocampus.LayerHippocampusSaddle(this));
+        super(context, new ModelHippocampus().asEntityModel(), 0.8F);
+        addLayer(new LayerHippocampusRainbow(this));
+        addLayer(new LayerHippocampusSaddle(this));
     }
 
-    @Nullable
+    private static Identifier texture(String name) {
+        return Identifier.fromNamespaceAndPath("iceandfire", "textures/models/hippocampus/" + name + ".png");
+    }
+
     @Override
-    public ResourceLocation getTextureLocation(EntityHippocampus entity) {
-        switch (entity.getVariant()) {
-            default:
-                return entity.isBlinking() ? VARIANT_0_BLINK : VARIANT_0;
-            case 1:
-                return entity.isBlinking() ? VARIANT_1_BLINK : VARIANT_1;
-            case 2:
-                return entity.isBlinking() ? VARIANT_2_BLINK : VARIANT_2;
-            case 3:
-                return entity.isBlinking() ? VARIANT_3_BLINK : VARIANT_3;
-            case 4:
-                return entity.isBlinking() ? VARIANT_4_BLINK : VARIANT_4;
-            case 5:
-                return entity.isBlinking() ? VARIANT_5_BLINK : VARIANT_5;
+    public HippocampusRenderState createRenderState() {
+        return new HippocampusRenderState();
+    }
 
+    @Override
+    public void extractRenderState(EntityHippocampus entity, HippocampusRenderState state, float partialTick) {
+        super.extractRenderState(entity, state, partialTick);
+        state.animation = entity.getAnimation() == EntityHippocampus.ANIMATION_SPEAK ? HippocampusRenderState.SPEAK : null;
+        state.animationTick = entity.getAnimationTick();
+        state.partialTick = partialTick;
+        state.onLandProgress = entity.onLandProgress;
+        state.sitProgress = entity.sitProgress;
+        state.onGround = entity.onGround();
+        state.inWater = entity.isInWater();
+        state.tailYaw = entity.tail_buffer == null ? 0 : entity.tail_buffer.sampleYaw(partialTick);
+        state.variant = entity.getVariant();
+        state.blinking = entity.isBlinking();
+        state.saddled = entity.isSaddled();
+        state.bridled = state.saddled && entity.getControllingPassenger() != null;
+        state.chested = entity.isChested();
+        state.armor = entity.getArmor();
+        state.rainbow = entity.hasCustomName() && entity.getCustomName() != null
+            && entity.getCustomName().getString().toLowerCase().contains("rainbow");
+        state.rainbowColor = -1;
+        if (state.rainbow) {
+            int i = entity.tickCount / 25 + entity.getId();
+            int count = DyeColor.values().length;
+            DyeColor first = DyeColor.byId(i % count);
+            DyeColor second = DyeColor.byId((i + 1) % count);
+            float f = ((float) (entity.tickCount % 25) + partialTick) / 25.0F;
+            state.rainbowColor = ARGB.colorFromFloat(1,
+                sheepChannel(first, 16) * (1 - f) + sheepChannel(second, 16) * f,
+                sheepChannel(first, 8) * (1 - f) + sheepChannel(second, 8) * f,
+                sheepChannel(first, 0) * (1 - f) + sheepChannel(second, 0) * f);
         }
     }
 
+    // Preserve the old Sheep.getColorArray float math, without the new color lerper's rounding.
+    private static float sheepChannel(DyeColor color, int shift) {
+        return color == DyeColor.WHITE ? 0.9F : ((color.getTextureDiffuseColor() >> shift) & 255) / 255.0F * 0.75F;
+    }
 
-    private class LayerHippocampusSaddle extends RenderLayer<EntityHippocampus, ModelHippocampus> {
-        private final RenderHippocampus renderer;
-        private final RenderType SADDLE_TEXTURE = RenderType.entityNoOutline(new ResourceLocation("iceandfire:textures/models/hippocampus/saddle.png"));
-        private final RenderType BRIDLE = RenderType.entityNoOutline(new ResourceLocation("iceandfire:textures/models/hippocampus/bridle.png"));
-        private final RenderType CHEST = RenderType.entityTranslucent(new ResourceLocation("iceandfire:textures/models/hippocampus/chest.png"));
-        private final RenderType TEXTURE_DIAMOND = RenderType.entityCutout(new ResourceLocation("iceandfire:textures/models/hippocampus/armor_diamond.png"));
-        private final RenderType TEXTURE_GOLD = RenderType.entityCutout(new ResourceLocation("iceandfire:textures/models/hippocampus/armor_gold.png"));
-        private final RenderType TEXTURE_IRON = RenderType.entityCutout(new ResourceLocation("iceandfire:textures/models/hippocampus/armor_iron.png"));
+    @Override
+    public Identifier getTextureLocation(HippocampusRenderState state) {
+        int variant = state.variant >= 0 && state.variant < TEXTURES.length ? state.variant : 0;
+        return state.blinking ? BLINK_TEXTURES[variant] : TEXTURES[variant];
+    }
 
-        public LayerHippocampusSaddle(RenderHippocampus renderer) {
+    private static class LayerHippocampusSaddle extends RenderLayer<HippocampusRenderState, EntityModel<HippocampusRenderState>> {
+        private static final RenderType SADDLE = noOutline(texture("saddle"));
+        private static final RenderType BRIDLE = noOutline(texture("bridle"));
+        private static final RenderType CHEST = RenderTypes.entityTranslucent(texture("chest"));
+        private static final RenderType IRON = RenderTypes.entityCutoutCull(texture("armor_iron"));
+        private static final RenderType GOLD = RenderTypes.entityCutoutCull(texture("armor_gold"));
+        private static final RenderType DIAMOND = RenderTypes.entityCutoutCull(texture("armor_diamond"));
+
+        LayerHippocampusSaddle(RenderHippocampus renderer) {
             super(renderer);
-            this.renderer = renderer;
         }
 
         @Override
-        public void render(@NotNull PoseStack matrixStackIn, @NotNull MultiBufferSource bufferIn, int packedLightIn, EntityHippocampus hippo, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch) {
-            if (hippo.isSaddled()) {
-                VertexConsumer ivertexbuilder = bufferIn.getBuffer(SADDLE_TEXTURE);
-                this.getParentModel().renderToBuffer(matrixStackIn, ivertexbuilder, packedLightIn, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
-            }
-            if (hippo.isSaddled() && hippo.getControllingPassenger() != null) {
-                VertexConsumer ivertexbuilder = bufferIn.getBuffer(BRIDLE);
-                this.getParentModel().renderToBuffer(matrixStackIn, ivertexbuilder, packedLightIn, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
-            }
-            if (hippo.isChested()) {
-                VertexConsumer ivertexbuilder = bufferIn.getBuffer(CHEST);
-                this.getParentModel().renderToBuffer(matrixStackIn, ivertexbuilder, packedLightIn, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
-            }
-            if (hippo.getArmor() != 0) {
-                RenderType type = null;
-                switch (hippo.getArmor()) {
-                    case 1:
-                        type = TEXTURE_IRON;
-                        break;
-                    case 2:
-                        type = TEXTURE_GOLD;
-                        break;
-                    case 3:
-                        type = TEXTURE_DIAMOND;
-                        break;
-                }
-                VertexConsumer ivertexbuilder = bufferIn.getBuffer(type);
-                this.getParentModel().renderToBuffer(matrixStackIn, ivertexbuilder, packedLightIn, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
+        public void submit(PoseStack poses, SubmitNodeCollector collector, int light, HippocampusRenderState state, float yRot, float xRot) {
+            if (state.saddled) submitPart(poses, collector, light, state, SADDLE);
+            if (state.bridled) submitPart(poses, collector, light, state, BRIDLE);
+            if (state.chested) submitPart(poses, collector, light, state, CHEST);
+            RenderType armor = switch (state.armor) {
+                case 1 -> IRON;
+                case 2 -> GOLD;
+                case 3 -> DIAMOND;
+                default -> null;
+            };
+            if (armor != null) submitPart(poses, collector, light, state, armor);
+        }
 
-            }
+        private void submitPart(PoseStack poses, SubmitNodeCollector collector, int light, HippocampusRenderState state, RenderType type) {
+            collector.order(2).submitModel(getParentModel(), state, poses, type, light, OverlayTexture.NO_OVERLAY, state.outlineColor, null);
         }
     }
 
-    private class LayerHippocampusRainbow extends RenderLayer<EntityHippocampus, ModelHippocampus> {
-        private final RenderHippocampus renderer;
-        private final RenderType TEXTURE = RenderType.entityNoOutline(new ResourceLocation("iceandfire:textures/models/hippocampus/rainbow.png"));
-        private final RenderType TEXTURE_BLINK = RenderType.entityNoOutline(new ResourceLocation("iceandfire:textures/models/hippocampus/rainbow_blink.png"));
+    private static class LayerHippocampusRainbow extends RenderLayer<HippocampusRenderState, EntityModel<HippocampusRenderState>> {
+        private static final RenderType TEXTURE = noOutline(texture("rainbow"));
+        private static final RenderType BLINK = noOutline(texture("rainbow_blink"));
 
-        public LayerHippocampusRainbow(RenderHippocampus renderer) {
+        LayerHippocampusRainbow(RenderHippocampus renderer) {
             super(renderer);
-            this.renderer = renderer;
         }
 
         @Override
-        public void render(@NotNull PoseStack matrixStackIn, @NotNull MultiBufferSource bufferIn, int packedLightIn, EntityHippocampus hippo, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch) {
-            if (hippo.hasCustomName() && hippo.getCustomName().toString().toLowerCase().contains("rainbow")) {
-                VertexConsumer ivertexbuilder = bufferIn.getBuffer(hippo.isBlinking() ? TEXTURE_BLINK : TEXTURE);
-                int i1 = 25;
-                int i = hippo.tickCount / 25 + hippo.getId();
-                int j = DyeColor.values().length;
-                int k = i % j;
-                int l = (i + 1) % j;
-                float f = ((float) (hippo.tickCount % 25) + partialTicks) / 25.0F;
-                float[] afloat1 = Sheep.getColorArray(DyeColor.byId(k));
-                float[] afloat2 = Sheep.getColorArray(DyeColor.byId(l));
-                this.getParentModel().renderToBuffer(matrixStackIn, ivertexbuilder, packedLightIn, LivingEntityRenderer.getOverlayCoords(hippo, 0.0F), afloat1[0] * (1.0F - f) + afloat2[0] * f, afloat1[1] * (1.0F - f) + afloat2[1] * f, afloat1[2] * (1.0F - f) + afloat2[2] * f, 1.0F);
+        public void submit(PoseStack poses, SubmitNodeCollector collector, int light, HippocampusRenderState state, float yRot, float xRot) {
+            if (state.rainbow) {
+                collector.order(1).submitModel(getParentModel(), state, poses, state.blinking ? BLINK : TEXTURE,
+                    light, LivingEntityRenderer.getOverlayCoords(state, 0), state.rainbowColor, null, state.outlineColor, null);
             }
         }
     }

@@ -3,16 +3,14 @@ package com.github.alexthe666.iceandfire.client.model;
 import com.github.alexthe666.citadel.client.model.AdvancedEntityModel;
 import com.github.alexthe666.citadel.client.model.AdvancedModelBox;
 import com.github.alexthe666.citadel.client.model.ModelAnimator;
-import net.minecraft.world.entity.Entity;
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
 
-public abstract class ModelDragonBase<T extends Entity> extends AdvancedEntityModel<T> implements ICustomStatueModel {
+public abstract class ModelDragonBase<T extends EntityRenderState> extends AdvancedEntityModel<T> implements ICustomStatueModel {
 
-    @Override
     public void rotate(ModelAnimator animator, AdvancedModelBox model, float x, float y, float z) {
         animator.rotate(model, (float) Math.toRadians(x), (float) Math.toRadians(y), (float) Math.toRadians(z));
     }
 
-    @Override
     public void rotateMinus(ModelAnimator animator, AdvancedModelBox model, float x, float y, float z) {
         animator.rotate(model, (float) Math.toRadians(x) - model.defaultRotationX, (float) Math.toRadians(y) - model.defaultRotationY, (float) Math.toRadians(z) - model.defaultRotationZ);
     }

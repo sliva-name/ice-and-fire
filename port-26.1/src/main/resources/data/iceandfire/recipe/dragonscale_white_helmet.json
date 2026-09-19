@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "SSS",
+    "S S"
+  ],
+  "key": {
+    "S": "iceandfire:dragonscales_white"
+  },
+  "result": {
+    "id": "iceandfire:armor_white_helmet"
+  }
+}

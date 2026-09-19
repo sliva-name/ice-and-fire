@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " T",
+    "S "
+  ],
+  "key": {
+    "S": "#forge:rods/wooden",
+    "T": "iceandfire:hippocampus_fin"
+  },
+  "result": {
+    "id": "iceandfire:hippocampus_slapper"
+  }
+}

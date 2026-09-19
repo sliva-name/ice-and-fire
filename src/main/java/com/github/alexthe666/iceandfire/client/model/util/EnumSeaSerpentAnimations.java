@@ -1,9 +1,9 @@
 package com.github.alexthe666.iceandfire.client.model.util;
 
 import com.github.alexthe666.citadel.client.model.TabulaModel;
-import com.github.alexthe666.iceandfire.IceAndFire;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.fml.loading.FMLEnvironment;
+import com.github.alexthe666.iceandfire.client.render.entity.SeaSerpentRenderState;
+
+import java.io.IOException;
 
 public enum EnumSeaSerpentAnimations {
     T_POSE(""),
@@ -25,24 +25,22 @@ public enum EnumSeaSerpentAnimations {
 
 
     private final String fileSuffix;
-    public TabulaModel seaserpent_model;
+    public TabulaModel<SeaSerpentRenderState> seaserpent_model;
 
     EnumSeaSerpentAnimations(String fileSuffix) {
         this.fileSuffix = fileSuffix;
     }
 
 
+    /** Called from client model initialization; fail at the asset, not later during animation. */
     public static void initializeSerpentModels() {
-        if (FMLEnvironment.dist == Dist.CLIENT) {
-            for (EnumSeaSerpentAnimations animation : values()) {
-                try {
-                    animation.seaserpent_model = new TabulaModel(TabulaModelHandlerHelper.loadTabulaModel("/assets/iceandfire/models/tabula/seaserpent/seaserpent" + animation.fileSuffix));
-                } catch (Exception e) {
-                    IceAndFire.LOGGER.warn("sea serpent model at: seaserpent" + animation.fileSuffix + ".tbl doesn't exist!");
-                    e.printStackTrace();
-                }
+        for (EnumSeaSerpentAnimations animation : values()) {
+            String path = "/assets/iceandfire/models/tabula/seaserpent/seaserpent" + animation.fileSuffix;
+            try {
+                animation.seaserpent_model = new TabulaModel<>(TabulaModelHandlerHelper.loadTabulaModel(path));
+            } catch (IOException e) {
+                throw new IllegalStateException("Unable to load SeaSerpent pose " + path + ".tbl", e);
             }
         }
-
     }
 }

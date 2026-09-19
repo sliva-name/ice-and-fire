@@ -2,11 +2,24 @@ package com.github.alexthe666.iceandfire.client.model;
 
 import com.github.alexthe666.citadel.client.model.AdvancedModelBox;
 import com.github.alexthe666.citadel.client.model.ModelAnimator;
-import com.github.alexthe666.iceandfire.client.model.util.HideableModelRenderer;
-import com.github.alexthe666.iceandfire.entity.EntityGhost;
+import com.github.alexthe666.citadel.client.model.AdvancedEntityModel;
+import com.github.alexthe666.citadel.client.model.basic.BasicModelPart;
+import com.github.alexthe666.iceandfire.client.render.entity.GhostRenderState;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.world.entity.Entity;
 import com.google.common.collect.ImmutableList;
 
-public class ModelGhost extends ModelBipedBase<EntityGhost> {
+public class ModelGhost extends AdvancedEntityModel<GhostRenderState> implements ICustomStatueModel {
+    public AdvancedModelBox head;
+    public AdvancedModelBox headware;
+    public AdvancedModelBox body;
+    public AdvancedModelBox armRight;
+    public AdvancedModelBox armLeft;
+    public AdvancedModelBox legRight;
+    public AdvancedModelBox legLeft;
+    private final ModelAnimator animator;
     public AdvancedModelBox robe;
     public AdvancedModelBox mask;
     public AdvancedModelBox hood;
@@ -17,20 +30,20 @@ public class ModelGhost extends ModelBipedBase<EntityGhost> {
     public AdvancedModelBox sleeveLeft;
 
     public ModelGhost(float modelScale) {
-        super();
+        this.headware = new AdvancedModelBox(this, 0, 0);
         this.texWidth = 128;
         this.texHeight = 64;
         this.sleeveRight = new AdvancedModelBox(this, 33, 35);
         this.sleeveRight.setPos(0.0F, -0.1F, 0.0F);
         this.sleeveRight.addBox(-2.2F, -2.0F, -2.0F, 3.0F, 12.0F, 4.0F, 0.0F, 0.0F, modelScale);
-        this.body = new HideableModelRenderer(this, 16, 16);
+        this.body = new AdvancedModelBox(this, 16, 16);
         this.body.setPos(0.0F, 0.0F, 0.0F);
         this.body.addBox(-4.0F, 0.0F, -2.0F, 8.0F, 12.0F, 4.0F, 0.0F, 0.0F, modelScale);
         this.robeLowerRight = new AdvancedModelBox(this, 48, 35);
         this.robeLowerRight.mirror = true;
         this.robeLowerRight.setPos(0.0F, 0.0F, 0.0F);
         this.robeLowerRight.addBox(-2.0F, 0.0F, -2.0F, 4.0F, 12.0F, 4.0F, 0.0F, 0.0F, modelScale);
-        this.armLeft = new HideableModelRenderer(this, 40, 16);
+        this.armLeft = new AdvancedModelBox(this, 40, 16);
         this.armLeft.mirror = true;
         this.armLeft.setPos(5.0F, 2.0F, -0.0F);
         this.armLeft.addBox(-1.0F, -2.0F, -1.0F, 2.0F, 12.0F, 2.0F, 0.0F, 0.0F, modelScale);
@@ -42,24 +55,24 @@ public class ModelGhost extends ModelBipedBase<EntityGhost> {
         this.hood = new AdvancedModelBox(this, 60, 0);
         this.hood.setPos(0.0F, 0.0F, 0.0F);
         this.hood.addBox(-4.5F, -8.6F, -4.5F, 9.0F, 9.0F, 9.0F, 0.0F, 0.0F, modelScale);
-        this.legLeft = new HideableModelRenderer(this, 0, 16);
+        this.legLeft = new AdvancedModelBox(this, 0, 16);
         this.legLeft.mirror = true;
         this.legLeft.setPos(2.2F, 12.0F, 0.1F);
         this.legLeft.addBox(-1.0F, 0.0F, -1.0F, 2.0F, 12.0F, 2.0F, 0.0F, 0.0F, modelScale);
-        this.head = new HideableModelRenderer(this, 0, 0);
+        this.head = new AdvancedModelBox(this, 0, 0);
         this.head.setPos(0.0F, 0.0F, 0.0F);
         this.head.addBox(-4.0F, -8.0F, -4.0F, 8.0F, 8.0F, 8.0F, 0.0F, 0.0F, modelScale);
         this.mask = new AdvancedModelBox(this, 40, 8);
         this.mask.setPos(0.0F, 0.0F, 0.0F);
         this.mask.addBox(-4.0F, -8.6F, -4.4F, 8.0F, 8.0F, 0.0F, 0.0F, 0.0F, modelScale);
-        this.armRight = new HideableModelRenderer(this, 40, 16);
+        this.armRight = new AdvancedModelBox(this, 40, 16);
         this.armRight.setPos(-5.0F, 2.0F, 0.0F);
         this.armRight.addBox(-1.0F, -2.0F, -1.0F, 2.0F, 12.0F, 2.0F, 0.0F, 0.0F, modelScale);
         this.setRotateAngle(armRight, -1.4570009181544104F, -0.10000736647217022F, 0.10000736647217022F);
         this.robe = new AdvancedModelBox(this, 4, 34);
         this.robe.setPos(0.0F, 0.1F, 0.0F);
         this.robe.addBox(-4.5F, 0.0F, -2.5F, 9.0F, 12.0F, 5.0F, 0.0F, 0.0F, modelScale);
-        this.legRight = new HideableModelRenderer(this, 0, 16);
+        this.legRight = new AdvancedModelBox(this, 0, 16);
         this.legRight.setPos(-2.3F, 12.0F, 0.1F);
         this.legRight.addBox(-1.0F, 0.0F, -1.0F, 2.0F, 12.0F, 2.0F, 0.0F, 0.0F, modelScale);
         this.robeLowerLeft = new AdvancedModelBox(this, 48, 35);
@@ -87,9 +100,14 @@ public class ModelGhost extends ModelBipedBase<EntityGhost> {
     }
 
     @Override
-    public void setupAnim(EntityGhost entity, float f, float f1, float f2, float f3, float f4) {
+    public void setupAnim(GhostRenderState state) {
+        float f = state.walkAnimationPos;
+        float f1 = state.walkAnimationSpeed;
+        float f2 = state.ageInTicks;
+        float f3 = state.yRot;
+        float f4 = state.xRot;
         this.resetToDefaultPose();
-        animate(entity, f, f1, f2, f3, f4, 1);
+        animate(state);
         this.faceTarget(f3, f4, 1, this.head);
         float speed_walk = 0.6F;
         float speed_idle = 0.05F;
@@ -121,10 +139,24 @@ public class ModelGhost extends ModelBipedBase<EntityGhost> {
 
     }
 
+    private void rotateMinus(ModelAnimator animator, AdvancedModelBox part, float x, float y, float z) {
+        animator.rotate(part, (float) Math.toRadians(x) - part.defaultRotationX,
+            (float) Math.toRadians(y) - part.defaultRotationY, (float) Math.toRadians(z) - part.defaultRotationZ);
+    }
+
     @Override
-    public void animate(EntityGhost entity, float f, float f1, float f2, float f3, float f4, float f5) {
-        animator.update(entity);
-        if (animator.setAnimation(EntityGhost.ANIMATION_SCARE)) {
+    public Iterable<BasicModelPart> parts() {
+        return ImmutableList.of(body);
+    }
+
+    @Override
+    public void renderStatue(PoseStack poses, VertexConsumer buffer, int light, Entity entity) {
+        renderToBuffer(poses, buffer, light, OverlayTexture.NO_OVERLAY, -1);
+    }
+
+    public void animate(GhostRenderState state) {
+        animator.update(state.animation, state.animationTick, state.partialTick);
+        if (animator.setAnimation(GhostRenderState.SCARE)) {
             animator.startKeyframe(5);
             animator.move(head, 0, -2, 0);
             animator.move(armLeft, 0, 1, 0);
@@ -163,7 +195,7 @@ public class ModelGhost extends ModelBipedBase<EntityGhost> {
             animator.endKeyframe();
             animator.resetKeyframe(10);
         }
-        if (animator.setAnimation(EntityGhost.ANIMATION_HIT)) {
+        if (animator.setAnimation(GhostRenderState.HIT)) {
             animator.startKeyframe(5);
             animator.move(head, 0, -1, 0);
             this.rotateMinus(animator, body, 0, 0F, 0F);

@@ -2,148 +2,156 @@ package com.github.alexthe666.iceandfire.client.particle;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Matrix4f;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
-import org.apache.commons.lang3.tuple.Pair;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.world.phys.Vec3;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.WeakHashMap;
 
-/*
-    Lightning bolt effect code used with permission from aidancbrady
+/**
+ * Electricity specialization of the lightning effect used with permission from aidancbrady.
+ * Generation/lifetime advance during extraction only; deferred drawing owns immutable vertices.
  */
 public class LightningRender {
+    private static final int SEGMENTS = 15;
+    private static final double LIFESPAN = 4;
+    private final Random random;
+    // Entities are weak extraction keys, never retained by a snapshot or deferred callback.
+    private final Map<Object, History> owners = new WeakHashMap<>();
 
-    private static final float REFRESH_TIME = 3F;
-    private static final double MAX_OWNER_TRACK_TIME = 100;
+    public LightningRender() {
+        this(new Random());
+    }
 
-    private Timestamp refreshTimestamp = new Timestamp();
+    public LightningRender(Random random) {
+        this.random = random;
+    }
 
-    private final Random random = new Random();
-    private final Minecraft minecraft = Minecraft.getInstance();
+    public static boolean withinRange(double distanceSquared, int renderDistanceChunks) {
+        double range = Math.max(256, renderDistanceChunks * 16.0);
+        return distanceSquared <= range * range;
+    }
 
-    private final Map<Object, BoltOwnerData> boltOwners = new Object2ObjectOpenHashMap<>();
+    public static float boltSize(float dragonScale) {
+        // This was a linear mapping, despite the old getBoundedScale name: do not clamp.
+        return 0.05F * (0.5F + 0.4F * dragonScale * 1.5F);
+    }
 
-    public void render(float partialTicks, PoseStack matrixStackIn, MultiBufferSource bufferIn) {
-        VertexConsumer buffer = bufferIn.getBuffer(RenderType.lightning());
-        Matrix4f matrix = matrixStackIn.last().pose();
-        Timestamp timestamp = new Timestamp(minecraft.level.getGameTime(), partialTicks);
-        boolean refresh = timestamp.isPassed(refreshTimestamp, (1 / REFRESH_TIME));
-        if (refresh) {
-            refreshTimestamp = timestamp;
+    public void remove(Object owner) {
+        owners.remove(owner);
+    }
+
+    public Snapshot extract(Object owner, double time, Vec3 start, Vec3 end, float dragonScale, Vec3 origin) {
+        History history = owners.computeIfAbsent(owner, ignored -> new History());
+        if (time < history.lastTime) history.bolts.clear();
+        history.bolts.removeIf(bolt -> time - bolt.created >= LIFESPAN);
+        // NO_DELAY spawns on every new frame, but not twice for the same extracted timestamp.
+        if (time != history.lastTime || history.bolts.isEmpty()) {
+            history.bolts.add(new Bolt(time, generate(start, end, boltSize(dragonScale))));
         }
-        for (Iterator<Map.Entry<Object, BoltOwnerData>> iter = boltOwners.entrySet().iterator(); iter.hasNext(); ) {
-            Map.Entry<Object, BoltOwnerData> entry = iter.next();
-            BoltOwnerData data = entry.getValue();
-            // tick our bolts based on the refresh rate, removing if they're now finished
-            if (refresh) {
-                data.bolts.removeIf(bolt -> bolt.tick(timestamp));
+        history.lastTime = time;
+        var vertices = new ArrayList<Vec3>();
+        for (Bolt bolt : history.bolts) {
+            double life = (time - bolt.created) / LIFESPAN;
+            int count = bolt.segments.size();
+            int first = life > 0.5 ? (int) (count * (life - 0.5) / 0.5) : 0;
+            int last = life < 0.5 ? (int) (count * life / 0.5) : count;
+            for (int i = first; i < last; i++) {
+                for (Vec3 vertex : bolt.segments.get(i)) vertices.add(vertex.subtract(origin));
             }
-            if (data.bolts.isEmpty() && data.lastBolt != null && data.lastBolt.getSpawnFunction().isConsecutive()) {
-                data.addBolt(new BoltInstance(data.lastBolt, timestamp), timestamp);
-            }
-            data.bolts.forEach(bolt -> bolt.render(matrix, buffer, timestamp));
+        }
+        return vertices.isEmpty() ? Snapshot.EMPTY : new Snapshot(vertices);
+    }
 
-            if (data.bolts.isEmpty() && timestamp.isPassed(data.lastUpdateTimestamp, MAX_OWNER_TRACK_TIME)) {
-                iter.remove();
+    public static void submit(Snapshot snapshot, PoseStack poses, SubmitNodeCollector collector) {
+        if (!snapshot.vertices.isEmpty()) {
+            collector.submitCustomGeometry(poses, RenderTypes.lightning(), snapshot::render);
+        }
+    }
+
+    public record Snapshot(List<Vec3> vertices) {
+        public static final Snapshot EMPTY = new Snapshot(List.of());
+
+        public Snapshot {
+            vertices = List.copyOf(vertices);
+        }
+
+        public void render(PoseStack.Pose pose, VertexConsumer buffer) {
+            for (Vec3 vertex : vertices) {
+                buffer.addVertex(pose, (float) vertex.x, (float) vertex.y, (float) vertex.z)
+                    .setColor(0.70F, 0.45F, 0.89F, 0.8F);
             }
         }
     }
 
-    public void update(Object owner, LightningBoltData newBoltData, float partialTicks) {
-        if (minecraft.level == null) {
-            return;
-        }
-        BoltOwnerData data = boltOwners.computeIfAbsent(owner, o -> new BoltOwnerData());
-        data.lastBolt = newBoltData;
-        Timestamp timestamp = new Timestamp(minecraft.level.getGameTime(), partialTicks);
-        if ((!data.lastBolt.getSpawnFunction().isConsecutive() || data.bolts.isEmpty()) && timestamp.isPassed(data.lastBoltTimestamp, data.lastBoltDelay)) {
-            data.addBolt(new BoltInstance(newBoltData, timestamp), timestamp);
-        }
-        data.lastUpdateTimestamp = timestamp;
-    }
-
-    public class BoltOwnerData {
-
-        private final Set<BoltInstance> bolts = new ObjectOpenHashSet<>();
-        private LightningBoltData lastBolt;
-        private Timestamp lastBoltTimestamp = new Timestamp();
-        private Timestamp lastUpdateTimestamp = new Timestamp();
-        private double lastBoltDelay;
-
-        private void addBolt(BoltInstance instance, Timestamp timestamp) {
-            bolts.add(instance);
-            lastBoltDelay = instance.bolt.getSpawnFunction().getSpawnDelay(random);
-            lastBoltTimestamp = timestamp;
-        }
-    }
-
-    public class BoltInstance {
-
-        private final LightningBoltData bolt;
-        private final List<LightningBoltData.BoltQuads> renderQuads;
-        private final Timestamp createdTimestamp;
-
-        public BoltInstance(LightningBoltData bolt, Timestamp timestamp) {
-            this.bolt = bolt;
-            this.renderQuads = bolt.generate();
-            this.createdTimestamp = timestamp;
-        }
-
-        public void render(Matrix4f matrix, VertexConsumer buffer, Timestamp timestamp) {
-            float lifeScale = timestamp.subtract(createdTimestamp).value() / bolt.getLifespan();
-            Pair<Integer, Integer> bounds = bolt.getFadeFunction().getRenderBounds(renderQuads.size(), lifeScale);
-            for (int i = bounds.getLeft(); i < bounds.getRight(); i++) {
-                renderQuads.get(i).getVecs().forEach(v -> buffer.vertex(matrix, (float) v.x, (float) v.y, (float) v.z)
-                    .color(bolt.getColor().x(), bolt.getColor().y(), bolt.getColor().z(), bolt.getColor().w())
-                    .endVertex());
+    private List<List<Vec3>> generate(Vec3 start, Vec3 end, float size) {
+        var segments = new ArrayList<List<Vec3>>();
+        Vec3 diff = end.subtract(start);
+        float distance = (float) diff.length();
+        if (distance < 1.0E-6F) return segments;
+        var queue = new ArrayDeque<Instruction>();
+        queue.add(new Instruction(start, 0, Vec3.ZERO, null, false));
+        while (!queue.isEmpty()) {
+            Instruction data = queue.remove();
+            Vec3 perpendicular = data.perpendicular;
+            float progress = data.progress + (1F / SEGMENTS) * (0.5F + random.nextFloat());
+            Vec3 segmentEnd;
+            if (progress >= 1) {
+                segmentEnd = end;
+            } else {
+                float spread = (float) Math.sin(Math.PI * progress);
+                float maxDiff = 0.25F * spread * distance * (float) random.nextGaussian();
+                Vec3 rand = new Vec3(-0.5 + random.nextDouble(), -0.5 + random.nextDouble(), -0.5 + random.nextDouble());
+                Vec3 next = diff.cross(rand).normalize().scale(maxDiff * (1 - 0.8F));
+                if (progress > 0.5F) next = next.add(perpendicular.scale(-(1 - spread)));
+                perpendicular = perpendicular.add(next);
+                segmentEnd = start.add(diff.scale(progress)).add(perpendicular);
+            }
+            float width = size * (0.5F + (1 - progress) * 0.5F);
+            End cache = addQuads(segments, data.cache, data.start, segmentEnd, width);
+            if (progress >= 1) break;
+            if (!data.branch || random.nextFloat() < 0.15F) {
+                queue.add(new Instruction(segmentEnd, progress, perpendicular, cache, data.branch));
+            }
+            while (random.nextFloat() < 0.25F * (1 - progress)) {
+                queue.add(new Instruction(segmentEnd, progress, perpendicular, cache, true));
             }
         }
-
-        public boolean tick(Timestamp timestamp) {
-            return timestamp.isPassed(createdTimestamp, bolt.getLifespan());
-        }
+        return segments;
     }
 
-    public class Timestamp {
-
-        private final long ticks;
-        private final float partial;
-
-        public Timestamp() {
-            this(0, 0);
+    private static End addQuads(List<List<Vec3>> segments, End cache, Vec3 start, Vec3 end, float size) {
+        Vec3 diff = end.subtract(start);
+        Vec3 right = diff.cross(new Vec3(0.5, 0.5, 0.5));
+        // Avoid a collapsed ribbon for a segment parallel to the original reference vector.
+        if (right.lengthSqr() < 1.0E-12) {
+            right = diff.cross(Math.abs(diff.y) < Math.abs(diff.x) ? new Vec3(0, 1, 0) : new Vec3(1, 0, 0));
         }
-
-        public Timestamp(long ticks, float partial) {
-            this.ticks = ticks;
-            this.partial = partial;
-        }
-
-        public Timestamp subtract(Timestamp other) {
-            long newTicks = ticks - other.ticks;
-            float newPartial = partial - other.partial;
-            if (newPartial < 0) {
-                newPartial += 1;
-                newTicks -= 1;
-            }
-            return new Timestamp(newTicks, newPartial);
-        }
-
-        public float value() {
-            return ticks + partial;
-        }
-
-        public boolean isPassed(Timestamp prev, double duration) {
-            long ticksPassed = ticks - prev.ticks;
-            if (ticksPassed > duration)
-                return true;
-            duration -= ticksPassed;
-            if (duration >= 1)
-                return false;
-            return (partial - prev.partial) >= duration;
-        }
+        right = right.normalize().scale(size);
+        Vec3 back = diff.cross(right).normalize().scale(size);
+        Vec3 startPos = cache != null ? cache.position : start;
+        Vec3 startRight = cache != null ? cache.right : startPos.add(right);
+        Vec3 startBack = cache != null ? cache.back : startPos.add(right.scale(0.5)).add(back);
+        Vec3 endRight = end.add(right);
+        Vec3 endBack = end.add(right.scale(0.5)).add(back);
+        segments.add(List.of(startPos, end, endRight, startRight,
+            startRight, endRight, end, startPos,
+            startRight, endRight, endBack, startBack,
+            startBack, endBack, endRight, startRight));
+        return new End(end, endRight, endBack);
     }
+
+    private static class History {
+        private double lastTime = Double.NEGATIVE_INFINITY;
+        private final List<Bolt> bolts = new ArrayList<>();
+    }
+
+    private record Bolt(double created, List<List<Vec3>> segments) {}
+    private record End(Vec3 position, Vec3 right, Vec3 back) {}
+    private record Instruction(Vec3 start, float progress, Vec3 perpendicular, End cache, boolean branch) {}
 }

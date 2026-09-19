@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    "#iceandfire:frozen_block",
+    "#iceandfire:frozen_block",
+    "#iceandfire:frozen_block",
+    "#iceandfire:frozen_block",
+    "#iceandfire:frozen_block",
+    "#iceandfire:frozen_block",
+    "#iceandfire:frozen_block",
+    "#iceandfire:frozen_block",
+    "#iceandfire:frozen_block"
+  ],
+  "result": {
+    "count": 1,
+    "id": "iceandfire:dragon_ice"
+  }
+}

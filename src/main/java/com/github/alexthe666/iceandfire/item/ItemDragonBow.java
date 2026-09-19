@@ -15,7 +15,7 @@ public class ItemDragonBow extends BowItem {
         -> stack.is(ForgeRegistries.ITEMS.tags().createTagKey(IafTagRegistry.DRAGON_ARROWS));
 
     public ItemDragonBow() {
-        super(new Item.Properties().tab(IceAndFire.TAB_ITEMS).durability(584));
+        super(IafItemRegistry.defaultBuilder().durability(584));
     }
 
     @Override

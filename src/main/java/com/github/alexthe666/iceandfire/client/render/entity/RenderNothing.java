@@ -1,35 +1,31 @@
 package com.github.alexthe666.iceandfire.client.render.entity;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.culling.Frustum;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.world.entity.Entity;
-import org.jetbrains.annotations.NotNull;
 
-public class RenderNothing<T extends Entity> extends EntityRenderer<T> {
-
+public class RenderNothing<T extends Entity, S extends EntityRenderState> extends EntityRenderer<T, S> {
     public RenderNothing(EntityRendererProvider.Context context) {
         super(context);
     }
 
+    /** Subclasses using a specialized state must override this factory. */
+    @SuppressWarnings("unchecked")
     @Override
-    public void render(@NotNull T entityIn, float entityYaw, float partialTicks, @NotNull PoseStack matrixStackIn, @NotNull MultiBufferSource bufferIn, int packedLightIn) {
-        super.render(entityIn, entityYaw, partialTicks, matrixStackIn, bufferIn, packedLightIn);
-    }
-
-    // Only render if the debug bboxes are enabled
-    @Override
-    public boolean shouldRender(@NotNull T livingEntityIn, @NotNull Frustum camera, double camX, double camY, double camZ) {
-        if (!this.entityRenderDispatcher.shouldRenderHitBoxes())
-            return false;
-        return super.shouldRender(livingEntityIn, camera, camX, camY, camZ);
+    public S createRenderState() {
+        return (S) new EntityRenderState();
     }
 
     @Override
-    public @NotNull ResourceLocation getTextureLocation(@NotNull Entity entity) {
-        return null;
+    public void extractRenderState(T entity, S state, float partialTick) {
+        super.extractRenderState(entity, state, partialTick);
+    }
+
+    @Override
+    public void submit(S state, PoseStack poses, SubmitNodeCollector collector, CameraRenderState camera) {
     }
 }

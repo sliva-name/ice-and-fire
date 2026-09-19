@@ -4,13 +4,15 @@ import com.github.alexthe666.iceandfire.IceAndFire;
 import com.github.alexthe666.iceandfire.entity.props.ChainProperties;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Matrix3f;
-import com.mojang.math.Matrix4f;
-import com.mojang.math.Vector3f;
+import org.joml.Matrix3f;
+import org.joml.Matrix4f;
+import com.mojang.math.Axis;
+import org.joml.Vector3f;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -20,7 +22,7 @@ import java.util.List;
 
 public class RenderChain {
 
-    private static final ResourceLocation TEXTURE = new ResourceLocation("iceandfire:textures/models/misc/chain_link.png");
+    private static final Identifier TEXTURE = Identifier.parse("iceandfire:textures/models/misc/chain_link.png");
 
     public static void render(LivingEntity entityLivingIn, float partialTicks, PoseStack matrixStackIn, MultiBufferSource bufferIn, int lightIn) {
         List<Entity> chainTargets = ChainProperties.getChainedTo(entityLivingIn);
@@ -49,8 +51,8 @@ public class RenderChain {
         vector3d2 = vector3d2.normalize();
         float f5 = (float) Math.acos(vector3d2.y);
         float f6 = (float) Math.atan2(vector3d2.z, vector3d2.x);
-        matrixStackIn.mulPose(Vector3f.YP.rotationDegrees((((float) Math.PI / 2F) - f6) * (180F / (float) Math.PI)));
-        matrixStackIn.mulPose(Vector3f.XP.rotationDegrees(f5 * (180F / (float) Math.PI)));
+        matrixStackIn.mulPose(Axis.YP.rotationDegrees((((float) Math.PI / 2F) - f6) * (180F / (float) Math.PI)));
+        matrixStackIn.mulPose(Axis.XP.rotationDegrees(f5 * (180F / (float) Math.PI)));
         float f7 = -1.0F;
         int j = 255;
         int k = 255;
@@ -68,7 +70,7 @@ public class RenderChain {
         float f32 = 0.75F;
         float f31 = f4 + f32;
 
-        VertexConsumer ivertexbuilder = bufferIn.getBuffer(RenderType.entityCutoutNoCull(getTexture()));
+        VertexConsumer ivertexbuilder = bufferIn.getBuffer(RenderTypes.entityCutout(getTexture()));
         PoseStack.Pose matrixstack$entry = matrixStackIn.last();
         Matrix4f matrix4f = matrixstack$entry.pose();
         Matrix3f matrix3f = matrixstack$entry.normal();
@@ -87,7 +89,7 @@ public class RenderChain {
     }
 
     private static void vertex(VertexConsumer p_229108_0_, Matrix4f p_229108_1_, Matrix3f p_229108_2_, float p_229108_3_, float p_229108_4_, float p_229108_5_, int p_229108_6_, int p_229108_7_, int p_229108_8_, float p_229108_9_, float p_229108_10_, int packedLight) {
-        p_229108_0_.vertex(p_229108_1_, p_229108_3_, p_229108_4_, p_229108_5_).color(p_229108_6_, p_229108_7_, p_229108_8_, 255).uv(p_229108_9_, p_229108_10_).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(p_229108_2_, 0.0F, 1.0F, 0.0F).endVertex();
+        p_229108_0_.addVertex(p_229108_1_, p_229108_3_, p_229108_4_, p_229108_5_).setColor(p_229108_6_, p_229108_7_, p_229108_8_, 255).setUv(p_229108_9_, p_229108_10_).setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight).setNormal(0.0F, 1.0F, 0.0F);
     }
 
     private static Vec3 getPosition(Entity LivingEntityIn, double p_177110_2_, float p_177110_4_) {
@@ -97,7 +99,7 @@ public class RenderChain {
         return new Vec3(d0, d1, d2);
     }
 
-    public static ResourceLocation getTexture() {
+    public static Identifier getTexture() {
         return TEXTURE;
     }
 }

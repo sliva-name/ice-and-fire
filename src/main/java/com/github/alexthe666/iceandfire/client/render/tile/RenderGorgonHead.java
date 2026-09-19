@@ -1,47 +1,64 @@
 package com.github.alexthe666.iceandfire.client.render.tile;
 
-import com.github.alexthe666.citadel.client.model.AdvancedEntityModel;
 import com.github.alexthe666.iceandfire.client.model.ModelGorgonHead;
 import com.github.alexthe666.iceandfire.client.model.ModelGorgonHeadActive;
 import com.github.alexthe666.iceandfire.item.IafItemRegistry;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.minecraft.client.model.geom.EntityModelSet;
-import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.block.model.ItemTransforms;
-import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
-import net.minecraft.resources.ResourceLocation;
+import com.mojang.serialization.MapCodec;
+import java.util.function.Consumer;
+import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.client.renderer.special.SpecialModelRenderer;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
-import org.jetbrains.annotations.NotNull;
+import net.minecraft.world.item.component.CustomData;
+import org.joml.Vector3fc;
+import org.jspecify.annotations.Nullable;
 
-public class RenderGorgonHead extends BlockEntityWithoutLevelRenderer {
+public class RenderGorgonHead implements SpecialModelRenderer<Boolean> {
+    private static final Identifier ACTIVE_TEXTURE = Identifier.fromNamespaceAndPath("iceandfire", "textures/models/gorgon/head_active.png");
+    private static final Identifier INACTIVE_TEXTURE = Identifier.fromNamespaceAndPath("iceandfire", "textures/models/gorgon/head_inactive.png");
+    private final EntityModel<EntityRenderState> activeModel = new ModelGorgonHeadActive().asEntityModel();
+    private final EntityModel<EntityRenderState> inactiveModel = new ModelGorgonHead().asEntityModel();
 
-    private static final RenderType ACTIVE_TEXTURE = RenderType.entityCutoutNoCull(new ResourceLocation("iceandfire:textures/models/gorgon/head_active.png"), false);
-    private static final RenderType INACTIVE_TEXTURE = RenderType.entityCutoutNoCull(new ResourceLocation("iceandfire:textures/models/gorgon/head_inactive.png"), false);
-    private static final AdvancedEntityModel ACTIVE_MODEL = new ModelGorgonHeadActive();
-    private static final AdvancedEntityModel INACTIVE_MODEL = new ModelGorgonHead();
-
-    public RenderGorgonHead(BlockEntityRenderDispatcher dispatcher, EntityModelSet set) {
-        super(dispatcher, set);
+    @Override
+    public Boolean extractArgument(ItemStack stack) {
+        return stack.is(IafItemRegistry.GORGON_HEAD.get())
+            && stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getBooleanOr("Active", false);
     }
 
     @Override
-    public void renderByItem(ItemStack stack, ItemTransforms.@NotNull TransformType type, @NotNull PoseStack stackIn, @NotNull MultiBufferSource bufferIn, int combinedLightIn, int combinedOverlayIn) {
-        boolean active = false;
-        if (stack.getItem() == IafItemRegistry.GORGON_HEAD.get()) {
-            if (stack.getTag() != null) {
-                if (stack.getTag().getBoolean("Active"))
-                    active = true;
-            }
-        }
-        AdvancedEntityModel model = active ? ACTIVE_MODEL : INACTIVE_MODEL;
-        stackIn.pushPose();
-        stackIn.translate(0.5F, active ? 1.5F : 1.25F, 0.5F);
-        VertexConsumer ivertexbuilder = bufferIn.getBuffer(active ? ACTIVE_TEXTURE : INACTIVE_TEXTURE);
-        model.renderToBuffer(stackIn, ivertexbuilder, combinedLightIn, combinedOverlayIn, 1.0F, 1.0F, 1.0F, 1.0F);
-        stackIn.popPose();
+    public void submit(@Nullable Boolean argument, PoseStack poses, SubmitNodeCollector collector,
+                       int light, int overlay, boolean hasFoil, int outlineColor) {
+        boolean active = Boolean.TRUE.equals(argument);
+        poses.pushPose();
+        // Special models no longer receive ItemRenderer's legacy (-0.5, -0.5, -0.5) offset.
+        poses.translate(0, active ? 1.0F : 0.75F, 0);
+        collector.submitModel(active ? activeModel : inactiveModel, new EntityRenderState(), poses,
+            RenderTypes.entityCutout(active ? ACTIVE_TEXTURE : INACTIVE_TEXTURE, false),
+            light, overlay, outlineColor, null);
+        poses.popPose();
     }
 
+    @Override
+    public void getExtents(Consumer<Vector3fc> output) {
+        PoseStack poses = new PoseStack();
+        poses.translate(0, 1.0F, 0);
+        activeModel.root().getExtentsForGui(poses, output);
+        poses.translate(0, -0.25F, 0);
+        inactiveModel.root().getExtentsForGui(poses, output);
+    }
+
+    public record Unbaked() implements SpecialModelRenderer.Unbaked<Boolean> {
+        public static final MapCodec<Unbaked> MAP_CODEC = MapCodec.unit(new Unbaked());
+
+        @Override
+        public MapCodec<Unbaked> type() { return MAP_CODEC; }
+
+        @Override
+        public RenderGorgonHead bake(BakingContext context) { return new RenderGorgonHead(); }
+    }
 }

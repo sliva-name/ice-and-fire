@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 public abstract class MuteSetBlockFarChunk {
     @Redirect(
             method = "ensureCanWrite",
-            at = @At(value = "INVOKE", target="Lnet/minecraft/Util;logAndPauseIfInIde(Ljava/lang/String;)V")
+            at = @At(value = "INVOKE", target="Lnet/minecraft/util/Util;logAndPauseIfInIde(Ljava/lang/String;)V")
     )
     private void iaf_noSetBlockError(String pError) {
 

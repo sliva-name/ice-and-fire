@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    "#forge:bones/wither"
+  ],
+  "result": {
+    "count": 3,
+    "id": "iceandfire:wither_shard"
+  }
+}

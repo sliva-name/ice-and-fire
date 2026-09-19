@@ -1,10 +1,13 @@
 package com.github.alexthe666.iceandfire.entity;
 
+import net.minecraft.server.level.ServerLevel;
+
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
 import com.github.alexthe666.iceandfire.entity.props.ChainProperties;
 import com.github.alexthe666.iceandfire.item.IafItemRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.protocol.Packet;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
@@ -18,7 +21,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.WallBlock;
 import net.minecraft.world.phys.AABB;
-import net.minecraftforge.network.NetworkHooks;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
@@ -66,33 +69,29 @@ public class EntityChainTie extends HangingEntity {
     protected void recalculateBoundingBox() {
         this.setPosRaw(this.pos.getX() + 0.5D, this.pos.getY() + 0.5D,
             this.pos.getZ() + 0.5D);
-        double xSize = 0.3D;
-        double ySize = 0.875D;
-        double zSize = xSize;
-        this.setBoundingBox(new AABB(this.getX() - xSize, this.getY() - 0.5, this.getZ() - zSize,
-            this.getX() + xSize, this.getY() + ySize - 0.5, this.getZ() + zSize));
+        this.setBoundingBox(calculateBoundingBox(this.pos, this.getDirection()));
     }
 
     @Override
-    public boolean hurt(DamageSource source, float amount) {
+    protected @NotNull AABB calculateBoundingBox(@NotNull BlockPos pos, @NotNull net.minecraft.core.Direction direction) {
+        double xSize = 0.3D;
+        double ySize = 0.875D;
+        double x = pos.getX() + 0.5D;
+        double y = pos.getY() + 0.5D;
+        double z = pos.getZ() + 0.5D;
+        return new AABB(x - xSize, y - 0.5, z - xSize, x + xSize, y + ySize - 0.5, z + xSize);
+    }
+
+    @Override
+    public boolean hurtServer(@NotNull ServerLevel level, @NotNull DamageSource source, float amount) {
         if (source.getEntity() != null && source.getEntity() instanceof Player) {
-            return super.hurt(source, amount);
+            return super.hurtServer(level, source, amount);
         }
         return false;
     }
 
     @Override
-    public int getWidth() {
-        return 9;
-    }
-
-    @Override
-    public int getHeight() {
-        return 9;
-    }
-
-    @Override
-    public void addAdditionalSaveData(CompoundTag compound) {
+    public void addAdditionalSaveData(ValueOutput compound) {
         BlockPos blockpos = this.getPos();
         compound.putInt("TileX", blockpos.getX());
         compound.putInt("TileY", blockpos.getY());
@@ -100,13 +99,8 @@ public class EntityChainTie extends HangingEntity {
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag compound) {
-        this.pos = new BlockPos(compound.getInt("TileX"), compound.getInt("TileY"), compound.getInt("TileZ"));
-    }
-
-    @Override
-    protected float getEyeHeight(@NotNull Pose poseIn, @NotNull EntityDimensions sizeIn) {
-        return -0.0625F;
+    public void readAdditionalSaveData(ValueInput compound) {
+        this.pos = new BlockPos(compound.getIntOr("TileX", 0), compound.getIntOr("TileY", 0), compound.getIntOr("TileZ", 0));
     }
 
     @Override
@@ -115,34 +109,34 @@ public class EntityChainTie extends HangingEntity {
     }
 
     @Override
-    public void dropItem(@Nullable Entity brokenEntity) {
-        this.playSound(SoundEvents.ARMOR_EQUIP_CHAIN, 1.0F, 1.0F);
+    public void dropItem(@NotNull ServerLevel level, @Nullable Entity brokenEntity) {
+        this.playSound(SoundEvents.ARMOR_EQUIP_CHAIN.value(), 1.0F, 1.0F);
     }
 
     @Override
     public void remove(Entity.@NotNull RemovalReason removalReason) {
         super.remove(removalReason);
         double d0 = 30D;
-        List<LivingEntity> list = this.level.getEntitiesOfClass(LivingEntity.class, new AABB(this.getX() - d0, this.getY() - d0, this.getZ() - d0, this.getX() + d0, this.getY() + d0, this.getZ() + d0));
+        List<LivingEntity> list = this.level().getEntitiesOfClass(LivingEntity.class, new AABB(this.getX() - d0, this.getY() - d0, this.getZ() - d0, this.getX() + d0, this.getY() + d0, this.getZ() + d0));
         for (LivingEntity livingEntity : list) {
             if (ChainProperties.isChainedTo(livingEntity, this)) {
                 ChainProperties.removeChain(livingEntity, this);
-                ItemEntity entityitem = new ItemEntity(this.level, this.getX(), this.getY() + 1, this.getZ(),
+                ItemEntity entityitem = new ItemEntity(this.level(), this.getX(), this.getY() + 1, this.getZ(),
                     new ItemStack(IafItemRegistry.CHAIN.get()));
                 entityitem.setDefaultPickUpDelay();
-                this.level.addFreshEntity(entityitem);
+                this.level().addFreshEntity(entityitem);
             }
         }
     }
 
     @Override
-    public @NotNull InteractionResult interact(@NotNull Player player, @NotNull InteractionHand hand) {
-        if (this.level.isClientSide) {
+    public @NotNull InteractionResult interact(@NotNull Player player, @NotNull InteractionHand hand, @NotNull Vec3 hit) {
+        if (this.level().isClientSide()) {
             return InteractionResult.SUCCESS;
         } else {
             boolean flag = false;
             double d0 = 30D;
-            List<LivingEntity> list = this.level.getEntitiesOfClass(LivingEntity.class, new AABB(this.getX() - d0, this.getY() - d0, this.getZ() - d0, this.getX() + d0, this.getY() + d0, this.getZ() + d0));
+            List<LivingEntity> list = this.level().getEntitiesOfClass(LivingEntity.class, new AABB(this.getX() - d0, this.getY() - d0, this.getZ() - d0, this.getX() + d0, this.getY() + d0, this.getZ() + d0));
 
             for (LivingEntity livingEntity : list) {
                 if (ChainProperties.isChainedTo(livingEntity, player)) {
@@ -160,20 +154,13 @@ public class EntityChainTie extends HangingEntity {
             return InteractionResult.CONSUME;
         }
     }
-
-
-    @Override
-    public @NotNull Packet<?> getAddEntityPacket() {
-        return NetworkHooks.getEntitySpawningPacket(this);
-    }
-
     @Override
     public boolean survives() {
-        return this.level.getBlockState(this.pos).getBlock() instanceof WallBlock;
+        return this.level().getBlockState(this.pos).getBlock() instanceof WallBlock;
     }
 
     @Override
     public void playPlacementSound() {
-        this.playSound(SoundEvents.ARMOR_EQUIP_CHAIN, 1.0F, 1.0F);
+        this.playSound(SoundEvents.ARMOR_EQUIP_CHAIN.value(), 1.0F, 1.0F);
     }
 }

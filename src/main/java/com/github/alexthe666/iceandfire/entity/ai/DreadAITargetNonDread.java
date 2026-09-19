@@ -9,12 +9,11 @@ import net.minecraft.world.entity.ai.targeting.TargetingConditions;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
-import java.util.function.Predicate;
 
 public class DreadAITargetNonDread extends NearestAttackableTargetGoal<LivingEntity> {
 
     public DreadAITargetNonDread(Mob entityIn, Class<LivingEntity> classTarget, boolean checkSight,
-                                 Predicate<LivingEntity> targetSelector) {
+                                 TargetingConditions.Selector targetSelector) {
         super(entityIn, classTarget, 0, checkSight, false, targetSelector);
     }
 

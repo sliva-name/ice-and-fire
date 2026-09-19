@@ -4,9 +4,9 @@ import com.github.alexthe666.citadel.client.model.AdvancedEntityModel;
 import com.github.alexthe666.citadel.client.model.AdvancedModelBox;
 import com.github.alexthe666.citadel.client.model.basic.BasicModelPart;
 import com.google.common.collect.ImmutableList;
-import net.minecraft.world.entity.Entity;
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
 
-public class ModelGorgonHeadActive extends AdvancedEntityModel<Entity> {
+public class ModelGorgonHeadActive extends AdvancedEntityModel<EntityRenderState> {
     public AdvancedModelBox Head;
     public AdvancedModelBox Head_Details;
     public AdvancedModelBox SnakeBaseR2;
@@ -486,7 +486,7 @@ public class ModelGorgonHeadActive extends AdvancedEntityModel<Entity> {
     }
 
     @Override
-    public void setupAnim(Entity entityIn, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+    public void setupAnim(EntityRenderState state) {
 
     }
 

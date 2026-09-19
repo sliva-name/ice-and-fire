@@ -3,13 +3,11 @@ package com.github.alexthe666.iceandfire.client.model;
 import com.github.alexthe666.citadel.client.model.AdvancedEntityModel;
 import com.github.alexthe666.citadel.client.model.AdvancedModelBox;
 import com.github.alexthe666.citadel.client.model.basic.BasicModelPart;
+import com.github.alexthe666.iceandfire.client.render.entity.GuardianStatueRenderState;
 import com.google.common.collect.ImmutableList;
-import net.minecraft.client.Minecraft;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.monster.Guardian;
 
-public class ModelGuardianStatue extends AdvancedEntityModel<Entity> {
+public class ModelGuardianStatue extends AdvancedEntityModel<GuardianStatueRenderState> {
     private final AdvancedModelBox guardianBody;
     private final AdvancedModelBox guardianEye;
     private final AdvancedModelBox[] guardianSpines;
@@ -46,11 +44,32 @@ public class ModelGuardianStatue extends AdvancedEntityModel<Entity> {
         this.guardianBody.addChild(this.guardianTail[0]);
         this.guardianTail[0].addChild(this.guardianTail[1]);
         this.guardianTail[1].addChild(this.guardianTail[2]);
+        updateDefaultPose();
+    }
+
+    public AdvancedModelBox body() {
+        return guardianBody;
+    }
+
+    public AdvancedModelBox eye() {
+        return guardianEye;
+    }
+
+    public AdvancedModelBox spine(int index) {
+        return guardianSpines[index];
+    }
+
+    public AdvancedModelBox tail(int index) {
+        return guardianTail[index];
     }
 
     @Override
     public Iterable<AdvancedModelBox> getAllParts() {
-        return null;
+        ImmutableList.Builder<AdvancedModelBox> parts = ImmutableList.builder();
+        parts.add(guardianBody, guardianEye);
+        parts.add(guardianSpines);
+        parts.add(guardianTail);
+        return parts.build();
     }
 
     @Override
@@ -59,11 +78,11 @@ public class ModelGuardianStatue extends AdvancedEntityModel<Entity> {
     }
 
     @Override
-    public void setupAnim(Entity entityIn, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
-        Guardian entityguardian = (Guardian) entityIn;
-        float f = ageInTicks - (float) entityguardian.tickCount;
-        this.guardianBody.rotateAngleY = netHeadYaw * 0.017453292F;
-        this.guardianBody.rotateAngleX = headPitch * 0.017453292F;
+    public void setupAnim(GuardianStatueRenderState state) {
+        super.setupAnim(state);
+        float ageInTicks = state.poseAge;
+        this.guardianBody.rotateAngleY = state.yRot * 0.017453292F;
+        this.guardianBody.rotateAngleX = state.xRot * 0.017453292F;
         float[] afloat = new float[]{1.75F, 0.25F, 0.0F, 0.0F, 0.5F, 0.5F, 0.5F, 0.5F, 1.25F, 0.75F, 0.0F, 0.0F};
         float[] afloat1 = new float[]{0.0F, 0.0F, 0.0F, 0.0F, 0.25F, 1.75F, 1.25F, 0.75F, 0.0F, 0.0F, 0.0F, 0.0F};
         float[] afloat2 = new float[]{0.0F, 0.0F, 0.25F, 1.75F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.75F, 1.25F};
@@ -82,14 +101,8 @@ public class ModelGuardianStatue extends AdvancedEntityModel<Entity> {
         }
 
         this.guardianEye.rotationPointZ = -8.25F;
-        Entity entity = Minecraft.getInstance().getCameraEntity();
-
-        if (entityguardian.hasActiveAttackTarget()) {
-            entity = entityguardian.getActiveAttackTarget();
-        }
-
         this.guardianEye.showModel = true;
-        float f2 = entityguardian.getTailAnimation(f);
+        float f2 = state.tailAnimation;
         this.guardianTail[0].rotateAngleY = Mth.sin(f2) * (float) Math.PI * 0.05F;
         this.guardianTail[1].rotateAngleY = Mth.sin(f2) * (float) Math.PI * 0.1F;
         this.guardianTail[1].rotationPointX = -1.5F;

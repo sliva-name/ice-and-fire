@@ -3,14 +3,17 @@ package com.github.alexthe666.iceandfire.world;
 import com.github.alexthe666.iceandfire.IceAndFire;
 import com.github.alexthe666.iceandfire.entity.util.MyrmexHive;
 import com.google.common.collect.Lists;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.saveddata.SavedData;
-import net.minecraft.world.level.storage.DimensionDataStorage;
-import org.jetbrains.annotations.NotNull;
+import net.minecraft.world.level.saveddata.SavedDataType;
+import net.minecraft.world.level.storage.SavedDataStorage;
 
 import java.util.Iterator;
 import java.util.List;
@@ -18,7 +21,28 @@ import java.util.UUID;
 
 public class MyrmexWorldData extends SavedData {
 
-    private static final String IDENTIFIER = "iceandfire_myrmex";
+    private static final Codec<MyrmexHive> HIVE_CODEC = CompoundTag.CODEC.xmap(tag -> {
+        MyrmexHive village = new MyrmexHive();
+        village.readVillageDataFromNBT(tag);
+        return village;
+    }, hive -> {
+        CompoundTag tag = new CompoundTag();
+        hive.writeVillageDataToNBT(tag);
+        return tag;
+    });
+
+    public static final Codec<MyrmexWorldData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+        Codec.INT.fieldOf("Tick").forGetter(data -> data.tickCounter),
+        HIVE_CODEC.listOf().fieldOf("Hives").forGetter(data -> data.hiveList)
+    ).apply(instance, MyrmexWorldData::new));
+
+    public static final SavedDataType<MyrmexWorldData> TYPE = new SavedDataType<>(
+        Identifier.fromNamespaceAndPath(IceAndFire.MODID, "myrmex"),
+        MyrmexWorldData::new,
+        CODEC,
+        DataFixTypes.LEVEL
+    );
+
     private final List<BlockPos> villagerPositionsList = Lists.newArrayList();
     private final List<MyrmexHive> hiveList = Lists.newArrayList();
     private Level world;
@@ -32,16 +56,17 @@ public class MyrmexWorldData extends SavedData {
         this.setDirty();
     }
 
-    public MyrmexWorldData(CompoundTag compoundTag) {
-        this.load(compoundTag);
+    private MyrmexWorldData(int tickCounter, List<MyrmexHive> hives) {
+        this.tickCounter = tickCounter;
+        this.hiveList.addAll(hives);
     }
 
     public static MyrmexWorldData get(Level world) {
         if (world instanceof ServerLevel) {
             ServerLevel overworld = world.getServer().getLevel(world.dimension());
 
-            DimensionDataStorage storage = overworld.getDataStorage();
-            MyrmexWorldData data = storage.computeIfAbsent(MyrmexWorldData::new, MyrmexWorldData::new, IDENTIFIER);
+            SavedDataStorage storage = overworld.getDataStorage();
+            MyrmexWorldData data = storage.computeIfAbsent(TYPE);
             if (data != null) {
                 data.world = world;
                 data.setDirty();
@@ -123,33 +148,6 @@ public class MyrmexWorldData extends SavedData {
         for (MyrmexHive hive : this.hiveList) {
             IceAndFire.LOGGER.warn(hive.toString());
         }
-    }
-
-    public void load(CompoundTag nbt) {
-        this.tickCounter = nbt.getInt("Tick");
-        ListTag nbttaglist = nbt.getList("Hives", 10);
-
-        for (int i = 0; i < nbttaglist.size(); ++i) {
-            CompoundTag CompoundNBT = nbttaglist.getCompound(i);
-            MyrmexHive village = new MyrmexHive();
-            village.readVillageDataFromNBT(CompoundNBT);
-            this.hiveList.add(village);
-        }
-    }
-
-    @Override
-    public @NotNull CompoundTag save(CompoundTag compound) {
-        compound.putInt("Tick", this.tickCounter);
-        ListTag nbttaglist = new ListTag();
-
-        for (MyrmexHive village : this.hiveList) {
-            CompoundTag CompoundNBT = new CompoundTag();
-            village.writeVillageDataToNBT(CompoundNBT);
-            nbttaglist.add(CompoundNBT);
-        }
-
-        compound.put("Hives", nbttaglist);
-        return compound;
     }
 
     public MyrmexHive getHiveFromUUID(UUID id) {

@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "DDD",
+    "D D",
+    "D D"
+  ],
+  "key": {
+    "D": "#forge:ingots/dragonsteel_lightning"
+  },
+  "result": {
+    "id": "iceandfire:dragonsteel_lightning_leggings"
+  }
+}

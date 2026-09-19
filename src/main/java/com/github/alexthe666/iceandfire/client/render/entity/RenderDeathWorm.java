@@ -2,45 +2,83 @@ package com.github.alexthe666.iceandfire.client.render.entity;
 
 import com.github.alexthe666.iceandfire.client.model.ModelDeathWorm;
 import com.github.alexthe666.iceandfire.entity.EntityDeathWorm;
-import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
-import org.jetbrains.annotations.NotNull;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.Entity;
 
-import javax.annotation.Nullable;
-
-
-public class RenderDeathWorm extends MobRenderer<EntityDeathWorm, ModelDeathWorm> {
-    public static final ResourceLocation TEXTURE_RED = new ResourceLocation("iceandfire:textures/models/deathworm/deathworm_red.png");
-    public static final ResourceLocation TEXTURE_WHITE = new ResourceLocation("iceandfire:textures/models/deathworm/deathworm_white.png");
-    public static final ResourceLocation TEXTURE_YELLOW = new ResourceLocation("iceandfire:textures/models/deathworm/deathworm_yellow.png");
+public class RenderDeathWorm extends MobRenderer<EntityDeathWorm, DeathWormRenderState, EntityModel<DeathWormRenderState>> {
+    public static final Identifier TEXTURE_RED = Identifier.fromNamespaceAndPath("iceandfire", "textures/models/deathworm/deathworm_red.png");
+    public static final Identifier TEXTURE_WHITE = Identifier.fromNamespaceAndPath("iceandfire", "textures/models/deathworm/deathworm_white.png");
+    public static final Identifier TEXTURE_YELLOW = Identifier.fromNamespaceAndPath("iceandfire", "textures/models/deathworm/deathworm_yellow.png");
 
     public RenderDeathWorm(EntityRendererProvider.Context context) {
-        super(context, new ModelDeathWorm(), 0);
+        super(context, new ModelDeathWorm().asEntityModel(), 0);
     }
 
     @Override
-    protected void scale(EntityDeathWorm entity, PoseStack matrixStackIn, float partialTickTime) {
-        this.shadowRadius = entity.getScale() / 3;
-        matrixStackIn.scale(entity.getScale(), entity.getScale(), entity.getScale());
-    }
-
-
-    @Override
-    protected int getBlockLightLevel(EntityDeathWorm entityIn, @NotNull BlockPos partialTicks) {
-        return entityIn.isOnFire() ? 15 : entityIn.getWormBrightness(false);
+    protected boolean affectedByCulling(EntityDeathWorm entity) {
+        return false;
     }
 
     @Override
-    protected int getSkyLightLevel(EntityDeathWorm entity, @NotNull BlockPos pos) {
+    public DeathWormRenderState createRenderState() {
+        return new DeathWormRenderState();
+    }
+
+    @Override
+    public void extractRenderState(EntityDeathWorm entity, DeathWormRenderState state, float partialTick) {
+        super.extractRenderState(entity, state, partialTick);
+        state.animation = entity.getAnimation() == EntityDeathWorm.ANIMATION_BITE ? DeathWormRenderState.BITE : null;
+        state.animationTick = entity.getAnimationTick();
+        state.partialTick = partialTick;
+        state.variant = entity.getVariant();
+        state.jumpProgress = entity.prevJumpProgress + (entity.jumpProgress - entity.prevJumpProgress) * (state.ageInTicks - entity.tickCount);
+        state.jumping = entity.getWormJumping() > 0;
+        state.tailYaw = entity.tail_buffer == null ? 0 : entity.tail_buffer.sampleYaw(partialTick);
+        // LivingEntityRenderer already extracts and applies getScale(). Do not scale twice.
+    }
+
+    @Override
+    public boolean shouldRender(EntityDeathWorm entity, Frustum frustum, double x, double y, double z) {
+        if (super.shouldRender(entity, frustum, x, y, z)) {
+            return true;
+        }
+        if (!entity.shouldRender(x, y, z)) {
+            return false;
+        }
+        Entity[] parts = entity.getWormParts();
+        if (parts == null) {
+            return false;
+        }
+        for (Entity part : parts) {
+            if (part != null && frustum.isVisible(part.getBoundingBox())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    protected float getShadowRadius(DeathWormRenderState state) {
+        return state.scale / 3;
+    }
+
+    @Override
+    protected int getBlockLightLevel(EntityDeathWorm entity, BlockPos pos) {
+        return entity.isOnFire() ? 15 : entity.getWormBrightness(false);
+    }
+
+    @Override
+    protected int getSkyLightLevel(EntityDeathWorm entity, BlockPos pos) {
         return entity.getWormBrightness(true);
     }
 
-    @Nullable
     @Override
-    public ResourceLocation getTextureLocation(EntityDeathWorm entity) {
-        return entity.getVariant() == 2 ? TEXTURE_WHITE : entity.getVariant() == 1 ? TEXTURE_RED : TEXTURE_YELLOW;
+    public Identifier getTextureLocation(DeathWormRenderState state) {
+        return state.variant == 2 ? TEXTURE_WHITE : state.variant == 1 ? TEXTURE_RED : TEXTURE_YELLOW;
     }
 }

@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "BB",
+    "BB"
+  ],
+  "key": {
+    "B": "iceandfire:dragon_ice"
+  },
+  "result": {
+    "id": "minecraft:blue_ice"
+  }
+}

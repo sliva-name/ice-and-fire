@@ -1,36 +1,39 @@
 package com.github.alexthe666.iceandfire.api.event;
 
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.living.LivingEvent;
-import net.minecraftforge.eventbus.api.Cancelable;
+import net.minecraftforge.eventbus.api.bus.CancellableEventBus;
+import net.minecraftforge.eventbus.api.event.MutableEvent;
+import net.minecraftforge.eventbus.api.event.characteristic.Cancellable;
 
 /**
- * GenericGriefEvent is fired right before a non-Dragon destroys or modifies blocks in some aspect. <br>
- * {@link #targetX} x coordinate being targeted for modification. <br>
- * {@link #targetY} y coordinate being targeted for modification. <br>
- * {@link #targetZ} z coordinate being targeted for modification. <br>
- * <br>
- * This event is {@link Cancelable}.<br>
- * If this event is canceled, no block destruction or explosion will follow.<br>
- * <br>
- * This event does not have a result. {@link HasResult}<br>
- * <br>
- * If you only want to deal with the damage caused by dragon fire, see {@link DragonFireDamageWorldEvent} <br>
- * <br>
- * This event is fired on the {@link MinecraftForge#EVENT_BUS}.
- **/
-@Cancelable
-public class GenericGriefEvent extends LivingEvent {
+ * Fired immediately before an entity destroys or modifies blocks.
+ * Post on {@link #BUS}; a true return value means no destruction or explosion should follow.
+ * Cancellable listeners return true to cancel the event.
+ * For dragon breath terrain damage, see {@link DragonFireDamageWorldEvent}.
+ */
+public final class GenericGriefEvent extends MutableEvent implements LivingEvent, Cancellable {
+    public static final CancellableEventBus<GenericGriefEvent> BUS = CancellableEventBus.create(GenericGriefEvent.class);
+
+    private final LivingEntity griefer;
     private final double targetX;
     private final double targetY;
     private final double targetZ;
 
     public GenericGriefEvent(LivingEntity griefer, double targetX, double targetY, double targetZ) {
-        super(griefer);
+        this.griefer = griefer;
         this.targetX = targetX;
         this.targetY = targetY;
         this.targetZ = targetZ;
+    }
+
+    @Override
+    public LivingEntity getEntity() {
+        return griefer;
+    }
+
+    public LivingEntity getEntityLiving() {
+        return getEntity();
     }
 
     public double getTargetX() {
@@ -44,5 +47,4 @@ public class GenericGriefEvent extends LivingEvent {
     public double getTargetZ() {
         return targetZ;
     }
-
 }

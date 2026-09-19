@@ -2,27 +2,25 @@ package com.github.alexthe666.iceandfire.client.model.util;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.model.EntityModel;
-import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
-import net.minecraft.world.entity.Entity;
-import org.jetbrains.annotations.NotNull;
+import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 
-
-public class HideableLayer<T extends Entity, M extends EntityModel<T>, C extends RenderLayer<T, M>> extends RenderLayer<T, M> {
-
+public class HideableLayer<S extends LivingEntityRenderState, M extends EntityModel<S>> extends RenderLayer<S, M> {
     public boolean hidden;
-    C layerRenderer;
+    private final RenderLayer<S, M> layerRenderer;
 
-    public HideableLayer(C layerRenderer, RenderLayerParent<T, M> entityRendererIn) {
+    public HideableLayer(RenderLayer<S, M> layerRenderer, RenderLayerParent<S, M> entityRendererIn) {
         super(entityRendererIn);
         hidden = false;
         this.layerRenderer = layerRenderer;
     }
 
     @Override
-    public void render(@NotNull PoseStack matrixStackIn, @NotNull MultiBufferSource bufferIn, int packedLightIn, @NotNull T entitylivingbaseIn, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch) {
-        if (!hidden)
-            layerRenderer.render(matrixStackIn, bufferIn, packedLightIn, entitylivingbaseIn, limbSwing, limbSwingAmount, partialTicks, ageInTicks, netHeadYaw, headPitch);
+    public void submit(PoseStack poses, SubmitNodeCollector collector, int light, S state, float yRot, float xRot) {
+        if (!hidden) {
+            layerRenderer.submit(poses, collector, light, state, yRot, xRot);
+        }
     }
 }

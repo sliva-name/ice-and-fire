@@ -10,7 +10,7 @@ import com.github.alexthe666.iceandfire.world.IafWorldRegistry;
 import com.mojang.serialization.Codec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -29,7 +29,7 @@ public class WorldGenPixieVillage extends Feature<NoneFeatureConfiguration> impl
     @Override
     public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> context) {
         WorldGenLevel worldIn = context.level();
-        Random rand = context.random();
+        net.minecraft.util.RandomSource rand = context.random();
         BlockPos position = context.origin();
 
         if (rand.nextInt(IafConfig.spawnPixiesChance) != 0 || !IafWorldRegistry.isFarEnoughFromSpawn(worldIn, position)) {
@@ -63,8 +63,8 @@ public class WorldGenPixieVillage extends Feature<NoneFeatureConfiguration> impl
                         case 5 -> IafBlockRegistry.PIXIE_HOUSE_DARK_OAK.get().defaultBlockState().setValue(BlockPixieHouse.FACING, houseDir.getOpposite());
                         default -> houseState;
                     };
-                    EntityPixie pixie = IafEntityRegistry.PIXIE.get().create(worldIn.getLevel());
-                    pixie.finalizeSpawn(worldIn, worldIn.getCurrentDifficultyAt(buildPosition2.above()), MobSpawnType.SPAWNER, null, null);
+                    EntityPixie pixie = IafEntityRegistry.PIXIE.get().create(worldIn.getLevel(), net.minecraft.world.entity.EntitySpawnReason.STRUCTURE);
+                    pixie.finalizeSpawn(worldIn, worldIn.getCurrentDifficultyAt(buildPosition2.above()), EntitySpawnReason.SPAWNER, null);
                     pixie.setPos(buildPosition2.getX(), buildPosition2.getY() + 2, buildPosition2.getZ());
                     pixie.setPersistenceRequired();
                     worldIn.addFreshEntity(pixie);

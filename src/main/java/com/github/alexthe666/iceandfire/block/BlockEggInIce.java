@@ -14,7 +14,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.material.MapColor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
@@ -27,14 +27,19 @@ public class BlockEggInIce extends BaseEntityBlock {
     @SuppressWarnings("deprecation")
     public BlockEggInIce() {
         super(
-            Properties
-                .of(Material.ICE)
+            IafBlockRegistry.id(Properties
+                .of().mapColor(MapColor.ICE)
                 .noOcclusion()
                 .dynamicShape()
                 .strength(0.5F)
                 .dynamicShape()
-                .sound(SoundType.GLASS)
+                .sound(SoundType.GLASS))
         );
+    }
+
+    @Override
+    protected com.mojang.serialization.MapCodec<? extends BaseEntityBlock> codec() {
+        return simpleCodec(properties -> new BlockEggInIce());
     }
 
     @Override
@@ -60,13 +65,14 @@ public class BlockEggInIce extends BaseEntityBlock {
     }
 
     @Override
-    public void playerWillDestroy(Level worldIn, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull Player player) {
+    public @NotNull BlockState playerWillDestroy(@NotNull Level worldIn, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull Player player) {
         if (worldIn.getBlockEntity(pos) != null) {
             if (worldIn.getBlockEntity(pos) instanceof TileEntityEggInIce) {
                 TileEntityEggInIce tile = (TileEntityEggInIce) worldIn.getBlockEntity(pos);
                 tile.spawnEgg();
             }
         }
+        return super.playerWillDestroy(worldIn, pos, state, player);
     }
 
 }

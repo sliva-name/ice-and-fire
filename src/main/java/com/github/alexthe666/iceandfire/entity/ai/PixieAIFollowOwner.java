@@ -1,5 +1,6 @@
 package com.github.alexthe666.iceandfire.entity.ai;
 
+import com.github.alexthe666.iceandfire.block.IafMaterials;
 import com.github.alexthe666.iceandfire.entity.EntityPixie;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
@@ -8,8 +9,7 @@ import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.Material;
-import net.minecraft.world.level.pathfinder.BlockPathTypes;
+import net.minecraft.world.level.pathfinder.PathType;
 
 import java.util.EnumSet;
 
@@ -24,7 +24,7 @@ public class PixieAIFollowOwner extends Goal {
 
     public PixieAIFollowOwner(EntityPixie tameableIn, double followSpeedIn, float minDistIn, float maxDistIn) {
         this.tameable = tameableIn;
-        this.world = tameableIn.level;
+        this.world = tameableIn.level();
         this.minDist = minDistIn;
         this.maxDist = maxDistIn;
         this.setFlags(EnumSet.of(Flag.MOVE));
@@ -57,20 +57,20 @@ public class PixieAIFollowOwner extends Goal {
     @Override
     public void start() {
         this.timeToRecalcPath = 0;
-        this.oldWaterCost = this.tameable.getPathfindingMalus(BlockPathTypes.WATER);
-        this.tameable.setPathfindingMalus(BlockPathTypes.WATER, 0.0F);
+        this.oldWaterCost = this.tameable.getPathfindingMalus(PathType.WATER);
+        this.tameable.setPathfindingMalus(PathType.WATER, 0.0F);
     }
 
     @Override
     public void stop() {
         this.owner = null;
-        this.tameable.setPathfindingMalus(BlockPathTypes.WATER, this.oldWaterCost);
+        this.tameable.setPathfindingMalus(PathType.WATER, this.oldWaterCost);
         this.tameable.slowSpeed = false;
     }
 
     private boolean isEmptyBlock(BlockPos pos) {
         BlockState BlockState = this.world.getBlockState(pos);
-        return BlockState.getMaterial() == Material.AIR || !BlockState.canOcclude();
+        return IafMaterials.isAir(BlockState) || !BlockState.canOcclude();
     }
 
     @Override
@@ -93,7 +93,7 @@ public class PixieAIFollowOwner extends Goal {
                         for (int l = 0; l <= 4; ++l) {
                             for (int i1 = 0; i1 <= 4; ++i1) {
                                 if ((l < 1 || i1 < 1 || l > 3 || i1 > 3) && this.isEmptyBlock(new BlockPos(i + l, k, j + i1)) && this.isEmptyBlock(new BlockPos(i + l, k + 1, j + i1))) {
-                                    this.tameable.moveTo(i + l + 0.5F, k + 1.5, j + i1 + 0.5F,
+                                    this.tameable.snapTo(i + l + 0.5F, k + 1.5, j + i1 + 0.5F,
                                         this.tameable.getYRot(), this.tameable.getXRot());
                                     return;
                                 }

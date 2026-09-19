@@ -5,6 +5,7 @@ import com.github.alexthe666.citadel.client.model.AdvancedModelBox;
 import com.github.alexthe666.citadel.client.model.basic.BasicModelPart;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.model.geom.ModelPart;
 
 // The AdvancedModelRenderer/ModelBox uses a child-parent structure
 // Meaning that if you change a parents showModel field to false all the children also
@@ -37,6 +38,16 @@ public class HideableModelRenderer extends AdvancedModelBox {
         this.rotationPointX = currentModel.rotationPointX;
         this.rotationPointY = currentModel.rotationPointY;
         this.rotationPointZ = currentModel.rotationPointZ;
+    }
+
+    @Override
+    protected void copyTransformTo(ModelPart part) {
+        super.copyTransformTo(part);
+        // Native skipDraw hides this part's cubes while children still transform, matching invisibleRender.
+        part.visible = showModel;
+        if (part.hasChild("geometry")) {
+            part.getChild("geometry").skipDraw = invisible;
+        }
     }
 
     public void invisibleRender(PoseStack matrixStackIn, VertexConsumer bufferIn, int packedLightIn, int packedOverlayIn, float red, float green, float blue, float alpha) {

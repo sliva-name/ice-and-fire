@@ -12,7 +12,7 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.material.MapColor;
 import org.jetbrains.annotations.NotNull;
 
 public class BlockDreadStoneFace extends HorizontalDirectionalBlock implements IDreadBlock, IDragonProof {
@@ -20,13 +20,18 @@ public class BlockDreadStoneFace extends HorizontalDirectionalBlock implements I
 
     public BlockDreadStoneFace() {
         super(
-            BlockBehaviour.Properties
-                .of(Material.STONE)
+            IafBlockRegistry.id(BlockBehaviour.Properties
+                .of().mapColor(MapColor.STONE)
                 .sound(SoundType.STONE)
-                .strength(-1F, 10000F)
+                .strength(-1F, 10000F))
         );
 
         this.registerDefaultState(this.getStateDefinition().any().setValue(FACING, Direction.NORTH).setValue(PLAYER_PLACED, Boolean.FALSE));
+    }
+
+    @Override
+    protected com.mojang.serialization.MapCodec<? extends HorizontalDirectionalBlock> codec() {
+        return simpleCodec(properties -> new BlockDreadStoneFace());
     }
 
     @SuppressWarnings("deprecation")
@@ -35,7 +40,7 @@ public class BlockDreadStoneFace extends HorizontalDirectionalBlock implements I
         if (state.getValue(PLAYER_PLACED)) {
             float f = 8f;
             //Code from super method
-            return player.getDigSpeed(state, pos) / f / (float) 30;
+            return player.getDestroySpeed(state) / f / (float) 30;
         }
         return super.getDestroyProgress(state, player, worldIn, pos);
     }

@@ -1,22 +1,22 @@
 package com.github.alexthe666.iceandfire.entity;
 
+import com.github.alexthe666.iceandfire.entity.util.IafOwners;
+
 import com.github.alexthe666.iceandfire.item.IafItemRegistry;
 import net.minecraft.core.particles.ItemParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.protocol.Packet;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.projectile.ThrowableItemProjectile;
+import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrowableItemProjectile;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraftforge.entity.IEntityAdditionalSpawnData;
-import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.NotNull;
 
 public class EntityDeathWormEgg extends ThrowableItemProjectile implements IEntityAdditionalSpawnData {
@@ -29,21 +29,15 @@ public class EntityDeathWormEgg extends ThrowableItemProjectile implements IEnti
 
     public EntityDeathWormEgg(EntityType<? extends ThrowableItemProjectile> type, LivingEntity throwerIn, Level worldIn,
                               boolean giant) {
-        super(type, throwerIn, worldIn);
+        super(type, throwerIn, worldIn, new net.minecraft.world.item.ItemStack(giant ? IafItemRegistry.DEATHWORM_EGG_GIGANTIC.get() : IafItemRegistry.DEATHWORM_EGG.get()));
         this.giant = giant;
     }
 
     public EntityDeathWormEgg(EntityType<? extends ThrowableItemProjectile> type, double x, double y, double z,
                               Level worldIn, boolean giant) {
-        super(type, x, y, z, worldIn);
+        super(type, x, y, z, worldIn, new net.minecraft.world.item.ItemStack(giant ? IafItemRegistry.DEATHWORM_EGG_GIGANTIC.get() : IafItemRegistry.DEATHWORM_EGG.get()));
         this.giant = giant;
     }
-
-    @Override
-    public @NotNull Packet<?> getAddEntityPacket() {
-        return NetworkHooks.getEntitySpawningPacket(this);
-    }
-
     @Override
     public void writeSpawnData(FriendlyByteBuf buffer) {
         buffer.writeBoolean(this.giant);
@@ -58,7 +52,7 @@ public class EntityDeathWormEgg extends ThrowableItemProjectile implements IEnti
     public void handleEntityEvent(byte id) {
         if (id == 3) {
             for (int i = 0; i < 8; ++i) {
-                this.level.addParticle(new ItemParticleOption(ParticleTypes.ITEM, this.getItem()), this.getX(), this.getY(), this.getZ(), (this.random.nextFloat() - 0.5D) * 0.08D, (this.random.nextFloat() - 0.5D) * 0.08D, (this.random.nextFloat() - 0.5D) * 0.08D);
+                this.level().addParticle(new ItemParticleOption(ParticleTypes.ITEM, this.getDefaultItem()), this.getX(), this.getY(), this.getZ(), (this.random.nextFloat() - 0.5D) * 0.08D, (this.random.nextFloat() - 0.5D) * 0.08D, (this.random.nextFloat() - 0.5D) * 0.08D);
             }
         }
     }
@@ -70,25 +64,27 @@ public class EntityDeathWormEgg extends ThrowableItemProjectile implements IEnti
     protected void onHit(HitResult result) {
         Entity thrower = getOwner();
         if (result.getType() == HitResult.Type.ENTITY) {
-            ((EntityHitResult) result).getEntity().hurt(DamageSource.thrown(this, thrower), 0.0F);
+            if (this.level() instanceof net.minecraft.server.level.ServerLevel server) {
+                ((EntityHitResult) result).getEntity().hurtServer(server, this.damageSources().thrown(this, thrower), 0.0F);
+            }
         }
 
-        if (!this.level.isClientSide) {
+        if (!this.level().isClientSide()) {
             float wormSize = 0.25F + (float) (Math.random() * 0.35F);
 
-            EntityDeathWorm deathworm = new EntityDeathWorm(IafEntityRegistry.DEATH_WORM.get(), this.level);
+            EntityDeathWorm deathworm = new EntityDeathWorm(IafEntityRegistry.DEATH_WORM.get(), this.level());
             deathworm.setVariant(random.nextInt(3));
-            deathworm.setTame(true);
+            deathworm.setTame(true, false);
             deathworm.setWormHome(blockPosition());
             deathworm.setWormAge(1);
             deathworm.setDeathWormScale(giant ? (wormSize * 4) : wormSize);
-            deathworm.moveTo(this.getX(), this.getY(), this.getZ(), this.getYRot(), 0.0F);
+            deathworm.snapTo(this.getX(), this.getY(), this.getZ(), this.getYRot(), 0.0F);
             if (thrower instanceof Player) {
-                deathworm.setOwnerUUID(thrower.getUUID());
+                IafOwners.setUUID(deathworm, thrower.getUUID());
             }
-            this.level.addFreshEntity(deathworm);
+            this.level().addFreshEntity(deathworm);
 
-            this.level.broadcastEntityEvent(this, (byte) 3);
+            this.level().broadcastEntityEvent(this, (byte) 3);
             this.remove(RemovalReason.DISCARDED);
         }
     }

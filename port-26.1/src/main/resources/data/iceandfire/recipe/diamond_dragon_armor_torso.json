@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "DDD",
+    "DDD",
+    "D D"
+  ],
+  "key": {
+    "D": "#forge:storage_blocks/diamond"
+  },
+  "result": {
+    "id": "iceandfire:dragonarmor_diamond_body"
+  }
+}

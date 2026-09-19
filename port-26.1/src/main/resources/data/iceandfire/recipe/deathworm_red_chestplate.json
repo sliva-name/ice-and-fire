@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "C C",
+    "CCC",
+    "CCC"
+  ],
+  "key": {
+    "C": "iceandfire:deathworm_chitin_red"
+  },
+  "result": {
+    "id": "iceandfire:deathworm_red_chestplate"
+  }
+}

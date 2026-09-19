@@ -7,25 +7,21 @@ import net.minecraft.core.Holder;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
-import net.minecraft.world.entity.SpawnPlacements;
+import net.minecraft.world.entity.SpawnPlacementTypes;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.MobSpawnSettings;
 import net.minecraft.world.level.levelgen.Heightmap;
-import net.minecraftforge.common.world.MobSpawnSettingsBuilder;
 import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraftforge.event.entity.SpawnPlacementRegisterEvent;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 
 import java.util.HashMap;
 
-@Mod.EventBusSubscriber(modid = IceAndFire.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class IafEntityRegistry {
 
-    public static final DeferredRegister<EntityType<?>> ENTITIES = DeferredRegister.create(ForgeRegistries.ENTITIES,
+    public static final DeferredRegister<EntityType<?>> ENTITIES = DeferredRegister.create(ForgeRegistries.ENTITY_TYPES,
         IceAndFire.MODID);
 
     public static final RegistryObject<EntityType<EntityDragonPart>> DRAGON_MULTIPART = registerEntity(EntityType.Builder.<EntityDragonPart>of(EntityDragonPart::new, MobCategory.MISC).sized(0.5F, 0.5F).fireImmune().setCustomClientFactory(EntityDragonPart::new), "dragon_multipart");
@@ -88,10 +84,9 @@ public class IafEntityRegistry {
     public static final RegistryObject<EntityType<EntityGhostSword>> GHOST_SWORD = registerEntity(EntityType.Builder.<EntityGhostSword>of(EntityGhostSword::new, MobCategory.MISC).sized(0.5F, 0.5F).setCustomClientFactory(EntityGhostSword::new), "ghost_sword");
 
     private static final <T extends Entity> RegistryObject<EntityType<T>> registerEntity(EntityType.Builder<T> builder, String entityName) {
-        return ENTITIES.register(entityName, () -> builder.build(entityName));
+        return ENTITIES.register(entityName, () -> builder.build(ENTITIES.key(entityName)));
     }
 
-    @SubscribeEvent
     public static void bakeAttributes(EntityAttributeCreationEvent creationEvent) {
         creationEvent.put(DRAGON_EGG.get(), EntityDragonEgg.bakeAttributes().build());
         creationEvent.put(DRAGON_SKULL.get(), EntityDragonSkull.bakeAttributes().build());
@@ -130,13 +125,17 @@ public class IafEntityRegistry {
         creationEvent.put(GHOST.get(), EntityGhost.bakeAttributes().build());
     }
 
-    @SubscribeEvent
-    public static void commonSetup(final FMLCommonSetupEvent event) {
-        SpawnPlacements.register(HIPPOGRYPH.get(), SpawnPlacements.Type.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, EntityHippogryph::checkMobSpawnRules);
-        SpawnPlacements.register(TROLL.get(), SpawnPlacements.Type.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, EntityTroll::canTrollSpawnOn);
-        SpawnPlacements.register(DREAD_LICH.get(), SpawnPlacements.Type.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, EntityDreadLich::canLichSpawnOn);
-        SpawnPlacements.register(COCKATRICE.get(), SpawnPlacements.Type.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, EntityCockatrice::checkMobSpawnRules);
-        SpawnPlacements.register(AMPHITHERE.get(), SpawnPlacements.Type.NO_RESTRICTIONS, Heightmap.Types.MOTION_BLOCKING, EntityAmphithere::canAmphithereSpawnOn);
+    static {
+        EntityAttributeCreationEvent.BUS.addListener(IafEntityRegistry::bakeAttributes);
+        SpawnPlacementRegisterEvent.BUS.addListener(IafEntityRegistry::registerSpawnPlacements);
+    }
+
+    public static void registerSpawnPlacements(SpawnPlacementRegisterEvent event) {
+        event.register(HIPPOGRYPH.get(), SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, EntityHippogryph::checkMobSpawnRules, SpawnPlacementRegisterEvent.Operation.REPLACE);
+        event.register(TROLL.get(), SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, EntityTroll::canTrollSpawnOn, SpawnPlacementRegisterEvent.Operation.REPLACE);
+        event.register(DREAD_LICH.get(), SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, EntityDreadLich::canLichSpawnOn, SpawnPlacementRegisterEvent.Operation.REPLACE);
+        event.register(COCKATRICE.get(), SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, EntityCockatrice::checkMobSpawnRules, SpawnPlacementRegisterEvent.Operation.REPLACE);
+        event.register(AMPHITHERE.get(), SpawnPlacementTypes.NO_RESTRICTIONS, Heightmap.Types.MOTION_BLOCKING, EntityAmphithere::canAmphithereSpawnOn, SpawnPlacementRegisterEvent.Operation.REPLACE);
     }
 
     public static HashMap<String, Boolean> LOADED_ENTITIES;
@@ -150,22 +149,21 @@ public class IafEntityRegistry {
     	LOADED_ENTITIES.put("TROLL_S", false);
     	LOADED_ENTITIES.put("TROLL_M", false);
     }
-    public static void addSpawners(Holder<Biome> biomeHolder) {
-        var spawners = new MobSpawnSettingsBuilder(biomeHolder.value().getMobSettings());
+    public static void addSpawners(Holder<Biome> biomeHolder, MobSpawnSettings.Builder spawners) {
         if (IafConfig.spawnHippogryphs && BiomeConfig.test(BiomeConfig.hippogryphBiomes, biomeHolder)) {
-            spawners.getSpawner(MobCategory.CREATURE).add(new MobSpawnSettings.SpawnerData(IafEntityRegistry.HIPPOGRYPH.get(), IafConfig.hippogryphSpawnRate, 1, 1));
+            spawners.addSpawn(MobCategory.CREATURE, IafConfig.hippogryphSpawnRate, new MobSpawnSettings.SpawnerData(HIPPOGRYPH.get(), 1, 1));
             LOADED_ENTITIES.put("HIPPOGRYPH", true);
         }
         if (IafConfig.spawnLiches && BiomeConfig.test(BiomeConfig.mausoleumBiomes, biomeHolder)) {
-            spawners.getSpawner(MobCategory.MONSTER).add(new MobSpawnSettings.SpawnerData(IafEntityRegistry.DREAD_LICH.get(), IafConfig.lichSpawnRate, 1, 1));
+            spawners.addSpawn(MobCategory.MONSTER, IafConfig.lichSpawnRate, new MobSpawnSettings.SpawnerData(DREAD_LICH.get(), 1, 1));
             LOADED_ENTITIES.put("DREAD_LICH", true);
         }
         if (IafConfig.spawnCockatrices && BiomeConfig.test(BiomeConfig.cockatriceBiomes, biomeHolder)) {
-            spawners.getSpawner(MobCategory.CREATURE).add(new MobSpawnSettings.SpawnerData(IafEntityRegistry.COCKATRICE.get(), IafConfig.cockatriceSpawnRate, 1, 2));
+            spawners.addSpawn(MobCategory.CREATURE, IafConfig.cockatriceSpawnRate, new MobSpawnSettings.SpawnerData(COCKATRICE.get(), 1, 2));
             LOADED_ENTITIES.put("COCKATRICE", true);
         }
         if (IafConfig.spawnAmphitheres && BiomeConfig.test(BiomeConfig.amphithereBiomes, biomeHolder)) {
-            spawners.getSpawner(MobCategory.CREATURE).add(new MobSpawnSettings.SpawnerData(IafEntityRegistry.AMPHITHERE.get(), IafConfig.amphithereSpawnRate, 1, 3));
+            spawners.addSpawn(MobCategory.CREATURE, IafConfig.amphithereSpawnRate, new MobSpawnSettings.SpawnerData(AMPHITHERE.get(), 1, 3));
             LOADED_ENTITIES.put("AMPHITHERE", true);
         }
         if (IafConfig.spawnTrolls && (
@@ -173,12 +171,10 @@ public class IafEntityRegistry {
     		BiomeConfig.test(BiomeConfig.snowyTrollBiomes, biomeHolder) ||
     		BiomeConfig.test(BiomeConfig.mountainTrollBiomes, biomeHolder)
 		)) {
-            spawners.getSpawner(MobCategory.MONSTER).add(new MobSpawnSettings.SpawnerData(IafEntityRegistry.TROLL.get(), IafConfig.trollSpawnRate, 1, 3));
+            spawners.addSpawn(MobCategory.MONSTER, IafConfig.trollSpawnRate, new MobSpawnSettings.SpawnerData(TROLL.get(), 1, 3));
     		if (BiomeConfig.test(BiomeConfig.forestTrollBiomes, biomeHolder)) LOADED_ENTITIES.put("TROLL_F", true);
     		if (BiomeConfig.test(BiomeConfig.snowyTrollBiomes, biomeHolder)) LOADED_ENTITIES.put("TROLL_S", true);
     		if (BiomeConfig.test(BiomeConfig.mountainTrollBiomes, biomeHolder)) LOADED_ENTITIES.put("TROLL_M", true);
         }
-
-        biomeHolder.value().getMobSettings().spawners = spawners.build().spawners;
     }
 }

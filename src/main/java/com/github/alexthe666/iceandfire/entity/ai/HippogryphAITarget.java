@@ -14,12 +14,12 @@ public class HippogryphAITarget<T extends LivingEntity> extends NearestAttackabl
     private final EntityHippogryph hippogryph;
 
     public HippogryphAITarget(EntityHippogryph entityIn, Class<T> classTarget, boolean checkSight, @Nullable Predicate<LivingEntity> targetPredicate) {
-        super(entityIn, classTarget, 20, checkSight, false, targetPredicate);
+        super(entityIn, classTarget, 20, checkSight, false, IafSelectors.of(targetPredicate));
         this.hippogryph = entityIn;
     }
 
     public HippogryphAITarget(EntityHippogryph entityIn, Class<T> classTarget, int i, boolean checkSight, @Nullable Predicate<LivingEntity> targetPredicate) {
-        super(entityIn, classTarget, i, checkSight, false, targetPredicate);
+        super(entityIn, classTarget, i, checkSight, false, IafSelectors.of(targetPredicate));
         this.hippogryph = entityIn;
     }
 

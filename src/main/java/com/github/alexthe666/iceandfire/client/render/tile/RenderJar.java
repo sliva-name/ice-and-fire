@@ -1,109 +1,60 @@
 package com.github.alexthe666.iceandfire.client.render.tile;
 
 import com.github.alexthe666.iceandfire.client.model.ModelPixie;
-import com.github.alexthe666.iceandfire.client.render.entity.RenderPixie;
+import com.github.alexthe666.iceandfire.client.render.entity.PixieRenderState;
 import com.github.alexthe666.iceandfire.entity.tile.TileEntityJar;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Quaternion;
-import com.mojang.math.Vector3f;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
+import com.mojang.math.Axis;
+import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import org.jetbrains.annotations.NotNull;
+import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.world.phys.Vec3;
+import org.jspecify.annotations.Nullable;
 
-public class RenderJar<T extends TileEntityJar> implements BlockEntityRenderer<T> {
-
-    public static final RenderType TEXTURE_0 = RenderType.entityCutoutNoCull(RenderPixie.TEXTURE_0, false);
-    public static final RenderType TEXTURE_1 = RenderType.entityCutoutNoCull(RenderPixie.TEXTURE_1, false);
-    public static final RenderType TEXTURE_2 = RenderType.entityCutoutNoCull(RenderPixie.TEXTURE_2, false);
-    public static final RenderType TEXTURE_3 = RenderType.entityCutoutNoCull(RenderPixie.TEXTURE_3, false);
-    public static final RenderType TEXTURE_4 = RenderType.entityCutoutNoCull(RenderPixie.TEXTURE_4, false);
-    public static final RenderType TEXTURE_5 = RenderType.entityCutoutNoCull(RenderPixie.TEXTURE_5, false);
-    public static final RenderType TEXTURE_0_GLO = RenderType.eyes(RenderPixie.TEXTURE_0);
-    public static final RenderType TEXTURE_1_GLO = RenderType.eyes(RenderPixie.TEXTURE_1);
-    public static final RenderType TEXTURE_2_GLO = RenderType.eyes(RenderPixie.TEXTURE_2);
-    public static final RenderType TEXTURE_3_GLO = RenderType.eyes(RenderPixie.TEXTURE_3);
-    public static final RenderType TEXTURE_4_GLO = RenderType.eyes(RenderPixie.TEXTURE_4);
-    public static final RenderType TEXTURE_5_GLO = RenderType.eyes(RenderPixie.TEXTURE_5);
-    private static ModelPixie MODEL_PIXIE;
+public class RenderJar<T extends TileEntityJar> implements BlockEntityRenderer<T, JarRenderState> {
+    private final EntityModel<PixieRenderState> model = new ModelPixie().asEntityModel();
 
     public RenderJar(BlockEntityRendererProvider.Context context) {
-
     }
 
     @Override
-    public void render(@NotNull T entity, float partialTicks, @NotNull PoseStack matrixStackIn, @NotNull MultiBufferSource bufferIn, int combinedLightIn, int combinedOverlayIn) {
-        int meta = 0;
-        boolean hasPixie = false;
-        if (MODEL_PIXIE == null) {
-            MODEL_PIXIE = new ModelPixie();
-        }
-        if (entity != null && entity.getLevel() != null) {
-            meta = entity.pixieType;
-            hasPixie = entity.hasPixie;
-        }
-        if (hasPixie) {
-            matrixStackIn.pushPose();
-            matrixStackIn.translate(0.5F, 1.501F, 0.5F);
-            matrixStackIn.mulPose(new Quaternion(Vector3f.XP, 180, true));
-            matrixStackIn.pushPose();
-            RenderType type = TEXTURE_0;
-            RenderType typeGlow = TEXTURE_0_GLO;
-            switch (meta) {
-                default:
-                    type = TEXTURE_0;
-                    typeGlow = TEXTURE_0_GLO;
-                    break;
-                case 1:
-                    type = TEXTURE_1;
-                    typeGlow = TEXTURE_1_GLO;
-                    break;
-                case 2:
-                    type = TEXTURE_2;
-                    typeGlow = TEXTURE_2_GLO;
-                    break;
-                case 3:
-                    type = TEXTURE_3;
-                    typeGlow = TEXTURE_3_GLO;
-                    break;
-                case 4:
-                    type = TEXTURE_4;
-                    typeGlow = TEXTURE_4_GLO;
-                    break;
-            }
-            VertexConsumer ivertexbuilder = bufferIn.getBuffer(type);
-            if (entity != null && entity.getLevel() != null) {
-
-                if (entity.hasProduced) {
-                    matrixStackIn.translate(0F, 0.90F, 0F);
-                } else {
-                    matrixStackIn.translate(0F, 0.60F, 0F);
-                }
-                matrixStackIn.mulPose(new Quaternion(Vector3f.YP, this.interpolateRotation(entity.prevRotationYaw, entity.rotationYaw, partialTicks), true));
-                matrixStackIn.scale(0.50F, 0.50F, 0.50F);
-                MODEL_PIXIE.animateInJar(entity.hasProduced, entity, 0);
-                MODEL_PIXIE.renderToBuffer(matrixStackIn, ivertexbuilder, combinedLightIn, combinedOverlayIn, 1.0F, 1.0F, 1.0F, 1.0F);
-                MODEL_PIXIE.renderToBuffer(matrixStackIn, bufferIn.getBuffer(typeGlow), combinedLightIn, combinedOverlayIn, 1.0F, 1.0F, 1.0F, 1.0F);
-            }
-            matrixStackIn.popPose();
-            matrixStackIn.popPose();
-        }
+    public JarRenderState createRenderState() {
+        return new JarRenderState();
     }
 
-    protected float interpolateRotation(float prevYawOffset, float yawOffset, float partialTicks) {
-        float f;
-
-        for (f = yawOffset - prevYawOffset; f < -180.0F; f += 360.0F) {
-        }
-
-        while (f >= 180.0F) {
-            f -= 360.0F;
-        }
-
-        return prevYawOffset + partialTicks * f;
+    @Override
+    public void extractRenderState(T jar, JarRenderState state, float partialTicks, Vec3 cameraPosition,
+                                   ModelFeatureRenderer.@Nullable CrumblingOverlay breakProgress) {
+        BlockEntityRenderer.super.extractRenderState(jar, state, partialTicks, cameraPosition, breakProgress);
+        state.hasPixie = jar.getLevel() != null && jar.hasPixie;
+        state.rotation = JarRenderState.interpolateRotation(jar.prevRotationYaw, jar.rotationYaw, partialTicks);
+        state.pixie.setContainedPose(PixieRenderState.Mode.JAR, jar.pixieType,
+            jar.ticksExisted + partialTicks, jar.hasProduced);
     }
 
-
+    @Override
+    public void submit(JarRenderState state, PoseStack poses, SubmitNodeCollector collector, CameraRenderState camera) {
+        if (!state.hasPixie) {
+            return;
+        }
+        poses.pushPose();
+        poses.translate(0.5F, 1.501F, 0.5F);
+        poses.mulPose(Axis.XP.rotationDegrees(180));
+        poses.translate(0F, state.pixie.sitting ? 0.90F : 0.60F, 0F);
+        poses.mulPose(Axis.YP.rotationDegrees(state.rotation));
+        poses.scale(0.50F, 0.50F, 0.50F);
+        // The original jar renderer used color 0 for every value outside 1–4, including 5.
+        int color = state.pixie.color;
+        var texture = PixieRenderState.textureFor(color >= 1 && color <= 4 ? color : 0);
+        collector.submitModel(model, state.pixie, poses, RenderTypes.entityCutout(texture, false),
+            state.lightCoords, OverlayTexture.NO_OVERLAY, 0, state.breakProgress);
+        collector.order(1).submitModel(model, state.pixie, poses, RenderTypes.eyes(texture),
+            state.lightCoords, OverlayTexture.NO_OVERLAY, 0, state.breakProgress);
+        poses.popPose();
+    }
 }

@@ -1,5 +1,6 @@
 package com.github.alexthe666.iceandfire.entity.tile;
 
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import com.github.alexthe666.iceandfire.block.BlockDragonforgeInput;
 import com.github.alexthe666.iceandfire.block.IafBlockRegistry;
 import com.github.alexthe666.iceandfire.entity.DragonType;
@@ -61,14 +62,15 @@ public class TileEntityDragonforgeInput extends BlockEntity {
         return ClientboundBlockEntityDataPacket.create(this);
     }
 
-    @Override
-    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
-        load(packet.getTag());
+    public void onDataPacket(Connection connection, ClientboundBlockEntityDataPacket packet) {
+        if (packet.getTag() != null && getLevel() != null) {
+            this.loadWithComponents(net.minecraft.world.level.storage.TagValueInput.create(net.minecraft.util.ProblemReporter.DISCARDING, getLevel().registryAccess(), packet.getTag()));
+        }
     }
 
     @Override
-    public @NotNull CompoundTag getUpdateTag() {
-        return this.saveWithFullMetadata();
+    public @NotNull CompoundTag getUpdateTag(net.minecraft.core.HolderLookup.Provider registries) {
+        return this.saveWithFullMetadata(registries);
     }
 
     protected void lureDragons() {
@@ -169,7 +171,7 @@ public class TileEntityDragonforgeInput extends BlockEntity {
     @Override
     @javax.annotation.Nonnull
     public <T> net.minecraftforge.common.util.LazyOptional<T> getCapability(net.minecraftforge.common.capabilities.@NotNull Capability<T> capability, @Nullable Direction facing) {
-        if (core != null && capability == net.minecraftforge.items.CapabilityItemHandler.ITEM_HANDLER_CAPABILITY) {
+        if (core != null && capability == net.minecraftforge.common.capabilities.ForgeCapabilities.ITEM_HANDLER) {
             return core.getCapability(capability, facing);
         }
         return super.getCapability(capability, facing);

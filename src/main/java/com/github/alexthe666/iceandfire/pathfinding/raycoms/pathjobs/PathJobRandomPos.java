@@ -13,7 +13,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.pathfinder.Path;
 
 import javax.annotation.Nullable;
-import java.util.Random;
+import net.minecraft.util.RandomSource;
 
 
 /**
@@ -35,7 +35,7 @@ public class PathJobRandomPos extends AbstractPathJob
     /**
      * Random pathing rand.
      */
-    private static final Random random = new Random();
+    private static final RandomSource random = RandomSource.create();
 
 
     /**
@@ -124,7 +124,7 @@ public class PathJobRandomPos extends AbstractPathJob
      * @param random a random object.
      * @return a tuple of two directions.
      */
-    public static Tuple<Direction, Direction> getRandomDirectionTuple(final Random random)
+    public static Tuple<Direction, Direction> getRandomDirectionTuple(final RandomSource random)
     {
         return new Tuple<>(Direction.getRandom(random), Direction.getRandom(random));
     }
@@ -152,7 +152,7 @@ public class PathJobRandomPos extends AbstractPathJob
     @Override
     protected double computeHeuristic(final BlockPos pos)
     {
-        return Math.sqrt(destination.distSqr(new BlockPos(pos.getX(), destination.getY(), pos.getZ())));
+        return Math.sqrt(destination.distSqr(BlockPos.containing(pos.getX(), destination.getY(), pos.getZ())));
     }
 
     @Override

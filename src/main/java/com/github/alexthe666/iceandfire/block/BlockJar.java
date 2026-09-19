@@ -22,7 +22,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -40,27 +40,29 @@ public class BlockJar extends BaseEntityBlock {
 
     public BlockJar(int pixieType) {
         super(
-            pixieType != -1 ?
+            IafBlockRegistry.id(pixieType != -1 ?
                 Properties
-                    .of(Material.GLASS)
+                    .of().mapColor(MapColor.NONE)
                     .noOcclusion()
                     .dynamicShape()
                     .strength(1, 2)
                     .sound(SoundType.GLASS)
-                    .lightLevel((state) -> {
-                        return pixieType == -1 ? 0 : 10;
-                    })
-                    .dropsLike(IafBlockRegistry.JAR_EMPTY.get())
-				: Properties
-                .of(Material.GLASS)
-                .noOcclusion()
-                .dynamicShape()
-                .strength(1, 2)
-					.sound(SoundType.GLASS)
-		);
+                    .lightLevel((state) -> pixieType == -1 ? 0 : 10)
+                : Properties
+                    .of().mapColor(MapColor.NONE)
+                    .noOcclusion()
+                    .dynamicShape()
+                    .strength(1, 2)
+                    .sound(SoundType.GLASS))
+        );
 
         this.empty = pixieType == -1;
         this.pixieType = pixieType;
+    }
+
+    @Override
+    protected com.mojang.serialization.MapCodec<? extends BaseEntityBlock> codec() {
+        return simpleCodec(properties -> new BlockJar(this.pixieType));
     }
 
     static String name(int pixieType) {
@@ -81,9 +83,9 @@ public class BlockJar extends BaseEntityBlock {
 
 
     @Override
-    public void onRemove(@NotNull BlockState state, @NotNull Level worldIn, @NotNull BlockPos pos, @NotNull BlockState newState, boolean isMoving) {
+    protected void affectNeighborsAfterRemoval(@NotNull BlockState state, @NotNull net.minecraft.server.level.ServerLevel worldIn, @NotNull BlockPos pos, boolean movedByPiston) {
         dropPixie(worldIn, pos);
-        super.onRemove(state, worldIn, pos, newState, isMoving);
+        super.affectNeighborsAfterRemoval(state, worldIn, pos, movedByPiston);
     }
 
     public void dropPixie(Level world, BlockPos pos) {
@@ -93,11 +95,11 @@ public class BlockJar extends BaseEntityBlock {
     }
 
     @Override
-    public @NotNull InteractionResult use(@NotNull BlockState state, @NotNull Level world, @NotNull BlockPos pos, @NotNull Player player, @NotNull InteractionHand handIn, @NotNull BlockHitResult resultIn) {
+    protected @NotNull InteractionResult useWithoutItem(@NotNull BlockState state, @NotNull Level world, @NotNull BlockPos pos, @NotNull Player player, @NotNull BlockHitResult resultIn) {
         if (!empty && world.getBlockEntity(pos) != null && world.getBlockEntity(pos) instanceof TileEntityJar && ((TileEntityJar) world.getBlockEntity(pos)).hasPixie && ((TileEntityJar) world.getBlockEntity(pos)).hasProduced) {
             ((TileEntityJar) world.getBlockEntity(pos)).hasProduced = false;
             ItemEntity item = new ItemEntity(world, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, new ItemStack(IafItemRegistry.PIXIE_DUST.get()));
-            if (!world.isClientSide) {
+            if (!world.isClientSide()) {
                 world.addFreshEntity(item);
             }
             world.playLocalSound(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5, IafSoundRegistry.PIXIE_HURT, SoundSource.NEUTRAL, 1, 1, false);

@@ -1,17 +1,18 @@
 package com.github.alexthe666.iceandfire.client.model;
 
-import com.github.alexthe666.citadel.animation.IAnimatedEntity;
+import com.github.alexthe666.citadel.client.model.AdvancedEntityModel;
 import com.github.alexthe666.citadel.client.model.AdvancedModelBox;
 import com.github.alexthe666.citadel.client.model.ModelAnimator;
 import com.github.alexthe666.citadel.client.model.basic.BasicModelPart;
-import com.github.alexthe666.iceandfire.entity.EntityDreadBeast;
+import com.github.alexthe666.iceandfire.client.render.entity.DreadBeastRenderState;
+import com.github.alexthe666.iceandfire.client.render.entity.DreadBeastRenderState.AnimationKind;
 import com.google.common.collect.ImmutableList;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.world.entity.Entity;
 
-public class ModelDreadBeast extends ModelDragonBase<EntityDreadBeast> {
+public class ModelDreadBeast extends AdvancedEntityModel<DreadBeastRenderState> implements ICustomStatueModel {
     private final ModelAnimator animator;
     public AdvancedModelBox Body;
     public AdvancedModelBox LegL1;
@@ -204,8 +205,11 @@ public class ModelDreadBeast extends ModelDragonBase<EntityDreadBeast> {
     }
 
     @Override
-    public void setupAnim(EntityDreadBeast entity, float f, float f1, float f2, float f3, float f4) {
-        animate(entity, f, f1, f2, f3, f4, 0);
+    public void setupAnim(DreadBeastRenderState state) {
+        animate(state);
+        float f = state.walkAnimationPos;
+        float f1 = state.walkAnimationSpeed;
+        float f2 = state.ageInTicks;
         float speed_walk = 0.45F;
         float speed_idle = 0.05F;
         float degree_walk = 1F;
@@ -239,10 +243,10 @@ public class ModelDreadBeast extends ModelDragonBase<EntityDreadBeast> {
         this.Tail.rotateAngleX = f12;
     }
 
-    public void animate(IAnimatedEntity entity, float f, float f1, float f2, float f3, float f4, float f5) {
+    public void animate(DreadBeastRenderState state) {
         this.resetToDefaultPose();
-        animator.update(entity);
-        if (animator.setAnimation(EntityDreadBeast.ANIMATION_BITE)) {
+        animator.update(state.animation.token(), state.animationTick, state.partialTick);
+        if (animator.setAnimation(AnimationKind.BITE.token())) {
             animator.startKeyframe(5);
             this.rotate(animator, Neck1, -39, 0, 0);
             this.rotate(animator, HeadBase, 40, 0, -15);
@@ -255,7 +259,7 @@ public class ModelDreadBeast extends ModelDragonBase<EntityDreadBeast> {
             animator.endKeyframe();
             animator.resetKeyframe(5);
         }
-        if (animator.setAnimation(EntityDreadBeast.ANIMATION_SPAWN)) {
+        if (animator.setAnimation(AnimationKind.SPAWN.token())) {
             animator.startKeyframe(0);
             animator.move(this.Body, 0, 35, 0);
             animator.endKeyframe();
@@ -263,7 +267,11 @@ public class ModelDreadBeast extends ModelDragonBase<EntityDreadBeast> {
             animator.move(this.Body, 0, 0, 0);
             animator.endKeyframe();
             animator.resetKeyframe(5);
+        }
     }
+
+    private void rotate(ModelAnimator animator, AdvancedModelBox box, float x, float y, float z) {
+        animator.rotate(box, (float) Math.toRadians(x), (float) Math.toRadians(y), (float) Math.toRadians(z));
     }
 
     @Override

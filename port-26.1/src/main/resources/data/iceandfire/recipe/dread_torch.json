@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "D",
+    "S"
+  ],
+  "key": {
+    "D": "iceandfire:dread_shard",
+    "S": "#forge:rods/wooden"
+  },
+  "result": {
+    "count": 4,
+    "id": "iceandfire:dread_torch"
+  }
+}

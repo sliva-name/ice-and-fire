@@ -15,7 +15,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.WorldGenLevel;
@@ -52,7 +52,7 @@ public class WorldGenMyrmexHive extends Feature<NoneFeatureConfiguration> implem
         this.jungle = jungle;
     }
 
-    public boolean placeSmallGen(WorldGenLevel worldIn, Random rand, BlockPos pos) {
+    public boolean placeSmallGen(WorldGenLevel worldIn, net.minecraft.util.RandomSource rand, BlockPos pos) {
         hasFoodRoom = false;
         hasNursery = false;
         totalRooms = 0;
@@ -66,7 +66,7 @@ public class WorldGenMyrmexHive extends Feature<NoneFeatureConfiguration> implem
     @Override
     public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> context) {
         WorldGenLevel worldIn = context.level();
-        Random rand = context.random();
+        net.minecraft.util.RandomSource rand = context.random();
         BlockPos pos = context.origin();
         if (!small) {
             if (rand.nextInt(IafConfig.myrmexColonyGenChance) != 0 || !IafWorldRegistry.isFarEnoughFromSpawn(worldIn, pos) || !IafWorldRegistry.isFarEnoughFromDangerousGen(worldIn, pos, "myrmex_hive")) {
@@ -83,7 +83,7 @@ public class WorldGenMyrmexHive extends Feature<NoneFeatureConfiguration> implem
         hasNursery = false;
         totalRooms = 0;
         int down = Math.max(15, pos.getY() - 20 + rand.nextInt(10));
-        BlockPos undergroundPos = new BlockPos(pos.getX(), down, pos.getZ());
+        BlockPos undergroundPos = BlockPos.containing(pos.getX(), down, pos.getZ());
         entrances = 0;
         centerOfHive = undergroundPos;
         generateMainRoom(worldIn, rand, undergroundPos);
@@ -91,7 +91,7 @@ public class WorldGenMyrmexHive extends Feature<NoneFeatureConfiguration> implem
         return true;
     }
 
-    private void generateMainRoom(ServerLevelAccessor world, Random rand, BlockPos position) {
+    private void generateMainRoom(ServerLevelAccessor world, net.minecraft.util.RandomSource rand, BlockPos position) {
         hive = new MyrmexHive(world.getLevel(), position, 100);
         MyrmexWorldData.addHive(world.getLevel(), hive);
         BlockState resin = jungle ? JUNGLE_RESIN : DESERT_RESIN;
@@ -106,43 +106,43 @@ public class WorldGenMyrmexHive extends Feature<NoneFeatureConfiguration> implem
         if (!small) {
             EntityMyrmexQueen queen = new EntityMyrmexQueen(IafEntityRegistry.MYRMEX_QUEEN.get(), world.getLevel());
             BlockPos ground = MyrmexHive.getGroundedPos(world, position);
-            queen.finalizeSpawn(world, world.getCurrentDifficultyAt(ground), MobSpawnType.CHUNK_GENERATION, null, null);
+            queen.finalizeSpawn(world, world.getCurrentDifficultyAt(ground), EntitySpawnReason.CHUNK_GENERATION, null);
             queen.setHive(hive);
             queen.setJungleVariant(jungle);
-            queen.absMoveTo(ground.getX() + 0.5D, ground.getY() + 1D, ground.getZ() + 0.5D, 0, 0);
+            queen.snapTo(ground.getX() + 0.5D, ground.getY() + 1D, ground.getZ() + 0.5D, 0, 0);
             world.addFreshEntity(queen);
 
             for (int i = 0; i < 4 + rand.nextInt(3); i++) {
                 EntityMyrmexBase myrmex = new EntityMyrmexWorker(IafEntityRegistry.MYRMEX_WORKER.get(),
                     world.getLevel());
-                myrmex.finalizeSpawn(world, world.getCurrentDifficultyAt(ground), MobSpawnType.CHUNK_GENERATION, null, null);
+                myrmex.finalizeSpawn(world, world.getCurrentDifficultyAt(ground), EntitySpawnReason.CHUNK_GENERATION, null);
                 myrmex.setHive(hive);
-                myrmex.absMoveTo(ground.getX() + 0.5D, ground.getY() + 1D, ground.getZ() + 0.5D, 0, 0);
+                myrmex.snapTo(ground.getX() + 0.5D, ground.getY() + 1D, ground.getZ() + 0.5D, 0, 0);
                 myrmex.setJungleVariant(jungle);
                 world.addFreshEntity(myrmex);
             }
             for (int i = 0; i < 2 + rand.nextInt(2); i++) {
                 EntityMyrmexBase myrmex = new EntityMyrmexSoldier(IafEntityRegistry.MYRMEX_SOLDIER.get(),
                     world.getLevel());
-                myrmex.finalizeSpawn(world, world.getCurrentDifficultyAt(ground), MobSpawnType.CHUNK_GENERATION, null, null);
+                myrmex.finalizeSpawn(world, world.getCurrentDifficultyAt(ground), EntitySpawnReason.CHUNK_GENERATION, null);
                 myrmex.setHive(hive);
-                myrmex.absMoveTo(ground.getX() + 0.5D, ground.getY() + 1D, ground.getZ() + 0.5D, 0, 0);
+                myrmex.snapTo(ground.getX() + 0.5D, ground.getY() + 1D, ground.getZ() + 0.5D, 0, 0);
                 myrmex.setJungleVariant(jungle);
                 world.addFreshEntity(myrmex);
             }
             for (int i = 0; i < rand.nextInt(2); i++) {
                 EntityMyrmexBase myrmex = new EntityMyrmexSentinel(IafEntityRegistry.MYRMEX_SENTINEL.get(),
                     world.getLevel());
-                myrmex.finalizeSpawn(world, world.getCurrentDifficultyAt(ground), MobSpawnType.CHUNK_GENERATION, null, null);
+                myrmex.finalizeSpawn(world, world.getCurrentDifficultyAt(ground), EntitySpawnReason.CHUNK_GENERATION, null);
                 myrmex.setHive(hive);
-                myrmex.absMoveTo(ground.getX() + 0.5D, ground.getY() + 1D, ground.getZ() + 0.5D, 0, 0);
+                myrmex.snapTo(ground.getX() + 0.5D, ground.getY() + 1D, ground.getZ() + 0.5D, 0, 0);
                 myrmex.setJungleVariant(jungle);
                 world.addFreshEntity(myrmex);
             }
         }
     }
 
-    private void generatePath(LevelAccessor world, Random rand, BlockPos offset, int length, Direction direction, int roomChance) {
+    private void generatePath(LevelAccessor world, net.minecraft.util.RandomSource rand, BlockPos offset, int length, Direction direction, int roomChance) {
         if (roomChance == 0) {
             return;
         }
@@ -182,7 +182,7 @@ public class WorldGenMyrmexHive extends Feature<NoneFeatureConfiguration> implem
         }
     }
 
-    private void generateRoom(LevelAccessor world, Random rand, BlockPos position, int size, int height, int roomChance, Direction direction) {
+    private void generateRoom(LevelAccessor world, net.minecraft.util.RandomSource rand, BlockPos position, int size, int height, int roomChance, Direction direction) {
         BlockState resin = jungle ? JUNGLE_RESIN : DESERT_RESIN;
         BlockState sticky_resin = jungle ? STICKY_JUNGLE_RESIN : STICKY_DESERT_RESIN;
         RoomType type = RoomType.random(rand);
@@ -213,7 +213,7 @@ public class WorldGenMyrmexHive extends Feature<NoneFeatureConfiguration> implem
         }
     }
 
-    private void generateEntrance(LevelAccessor world, Random rand, BlockPos position, int size, int height, Direction direction) {
+    private void generateEntrance(LevelAccessor world, net.minecraft.util.RandomSource rand, BlockPos position, int size, int height, Direction direction) {
         BlockPos up = position.above();
         hive.getEntranceBottoms().put(up, direction);
         while (up.getY() < world.getHeightmapPos(small ? Heightmap.Types.MOTION_BLOCKING_NO_LEAVES : Heightmap.Types.WORLD_SURFACE_WG, up).getY()
@@ -231,7 +231,7 @@ public class WorldGenMyrmexHive extends Feature<NoneFeatureConfiguration> implem
         entrances++;
     }
 
-    private void generateCircle(LevelAccessor world, Random rand, BlockPos position, int size, int height, Direction direction) {
+    private void generateCircle(LevelAccessor world, net.minecraft.util.RandomSource rand, BlockPos position, int size, int height, Direction direction) {
         BlockState resin = jungle ? JUNGLE_RESIN : DESERT_RESIN;
         BlockState sticky_resin = jungle ? STICKY_JUNGLE_RESIN : STICKY_DESERT_RESIN;
         int radius = size + 2;
@@ -267,7 +267,7 @@ public class WorldGenMyrmexHive extends Feature<NoneFeatureConfiguration> implem
         decorateCircle(world, rand, position, size, height, direction);
     }
 
-    private void generateCircleRespectSky(LevelAccessor world, Random rand, BlockPos position, int size, int height, Direction direction) {
+    private void generateCircleRespectSky(LevelAccessor world, net.minecraft.util.RandomSource rand, BlockPos position, int size, int height, Direction direction) {
         BlockState resin = jungle ? JUNGLE_RESIN : DESERT_RESIN;
         BlockState sticky_resin = jungle ? STICKY_JUNGLE_RESIN : STICKY_DESERT_RESIN;
         int radius = size + 2;
@@ -308,7 +308,7 @@ public class WorldGenMyrmexHive extends Feature<NoneFeatureConfiguration> implem
     }
 
 
-    private void generateCircleAir(LevelAccessor world, Random rand, BlockPos position, int size, int height, Direction direction) {
+    private void generateCircleAir(LevelAccessor world, net.minecraft.util.RandomSource rand, BlockPos position, int size, int height, Direction direction) {
         int radius = size;
         {
             for (float i = 0; i < radius; i += 0.5) {
@@ -327,7 +327,7 @@ public class WorldGenMyrmexHive extends Feature<NoneFeatureConfiguration> implem
         decorateCircle(world, rand, position, size, height, direction);
     }
 
-    public void generateSphere(LevelAccessor world, Random rand, BlockPos position, int size, int height, BlockState fill) {
+    public void generateSphere(LevelAccessor world, net.minecraft.util.RandomSource rand, BlockPos position, int size, int height, BlockState fill) {
         int i2 = size;
         int ySize = rand.nextInt(2);
         int j = i2 + rand.nextInt(2);
@@ -341,7 +341,7 @@ public class WorldGenMyrmexHive extends Feature<NoneFeatureConfiguration> implem
         }
     }
 
-    public void generateSphere(LevelAccessor world, Random rand, BlockPos position, int size, int height, BlockState fill, BlockState fill2) {
+    public void generateSphere(LevelAccessor world, net.minecraft.util.RandomSource rand, BlockPos position, int size, int height, BlockState fill, BlockState fill2) {
         int i2 = size;
         int ySize = rand.nextInt(2);
         int j = i2 + rand.nextInt(2);
@@ -355,7 +355,7 @@ public class WorldGenMyrmexHive extends Feature<NoneFeatureConfiguration> implem
         }
     }
 
-    public void generateSphereRespectResin(LevelAccessor world, Random rand, BlockPos position, int size, int height, BlockState fill, BlockState fill2) {
+    public void generateSphereRespectResin(LevelAccessor world, net.minecraft.util.RandomSource rand, BlockPos position, int size, int height, BlockState fill, BlockState fill2) {
         int i2 = size;
         int ySize = rand.nextInt(2);
         int j = i2 + rand.nextInt(2);
@@ -370,7 +370,7 @@ public class WorldGenMyrmexHive extends Feature<NoneFeatureConfiguration> implem
         }
     }
 
-    public void generateSphereRespectAir(LevelAccessor world, Random rand, BlockPos position, int size, int height, BlockState fill, BlockState fill2) {
+    public void generateSphereRespectAir(LevelAccessor world, net.minecraft.util.RandomSource rand, BlockPos position, int size, int height, BlockState fill, BlockState fill2) {
         int i2 = size;
         int ySize = rand.nextInt(2);
         int j = i2 + rand.nextInt(2);
@@ -393,7 +393,7 @@ public class WorldGenMyrmexHive extends Feature<NoneFeatureConfiguration> implem
         return world.getBlockState(copy).getBlock() instanceof BlockMyrmexResin || world.getBlockState(copy).getBlock() instanceof BlockMyrmexConnectedResin;
     }
 
-    private void decorateCircle(LevelAccessor world, Random rand, BlockPos position, int size, int height, Direction direction) {
+    private void decorateCircle(LevelAccessor world, net.minecraft.util.RandomSource rand, BlockPos position, int size, int height, Direction direction) {
         int radius = size + 2;
         {
             for (float i = 0; i < radius; i += 0.5) {
@@ -420,7 +420,7 @@ public class WorldGenMyrmexHive extends Feature<NoneFeatureConfiguration> implem
         }
     }
 
-    private void decorateSphere(LevelAccessor world, Random rand, BlockPos position, int size, int height, RoomType roomType) {
+    private void decorateSphere(LevelAccessor world, net.minecraft.util.RandomSource rand, BlockPos position, int size, int height, RoomType roomType) {
         int i2 = size;
         int ySize = rand.nextInt(2);
         int j = i2 + rand.nextInt(2);
@@ -439,7 +439,7 @@ public class WorldGenMyrmexHive extends Feature<NoneFeatureConfiguration> implem
         }
     }
 
-    private void decorate(LevelAccessor world, BlockPos blockpos, BlockPos center, int size, Random random, RoomType roomType) {
+    private void decorate(LevelAccessor world, BlockPos blockpos, BlockPos center, int size, net.minecraft.util.RandomSource random, RoomType roomType) {
         switch (roomType) {
             case FOOD:
                 if (random.nextInt(45) == 0 && world.getBlockState(blockpos.below()).getBlock() instanceof BlockMyrmexResin) {
@@ -482,7 +482,7 @@ public class WorldGenMyrmexHive extends Feature<NoneFeatureConfiguration> implem
 
     }
 
-    private void decorateTubers(LevelAccessor world, BlockPos blockpos, Random random, RoomType roomType) {
+    private void decorateTubers(LevelAccessor world, BlockPos blockpos, net.minecraft.util.RandomSource random, RoomType roomType) {
         if (world.getBlockState(blockpos.above()).canOcclude() && random.nextInt(roomType == RoomType.ENTERANCE || roomType == RoomType.TUNNEL ? 20 : 6) == 0) {
             int tuberLength = roomType == RoomType.ENTERANCE || roomType == RoomType.TUNNEL ? 1 : roomType == RoomType.QUEEN ? 1 + random.nextInt(5) : 1 + random.nextInt(3);
             for (int i = 0; i < tuberLength; i++) {
@@ -511,7 +511,7 @@ public class WorldGenMyrmexHive extends Feature<NoneFeatureConfiguration> implem
             this.random = random;
         }
 
-        public static RoomType random(Random rand) {
+        public static RoomType random(net.minecraft.util.RandomSource rand) {
             List<RoomType> list = new ArrayList<RoomType>();
             for (RoomType type : RoomType.values()) {
                 if (type.random) {

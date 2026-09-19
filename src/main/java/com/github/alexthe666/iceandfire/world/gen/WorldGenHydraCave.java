@@ -10,7 +10,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 //import net.minecraft.data.worldgen.Features;
 import net.minecraft.data.worldgen.features.TreeFeatures;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.Blocks;
@@ -31,8 +31,8 @@ import java.util.stream.Collectors;
 
 public class WorldGenHydraCave extends Feature<NoneFeatureConfiguration> implements TypedFeature {
 
-    public static final ResourceLocation HYDRA_CHEST = new ResourceLocation("iceandfire", "chest/hydra_cave");
-    protected static final ConfiguredFeature SWAMP_FEATURE = TreeFeatures.SWAMP_OAK.value();
+    public static final Identifier HYDRA_CHEST = Identifier.fromNamespaceAndPath("iceandfire", "chest/hydra_cave");
+    protected static final net.minecraft.resources.ResourceKey<ConfiguredFeature<?, ?>> SWAMP_FEATURE = TreeFeatures.SWAMP_OAK;
     private static final Direction[] HORIZONTALS = new Direction[]{Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
 
     public WorldGenHydraCave(Codec<NoneFeatureConfiguration> configFactoryIn) {
@@ -42,7 +42,7 @@ public class WorldGenHydraCave extends Feature<NoneFeatureConfiguration> impleme
     @Override
     public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> context) {
         WorldGenLevel worldIn = context.level();
-        Random rand = context.random();
+        net.minecraft.util.RandomSource rand = context.random();
         BlockPos position = context.origin();
         ChunkGenerator generator = context.chunkGenerator();
 
@@ -76,10 +76,12 @@ public class WorldGenHydraCave extends Feature<NoneFeatureConfiguration> impleme
                             worldIn.setBlock(blockpos.below(), Blocks.DIRT.defaultBlockState(), 3);
                         }
                         if (rand.nextInt(4) == 0) {
-                            worldIn.setBlock(blockpos.above(), Blocks.GRASS.defaultBlockState(), 2);
+                            worldIn.setBlock(blockpos.above(), Blocks.SHORT_GRASS.defaultBlockState(), 2);
                         }
                         if (rand.nextInt(9) == 0) {
-                            SWAMP_FEATURE.place(worldIn, generator, rand, blockpos.above());
+                            worldIn.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.CONFIGURED_FEATURE)
+                                .get(SWAMP_FEATURE)
+                                .ifPresent(holder -> holder.value().place(worldIn, generator, rand, blockpos.above()));
                         }
 
                     }
@@ -116,7 +118,8 @@ public class WorldGenHydraCave extends Feature<NoneFeatureConfiguration> impleme
                         if (worldIn.getBlockState(blockpos.above(1)).getBlock() instanceof ChestBlock) {
                             BlockEntity tileentity1 = worldIn.getBlockEntity(blockpos.above(1));
                             if (tileentity1 instanceof ChestBlockEntity) {
-                                ((ChestBlockEntity) tileentity1).setLootTable(HYDRA_CHEST, rand.nextLong());
+                                ((ChestBlockEntity) tileentity1).setLootTable(com.github.alexthe666.iceandfire.entity.util.IafLoot.table(HYDRA_CHEST));
+                                ((ChestBlockEntity) tileentity1).setLootTableSeed(rand.nextLong());
                             }
                         }
                         continue;
@@ -148,8 +151,8 @@ public class WorldGenHydraCave extends Feature<NoneFeatureConfiguration> impleme
         }
         EntityHydra hydra = new EntityHydra(IafEntityRegistry.HYDRA.get(), worldIn.getLevel());
         hydra.setVariant(rand.nextInt(3));
-        hydra.restrictTo(position, 15);
-        hydra.absMoveTo(position.getX() + 0.5, position.getY() + 1.5, position.getZ() + 0.5, rand.nextFloat() * 360, 0);
+        hydra.setHomeTo(position, 15);
+        hydra.snapTo(position.getX() + 0.5, position.getY() + 1.5, position.getZ() + 0.5, rand.nextFloat() * 360, 0);
         worldIn.addFreshEntity(hydra);
         return true;
     }

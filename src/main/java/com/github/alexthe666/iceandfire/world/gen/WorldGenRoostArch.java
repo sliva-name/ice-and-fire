@@ -5,7 +5,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
 
-import java.util.Random;
+import net.minecraft.util.RandomSource;
 
 public class WorldGenRoostArch {
     private static final Direction[] HORIZONTALS = new Direction[]{Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
@@ -15,7 +15,7 @@ public class WorldGenRoostArch {
         this.block = block;
     }
 
-    public boolean generate(LevelAccessor worldIn, Random rand, BlockPos position) {
+    public boolean generate(LevelAccessor worldIn, RandomSource rand, BlockPos position) {
         int height = 3 + rand.nextInt(3);
         int width = Math.min(3, height - 2);
         Direction direction = HORIZONTALS[rand.nextInt(HORIZONTALS.length - 1)];

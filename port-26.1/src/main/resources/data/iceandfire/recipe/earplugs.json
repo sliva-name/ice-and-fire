@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "B B"
+  ],
+  "key": {
+    "B": "#minecraft:planks"
+  },
+  "result": {
+    "id": "iceandfire:earplugs"
+  }
+}

@@ -9,19 +9,19 @@ import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.material.MapColor;
 import org.jetbrains.annotations.NotNull;
 
 public class BlockDreadBase extends BlockGeneric implements IDragonProof, IDreadBlock {
     public static final BooleanProperty PLAYER_PLACED = BooleanProperty.create("player_placed");
 
-    public BlockDreadBase(Material materialIn, float hardness, float resistance, SoundType sound) {
-        super(materialIn, hardness, resistance, sound);
+    public BlockDreadBase(MapColor color, float hardness, float resistance, SoundType sound) {
+        super(color, hardness, resistance, sound);
         this.registerDefaultState(this.stateDefinition.any().setValue(PLAYER_PLACED, Boolean.FALSE));
     }
 
-    public BlockDreadBase(Material materialIn, float hardness, float resistance, SoundType sound, boolean slippery) {
-        super(materialIn, hardness, resistance, sound, slippery);
+    public BlockDreadBase(MapColor color, float hardness, float resistance, SoundType sound, boolean slippery) {
+        super(color, hardness, resistance, sound, slippery);
         this.registerDefaultState(this.stateDefinition.any().setValue(PLAYER_PLACED, Boolean.FALSE));
     }
 
@@ -31,7 +31,7 @@ public class BlockDreadBase extends BlockGeneric implements IDragonProof, IDread
         if (state.getValue(PLAYER_PLACED)) {
             float f = 8f;
             //Code from super method
-            return player.getDigSpeed(state, pos) / f / (float) 30;
+            return player.getDestroySpeed(state) / f / (float) 30;
         }
         return super.getDestroyProgress(state, player, worldIn, pos);
     }

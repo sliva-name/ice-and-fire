@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:smithing_transform",
+  "base": "iceandfire:dragonbone_sword",
+  "addition": "iceandfire:ghost_ingot",
+  "result": {
+    "id": "iceandfire:ghost_sword"
+  }
+}

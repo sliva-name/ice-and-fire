@@ -1,5 +1,6 @@
 package com.github.alexthe666.iceandfire.entity.ai;
 
+import com.github.alexthe666.iceandfire.block.IafMaterials;
 import com.github.alexthe666.iceandfire.block.IafBlockRegistry;
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
 import com.github.alexthe666.iceandfire.entity.EntityDragonEgg;
@@ -7,11 +8,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.Material;
 
 import java.util.EnumSet;
 import java.util.List;
@@ -27,7 +27,7 @@ public class DragonAIMate extends Goal {
 
     public DragonAIMate(EntityDragonBase dragon, double speedIn) {
         this.dragon = dragon;
-        this.theWorld = dragon.level;
+        this.theWorld = dragon.level();
         this.moveSpeed = speedIn;
         this.setFlags(EnumSet.of(Flag.MOVE));
     }
@@ -115,9 +115,9 @@ public class DragonAIMate extends Goal {
             int nestY = (int) (this.dragon.isMale() ? this.targetMate.getY() : this.dragon.getY()) - 1;
             int nestZ = (int) (this.dragon.isMale() ? this.targetMate.getZ() : this.dragon.getZ());
 
-            egg.moveTo(nestX - 0.5F, nestY + 1F, nestZ - 0.5F, 0.0F, 0.0F);
+            egg.snapTo(nestX - 0.5F, nestY + 1F, nestZ - 0.5F, 0.0F, 0.0F);
             this.theWorld.addFreshEntity(egg);
-            Random random = this.dragon.getRandom();
+            net.minecraft.util.RandomSource random = this.dragon.getRandom();
 
             for (int i = 0; i < 17; ++i) {
                 final double d0 = random.nextGaussian() * 0.02D;
@@ -135,16 +135,16 @@ public class DragonAIMate extends Goal {
                 for (int z = 0; z < 3; z++) {
                     BlockPos add = eggPos.offset(x, 0, z);
                     BlockState prevState = theWorld.getBlockState(add);
-                    if (prevState.getMaterial().isReplaceable() || theWorld.getBlockState(add).getMaterial() == Material.DIRT || theWorld.getBlockState(add).getDestroySpeed(theWorld, add) < 5F || theWorld.getBlockState(add).getDestroySpeed(theWorld, add) >= 0F) {
+                    if (IafMaterials.isReplaceable(prevState) || IafMaterials.isDirt(theWorld.getBlockState(add)) || theWorld.getBlockState(add).getDestroySpeed(theWorld, add) < 5F || theWorld.getBlockState(add).getDestroySpeed(theWorld, add) >= 0F) {
                         theWorld.setBlockAndUpdate(add, NEST);
                     }
                 }
             }
-            if (theWorld.getBlockState(dirtPos).getMaterial().isReplaceable() || theWorld.getBlockState(dirtPos) == NEST) {
+            if (IafMaterials.isReplaceable(theWorld.getBlockState(dirtPos)) || theWorld.getBlockState(dirtPos) == NEST) {
                 theWorld.setBlockAndUpdate(dirtPos, Blocks.DIRT_PATH.defaultBlockState());
             }
-            if (this.theWorld.getGameRules().getBoolean(GameRules.RULE_DOMOBLOOT)) {
-                this.theWorld.addFreshEntity(new ExperienceOrb(this.theWorld, this.dragon.getX(), this.dragon.getY(), this.dragon.getZ(), random.nextInt(15) + 10));
+            if (this.theWorld instanceof net.minecraft.server.level.ServerLevel server && server.getGameRules().get(GameRules.ENTITY_DROPS)) {
+                server.addFreshEntity(new ExperienceOrb(server, this.dragon.getX(), this.dragon.getY(), this.dragon.getZ(), random.nextInt(15) + 10));
             }
         }
     }

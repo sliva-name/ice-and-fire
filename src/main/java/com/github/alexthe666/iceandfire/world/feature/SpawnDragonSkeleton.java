@@ -26,14 +26,14 @@ public class SpawnDragonSkeleton extends Feature<NoneFeatureConfiguration> {
     @Override
     public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> context) {
         WorldGenLevel worldIn = context.level();
-        Random rand = context.random();
+        net.minecraft.util.RandomSource rand = context.random();
         BlockPos position = context.origin();
 
         position = worldIn.getHeightmapPos(Heightmap.Types.WORLD_SURFACE_WG, position.offset(8, 0, 8));
 
         if (IafConfig.generateDragonSkeletons) {
             if (rand.nextInt(IafConfig.generateDragonSkeletonChance + 1) == 0) {
-                EntityDragonBase dragon = dragonType.create(worldIn.getLevel());
+                EntityDragonBase dragon = dragonType.create(worldIn.getLevel(), net.minecraft.world.entity.EntitySpawnReason.STRUCTURE);
                 dragon.setPos(position.getX() + 0.5F, position.getY() + 1, position.getZ() + 0.5F);
                 int dragonage = 10 + rand.nextInt(100);
                 dragon.growDragon(dragonage);

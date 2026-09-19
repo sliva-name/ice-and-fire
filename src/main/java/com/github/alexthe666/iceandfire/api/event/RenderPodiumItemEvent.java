@@ -3,14 +3,23 @@ package com.github.alexthe666.iceandfire.api.event;
 import com.github.alexthe666.iceandfire.client.render.tile.RenderPodium;
 import com.github.alexthe666.iceandfire.entity.tile.TileEntityPodium;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.eventbus.api.Event;
+import net.minecraftforge.eventbus.api.bus.CancellableEventBus;
+import net.minecraftforge.eventbus.api.event.MutableEvent;
+import net.minecraftforge.eventbus.api.event.characteristic.Cancellable;
 
-/*
-    Called before an item is rendered on a podium. Cancel to remove default render of item
+/**
+ * Fired during extraction for ordinary podium items, not the custom egg models.
+ * Listeners on {@link #BUS} return true to suppress the default item submission.
+ * Coordinates are relative to the extraction camera. The live podium is available
+ * only for this synchronous callback; do not retain it for deferred rendering.
+ * The item getter returns a defensive snapshot, not the podium's inventory stack.
  */
-public class RenderPodiumItemEvent extends Event {
-    float partialTicks;
-    double x, y, z;
+public final class RenderPodiumItemEvent extends MutableEvent implements Cancellable {
+    public static final CancellableEventBus<RenderPodiumItemEvent> BUS = CancellableEventBus.create(RenderPodiumItemEvent.class);
+
+    private final float partialTicks;
+    private final double x, y, z;
+    private final ItemStack itemStack;
     private final RenderPodium<?> render;
     private final TileEntityPodium podium;
 
@@ -18,6 +27,7 @@ public class RenderPodiumItemEvent extends Event {
                                  double y, double z) {
         this.render = renderPodium;
         this.podium = podium;
+        this.itemStack = podium.getItem(0).copy();
         this.partialTicks = partialTicks;
         this.x = x;
         this.y = y;
@@ -29,7 +39,7 @@ public class RenderPodiumItemEvent extends Event {
     }
 
     public ItemStack getItemStack() {
-        return podium.getItem(0);
+        return itemStack.copy();
     }
 
     public TileEntityPodium getPodium() {

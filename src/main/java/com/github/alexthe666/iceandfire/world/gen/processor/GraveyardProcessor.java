@@ -1,8 +1,9 @@
 package com.github.alexthe666.iceandfire.world.gen.processor;
 
 import com.github.alexthe666.iceandfire.world.IafProcessors;
-import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -13,18 +14,17 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemp
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
-import java.util.Random;
 
 public class GraveyardProcessor extends StructureProcessor {
 
     private final float integrity = 1.0F;
     public static final GraveyardProcessor INSTANCE = new GraveyardProcessor();
-    public static final Codec<GraveyardProcessor> CODEC = Codec.unit(() -> INSTANCE);
+    public static final MapCodec<GraveyardProcessor> CODEC = MapCodec.unit(() -> INSTANCE);
 
     public GraveyardProcessor() {
     }
 
-    public static BlockState getRandomCobblestone(@Nullable BlockState prev, Random random) {
+    public static BlockState getRandomCobblestone(@Nullable BlockState prev, RandomSource random) {
         float rand = random.nextFloat();
         if (rand < 0.5) {
             return Blocks.COBBLESTONE.defaultBlockState();
@@ -35,7 +35,7 @@ public class GraveyardProcessor extends StructureProcessor {
         }
     }
 
-    public static BlockState getRandomCrackedBlock(@Nullable BlockState prev, Random random) {
+    public static BlockState getRandomCrackedBlock(@Nullable BlockState prev, RandomSource random) {
         float rand = random.nextFloat();
         if (rand < 0.5) {
             return Blocks.STONE_BRICKS.defaultBlockState();
@@ -47,23 +47,21 @@ public class GraveyardProcessor extends StructureProcessor {
     }
 
     @Override
-    public StructureTemplate.StructureBlockInfo process(@NotNull LevelReader worldReader, @NotNull BlockPos pos, @NotNull BlockPos pos2, StructureTemplate.@NotNull StructureBlockInfo infoIn1, StructureTemplate.StructureBlockInfo infoIn2, StructurePlaceSettings settings, @Nullable StructureTemplate template) {
-        Random random = settings.getRandom(infoIn2.pos);
-        if (infoIn2.state.getBlock() == Blocks.STONE_BRICKS) {
+    public StructureTemplate.StructureBlockInfo processBlock(@NotNull LevelReader worldReader, @NotNull BlockPos pos, @NotNull BlockPos pos2, StructureTemplate.@NotNull StructureBlockInfo infoIn1, StructureTemplate.StructureBlockInfo infoIn2, @NotNull StructurePlaceSettings settings, @Nullable StructureTemplate template) {
+        RandomSource random = settings.getRandom(infoIn2.pos());
+        if (infoIn2.state().getBlock() == Blocks.STONE_BRICKS) {
             BlockState state = getRandomCrackedBlock(null, random);
-            return new StructureTemplate.StructureBlockInfo(infoIn2.pos, state, null);
+            return new StructureTemplate.StructureBlockInfo(infoIn2.pos(), state, null);
         }
-        if (infoIn2.state.getBlock() == Blocks.COBBLESTONE) {
+        if (infoIn2.state().getBlock() == Blocks.COBBLESTONE) {
             BlockState state = getRandomCobblestone(null, random);
-            return new StructureTemplate.StructureBlockInfo(infoIn2.pos, state, null);
+            return new StructureTemplate.StructureBlockInfo(infoIn2.pos(), state, null);
         }
         return infoIn2;
     }
-
 
     @Override
     protected @NotNull StructureProcessorType getType() {
         return IafProcessors.GRAVEYARDPROCESSOR.get();
     }
-
 }

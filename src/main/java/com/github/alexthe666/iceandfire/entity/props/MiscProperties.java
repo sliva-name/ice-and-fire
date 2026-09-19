@@ -31,8 +31,8 @@ public class MiscProperties {
     }
 
     private static CompoundTag getOrCreateMiscData(CompoundTag entityData) {
-        if (entityData.contains(MISC_DATA, 10)) {
-            return (CompoundTag) entityData.get(MISC_DATA);
+        if (entityData.contains(MISC_DATA)) {
+            return entityData.getCompoundOrEmpty(MISC_DATA);
         }
         return createDefaultData();
     }
@@ -43,16 +43,16 @@ public class MiscProperties {
 
     private static ListTag getOrCreateScepterTargetedBy(CompoundTag entityData) {
         CompoundTag miscData = getOrCreateMiscData(entityData);
-        if (miscData.contains(TARGETED_BY_SCEPTER_HOLDERS, 9)) {
-            return miscData.getList(TARGETED_BY_SCEPTER_HOLDERS, 10);
+        if (miscData.contains(TARGETED_BY_SCEPTER_HOLDERS)) {
+            return miscData.getListOrEmpty(TARGETED_BY_SCEPTER_HOLDERS);
         }
         return new ListTag();
     }
 
     private static ListTag getOrCreateScepterTargets(CompoundTag entityData) {
         CompoundTag miscData = getOrCreateMiscData(entityData);
-        if (miscData.contains(TARGETING_ENTITIES_WITH_SCEPTER, 9)) {
-            return miscData.getList(TARGETING_ENTITIES_WITH_SCEPTER, 10);
+        if (miscData.contains(TARGETING_ENTITIES_WITH_SCEPTER)) {
+            return miscData.getListOrEmpty(TARGETING_ENTITIES_WITH_SCEPTER);
         }
         return new ListTag();
     }
@@ -71,7 +71,7 @@ public class MiscProperties {
     public static boolean hasDismounted(LivingEntity entity) {
         CompoundTag nbt = getOrCreateMiscData(entity);
         if (nbt.contains(DISMOUNTED_DRAGON)) {
-            return nbt.getBoolean(DISMOUNTED_DRAGON);
+            return nbt.getBooleanOr(DISMOUNTED_DRAGON, false);
         }
         return false;
     }
@@ -79,7 +79,7 @@ public class MiscProperties {
     public static int getLoveTicks(LivingEntity entity) {
         CompoundTag nbt = getOrCreateMiscData(entity);
         if (nbt.contains(IN_LOVE_TIME)) {
-            return nbt.getInt(IN_LOVE_TIME);
+            return nbt.getIntOr(IN_LOVE_TIME, 0);
         }
         return 0;
     }
@@ -87,7 +87,7 @@ public class MiscProperties {
     public static int getLungeTicks(LivingEntity entity) {
         CompoundTag nbt = getOrCreateMiscData(entity);
         if (nbt.contains(LUNGE_TICKS)) {
-            return nbt.getInt(LUNGE_TICKS);
+            return nbt.getIntOr(LUNGE_TICKS, 0);
         }
         return 0;
     }
@@ -159,7 +159,7 @@ public class MiscProperties {
             CompoundTag targetedBy = (CompoundTag) scepterDatum;
             if (!targetedBy.contains(SCEPTER_ENTITY_ID))
                 continue;
-            int targetedById = targetedBy.getInt(SCEPTER_ENTITY_ID);
+            int targetedById = targetedBy.getIntOr(SCEPTER_ENTITY_ID, 0);
             if (entityId == targetedById)
                 return true;
         }
@@ -174,7 +174,7 @@ public class MiscProperties {
             CompoundTag targetedBy = (CompoundTag) scepterDatum;
             if (!targetedBy.contains(SCEPTER_ENTITY_ID))
                 continue;
-            int targetedById = targetedBy.getInt(SCEPTER_ENTITY_ID);
+            int targetedById = targetedBy.getIntOr(SCEPTER_ENTITY_ID, 0);
             if (entityId == targetedById)
                 return true;
         }
@@ -189,8 +189,8 @@ public class MiscProperties {
             CompoundTag targetedBy = (CompoundTag) scepterDatum;
             if (!targetedBy.contains(SCEPTER_ENTITY_ID))
                 continue;
-            int targetedById = targetedBy.getInt(SCEPTER_ENTITY_ID);
-            Entity entity = target.level.getEntity(targetedById);
+            int targetedById = targetedBy.getIntOr(SCEPTER_ENTITY_ID, 0);
+            Entity entity = target.level().getEntity(targetedById);
             if (entity instanceof LivingEntity)
                 targetedByEntities.add((LivingEntity) entity);
         }
@@ -205,8 +205,8 @@ public class MiscProperties {
             CompoundTag targetedBy = (CompoundTag) scepterDatum;
             if (!targetedBy.contains(SCEPTER_ENTITY_ID))
                 continue;
-            int targetedById = targetedBy.getInt(SCEPTER_ENTITY_ID);
-            Entity entity = caster.level.getEntity(targetedById);
+            int targetedById = targetedBy.getIntOr(SCEPTER_ENTITY_ID, 0);
+            Entity entity = caster.level().getEntity(targetedById);
             if (entity instanceof LivingEntity)
                 targetingEntities.add((LivingEntity) entity);
         }
@@ -223,7 +223,7 @@ public class MiscProperties {
             CompoundTag targetedBy = (CompoundTag) scepterDatum;
             if (!targetedBy.contains(SCEPTER_ENTITY_ID))
                 continue;
-            int targetedById = targetedBy.getInt(SCEPTER_ENTITY_ID);
+            int targetedById = targetedBy.getIntOr(SCEPTER_ENTITY_ID, 0);
             if (entityId != targetedById)
                 updatedScepterData.add(targetedBy);
         }
@@ -250,7 +250,7 @@ public class MiscProperties {
             CompoundTag targetedBy = (CompoundTag) scepterDatum;
             if (!targetedBy.contains(SCEPTER_ENTITY_ID))
                 continue;
-            int targetedById = targetedBy.getInt(SCEPTER_ENTITY_ID);
+            int targetedById = targetedBy.getIntOr(SCEPTER_ENTITY_ID, 0);
             if (targetedById != entityId)
                 updatedScepterData.add(targetedBy);
         }
@@ -265,15 +265,15 @@ public class MiscProperties {
 
     private static void updateData(LivingEntity entity, CompoundTag nbt) {
         CitadelEntityData.setCitadelTag(entity, nbt);
-        if (!entity.level.isClientSide()) {
-            Citadel.sendMSGToAll(new PropertiesMessage("CitadelPatreonConfig", nbt, entity.getId()));
+        if (!entity.level().isClientSide()) {
+            com.github.alexthe666.citadel.network.PropertiesNetwork.send(entity);
         }
     }
 
     private static void createLoveParticles(LivingEntity entity) {
         if (rand.nextInt(7) == 0) {
             for (int i = 0; i < 5; i++) {
-                entity.level.addParticle(ParticleTypes.HEART,
+                entity.level().addParticle(ParticleTypes.HEART,
                     entity.getX() + ((rand.nextDouble() - 0.5D) * 3),
                     entity.getY() + ((rand.nextDouble() - 0.5D) * 3),
                     entity.getZ() + ((rand.nextDouble() - 0.5D) * 3), 0, 0, 0);

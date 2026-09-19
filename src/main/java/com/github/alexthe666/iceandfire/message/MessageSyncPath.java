@@ -3,13 +3,10 @@ package com.github.alexthe666.iceandfire.message;
 import com.github.alexthe666.iceandfire.pathfinding.raycoms.MNode;
 import com.github.alexthe666.iceandfire.pathfinding.raycoms.Pathfinding;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.network.NetworkDirection;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.function.Supplier;
 
 /**
  * Message to sync some path over to the client.
@@ -81,22 +78,11 @@ public class MessageSyncPath
         return new MessageSyncPath(lastDebugNodesVisited, lastDebugNodesNotVisited, lastDebugNodesPath);
     }
 
-    public boolean handle(Supplier<NetworkEvent.Context> contextSupplier) {
-        contextSupplier.get().enqueueWork(() -> {
-            contextSupplier.get().setPacketHandled(true);
-
-            if (contextSupplier.get().getDirection() == NetworkDirection.PLAY_TO_CLIENT) {
-                Pathfinding.lastDebugNodesVisited = lastDebugNodesVisited;
-                Pathfinding.lastDebugNodesNotVisited = lastDebugNodesNotVisited;
-                Pathfinding.lastDebugNodesPath = lastDebugNodesPath;
-            }
-        });
-        return true;
+    public static void handle(MessageSyncPath message, CustomPayloadEvent.Context context) {
+        if (context.isClientSide()) {
+            Pathfinding.lastDebugNodesVisited = message.lastDebugNodesVisited;
+            Pathfinding.lastDebugNodesNotVisited = message.lastDebugNodesNotVisited;
+            Pathfinding.lastDebugNodesPath = message.lastDebugNodesPath;
+        }
     }
-
-    public LogicalSide getExecutionSide()
-    {
-        return LogicalSide.CLIENT;
-    }
-
 }

@@ -1,27 +1,20 @@
 package com.github.alexthe666.iceandfire.util;
 
 import com.github.alexthe666.iceandfire.world.IafWorldRegistry;
-import com.mojang.datafixers.util.Either;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Position;
-import net.minecraft.core.Registry;
-import net.minecraft.core.RegistryAccess;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ChunkHolder;
-import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.level.*;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.chunk.ChunkAccess;
-import net.minecraft.world.level.chunk.ChunkStatus;
+import net.minecraft.world.level.chunk.status.ChunkStatus;
+import net.minecraft.world.level.dimension.BuiltinDimensionTypes;
 import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.phys.AABB;
 
 import java.util.Random;
-import java.util.concurrent.CompletableFuture;
 
 
 /**
@@ -48,12 +41,6 @@ public class WorldUtil {
      * @return true if loaded
      */
     public static boolean isChunkLoaded(final LevelAccessor world, final int x, final int z) {
-        if (world.getChunkSource() instanceof ServerChunkCache) {
-            final CompletableFuture<Either<ChunkAccess, ChunkHolder.ChunkLoadingFailure>>
-                future = ((ServerChunkCache) world.getChunkSource()).getChunkFuture(x, z, ChunkStatus.FULL, false);
-
-            return future.isDone() && future.getNow(ChunkHolder.UNLOADED_CHUNK).left().isPresent();
-        }
         return world.getChunk(x, z, ChunkStatus.FULL, false) != null;
     }
 
@@ -65,7 +52,7 @@ public class WorldUtil {
      */
     public static void markChunkDirty(final Level world, final BlockPos pos) {
         if (WorldUtil.isBlockLoaded(world, pos)) {
-            world.getChunk(pos.getX() >> 4, pos.getZ() >> 4).setUnsaved(true);
+            world.getChunk(pos.getX() >> 4, pos.getZ() >> 4).markUnsaved();
             final BlockState state = world.getBlockState(pos);
             world.sendBlockUpdated(pos, state, state, 3);
         }
@@ -79,7 +66,7 @@ public class WorldUtil {
      * @return true if loaded
      */
     public static boolean isChunkLoaded(final LevelAccessor world, final ChunkPos pos) {
-        return isChunkLoaded(world, pos.x, pos.z);
+        return isChunkLoaded(world, pos.x(), pos.z());
     }
 
     /**
@@ -138,7 +125,7 @@ public class WorldUtil {
      * @return true if so.
      */
     public static boolean isPastTime(final Level world, final int pastTime) {
-        return world.getDayTime() % 24000 <= pastTime;
+        return world.getDefaultClockTime() % 24000 <= pastTime;
     }
 
 
@@ -149,7 +136,7 @@ public class WorldUtil {
      * @return true if so.
      */
     public static boolean isOverworldType(final Level world) {
-        return isOfWorldType(world, DimensionType.OVERWORLD_LOCATION);
+        return isOfWorldType(world, BuiltinDimensionTypes.OVERWORLD);
     }
 
     /**
@@ -159,7 +146,7 @@ public class WorldUtil {
      * @return true if so.
      */
     public static boolean isNetherType(final Level world) {
-        return isOfWorldType(world, DimensionType.NETHER_LOCATION);
+        return isOfWorldType(world, BuiltinDimensionTypes.NETHER);
     }
 
     /**
@@ -170,16 +157,7 @@ public class WorldUtil {
      * @return true if it matches.
      */
     public static boolean isOfWorldType(final Level world, final ResourceKey<DimensionType> type) {
-        RegistryAccess dynRegistries = world.registryAccess();
-        ResourceLocation loc = dynRegistries.registry(Registry.DIMENSION_TYPE_REGISTRY).get().getKey(world.dimensionType());
-        if (loc == null) {
-            if (world.isClientSide) {
-                return world.dimensionType().effectsLocation().equals(type.location());
-            }
-            return false;
-        }
-        ResourceKey<DimensionType> regKey = ResourceKey.create(Registry.DIMENSION_TYPE_REGISTRY, loc);
-        return regKey == type;
+        return world.dimensionTypeRegistration().is(type);
     }
 
     /**
@@ -191,7 +169,7 @@ public class WorldUtil {
      * @return true if peaceful
      */
     public static boolean isPeaceful(final Level world) {
-        return !world.getLevelData().getGameRules().getBoolean(GameRules.RULE_DOMOBSPAWNING) || world.getDifficulty().equals(Difficulty.PEACEFUL);
+        return world.getDifficulty().equals(Difficulty.PEACEFUL);
     }
 
     /**
@@ -284,7 +262,7 @@ public class WorldUtil {
         return containing(position.x(), position.y(), position.z());
     }
 
-    public static boolean canGenerate(int configChance, final WorldGenLevel level, final Random random, final BlockPos origin, final String id, boolean checkFluid) {
+    public static boolean canGenerate(int configChance, final WorldGenLevel level, final net.minecraft.util.RandomSource random, final BlockPos origin, final String id, boolean checkFluid) {
         boolean canGenerate = random.nextInt(configChance) == 0 && IafWorldRegistry.isFarEnoughFromSpawn(level, origin) && IafWorldRegistry.isFarEnoughFromDangerousGen(level, origin, id);
 
         if (canGenerate && checkFluid) {

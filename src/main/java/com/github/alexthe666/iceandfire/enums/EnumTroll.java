@@ -7,7 +7,14 @@ import com.github.alexthe666.iceandfire.item.ItemTrollArmor;
 import com.github.alexthe666.iceandfire.item.ItemTrollLeather;
 import com.github.alexthe666.iceandfire.item.ItemTrollWeapon;
 import net.minecraft.core.Holder;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.item.equipment.ArmorMaterial;
+import net.minecraft.world.item.equipment.ArmorType;
+import net.minecraft.world.item.equipment.EquipmentAsset;
+import net.minecraft.world.item.equipment.EquipmentAssets;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.biome.Biome;
@@ -24,9 +31,9 @@ public enum EnumTroll {
     MOUNTAIN(IafItemRegistry.TROLL_MOUNTAIN_ARMOR_MATERIAL, Weapon.COLUMN, Weapon.AXE, Weapon.HAMMER);
 
     private final Weapon[] weapons;
-    public ResourceLocation TEXTURE;
-    public ResourceLocation TEXTURE_STONE;
-    public ResourceLocation TEXTURE_EYES;
+    public Identifier TEXTURE;
+    public Identifier TEXTURE_STONE;
+    public Identifier TEXTURE_EYES;
     public CustomArmorMaterial material;
     public Supplier<Item> leather;
     public Supplier<Item> helmet;
@@ -37,9 +44,9 @@ public enum EnumTroll {
     EnumTroll(CustomArmorMaterial material, Weapon... weapons) {
         this.weapons = weapons;
         this.material = material;
-        TEXTURE = new ResourceLocation("iceandfire:textures/models/troll/troll_" + this.name().toLowerCase(Locale.ROOT) + ".png");
-        TEXTURE_STONE = new ResourceLocation("iceandfire:textures/models/troll/troll_" + this.name().toLowerCase(Locale.ROOT) + "_stone.png");
-        TEXTURE_EYES = new ResourceLocation("iceandfire:textures/models/troll/troll_" + this.name().toLowerCase(Locale.ROOT) + "_eyes.png");
+        TEXTURE = Identifier.parse("iceandfire:textures/models/troll/troll_" + this.name().toLowerCase(Locale.ROOT) + ".png");
+        TEXTURE_STONE = Identifier.parse("iceandfire:textures/models/troll/troll_" + this.name().toLowerCase(Locale.ROOT) + "_stone.png");
+        TEXTURE_EYES = Identifier.parse("iceandfire:textures/models/troll/troll_" + this.name().toLowerCase(Locale.ROOT) + "_eyes.png");
         leather = () ->new ItemTrollLeather(this);
         helmet = () -> new ItemTrollArmor(this, material, EquipmentSlot.HEAD);
         chestplate = () -> new ItemTrollArmor(this, material, EquipmentSlot.CHEST);
@@ -57,6 +64,25 @@ public enum EnumTroll {
         //boots = genArmor.apply(EquipmentSlot.FEET);
 
 
+    }
+
+    public TagKey<Item> repairTag() {
+        return TagKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath("iceandfire",
+                "repairs_troll_" + name().toLowerCase(Locale.ROOT) + "_armor"));
+    }
+
+    public ResourceKey<EquipmentAsset> equipmentAsset() {
+        return ResourceKey.create(EquipmentAssets.ROOT_ID, Identifier.fromNamespaceAndPath("iceandfire",
+                "troll_" + name().toLowerCase(Locale.ROOT)));
+    }
+
+    public ArmorMaterial armorMaterial() {
+        return material.toArmorMaterial(repairTag(), equipmentAsset());
+    }
+
+    /** ItemTrollArmor's 26.1 constructor must apply this to its registry-keyed properties. */
+    public Item.Properties armorProperties(Item.Properties properties, ArmorType type) {
+        return properties.humanoidArmor(armorMaterial(), type);
     }
 
     public static EnumTroll getBiomeType(Holder<Biome> biome) {
@@ -84,22 +110,22 @@ public enum EnumTroll {
 
     public static void initArmors() {
         for (EnumTroll troll: EnumTroll.values()) {
-            troll.leather = IafItemRegistry.ITEMS.register("troll_leather_%s".formatted(troll.name().toLowerCase(Locale.ROOT)), () -> new ItemTrollLeather(troll));
-            troll.helmet = IafItemRegistry.ITEMS.register(ItemTrollArmor.getName(troll, EquipmentSlot.HEAD), () -> new ItemTrollArmor(troll, troll.material, EquipmentSlot.HEAD));
-            troll.chestplate = IafItemRegistry.ITEMS.register(ItemTrollArmor.getName(troll, EquipmentSlot.CHEST), () -> new ItemTrollArmor(troll, troll.material, EquipmentSlot.CHEST));
-            troll.leggings = IafItemRegistry.ITEMS.register(ItemTrollArmor.getName(troll, EquipmentSlot.LEGS), () -> new ItemTrollArmor(troll, troll.material, EquipmentSlot.LEGS));
-            troll.boots = IafItemRegistry.ITEMS.register(ItemTrollArmor.getName(troll, EquipmentSlot.FEET), () -> new ItemTrollArmor(troll, troll.material, EquipmentSlot.FEET));
+            troll.leather = IafItemRegistry.register("troll_leather_%s".formatted(troll.name().toLowerCase(Locale.ROOT)), () -> new ItemTrollLeather(troll));
+            troll.helmet = IafItemRegistry.register(ItemTrollArmor.getName(troll, EquipmentSlot.HEAD), () -> new ItemTrollArmor(troll, troll.material, EquipmentSlot.HEAD));
+            troll.chestplate = IafItemRegistry.register(ItemTrollArmor.getName(troll, EquipmentSlot.CHEST), () -> new ItemTrollArmor(troll, troll.material, EquipmentSlot.CHEST));
+            troll.leggings = IafItemRegistry.register(ItemTrollArmor.getName(troll, EquipmentSlot.LEGS), () -> new ItemTrollArmor(troll, troll.material, EquipmentSlot.LEGS));
+            troll.boots = IafItemRegistry.register(ItemTrollArmor.getName(troll, EquipmentSlot.FEET), () -> new ItemTrollArmor(troll, troll.material, EquipmentSlot.FEET));
         }
     }
 
     public enum Weapon {
         AXE, COLUMN, COLUMN_FOREST, COLUMN_FROST, HAMMER, TRUNK, TRUNK_FROST;
-        public ResourceLocation TEXTURE;
+        public Identifier TEXTURE;
         public Supplier<Item> item;
 
         Weapon() {
-            TEXTURE = new ResourceLocation("iceandfire:textures/models/troll/weapon/weapon_" + this.name().toLowerCase(Locale.ROOT) + ".png");
-            item = IafItemRegistry.ITEMS.register("troll_weapon_" + this.name().toLowerCase(Locale.ROOT), () -> new ItemTrollWeapon(this));
+            TEXTURE = Identifier.parse("iceandfire:textures/models/troll/weapon/weapon_" + this.name().toLowerCase(Locale.ROOT) + ".png");
+            item = IafItemRegistry.register("troll_weapon_" + this.name().toLowerCase(Locale.ROOT), () -> new ItemTrollWeapon(this));
         }
 
     }

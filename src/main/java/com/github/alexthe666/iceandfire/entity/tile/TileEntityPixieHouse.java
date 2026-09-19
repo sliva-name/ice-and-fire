@@ -1,5 +1,10 @@
 package com.github.alexthe666.iceandfire.entity.tile;
 
+import com.github.alexthe666.iceandfire.entity.util.IafOwners;
+
+import net.minecraft.core.UUIDUtil;
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
 import com.github.alexthe666.iceandfire.IceAndFire;
 import com.github.alexthe666.iceandfire.block.IafBlockRegistry;
 import com.github.alexthe666.iceandfire.entity.EntityPixie;
@@ -55,10 +60,10 @@ public class TileEntityPixieHouse extends BlockEntity {
 
     public static void tick(Level level, BlockPos pos, BlockState state, TileEntityPixieHouse entityPixieHouse) {
         entityPixieHouse.ticksExisted++;
-        if (!level.isClientSide && entityPixieHouse.hasPixie && ThreadLocalRandom.current().nextInt(100) == 0) {
+        if (!level.isClientSide() && entityPixieHouse.hasPixie && ThreadLocalRandom.current().nextInt(100) == 0) {
             entityPixieHouse.releasePixie();
         }
-        if (level.isClientSide && entityPixieHouse.hasPixie) {
+        if (level.isClientSide() && entityPixieHouse.hasPixie) {
             IceAndFire.PROXY.spawnParticle(EnumParticles.If_Pixie,
                 pos.getX() + 0.5F + (double) (entityPixieHouse.rand.nextFloat() * PARTICLE_WIDTH * 2F) - PARTICLE_WIDTH,
                 pos.getY() + (double) (entityPixieHouse.rand.nextFloat() * PARTICLE_HEIGHT),
@@ -69,13 +74,13 @@ public class TileEntityPixieHouse extends BlockEntity {
     }
 
     @Override
-    public void saveAdditional(CompoundTag compound) {
+    public void saveAdditional(ValueOutput compound) {
         compound.putInt("HouseType", houseType);
         compound.putBoolean("HasPixie", hasPixie);
         compound.putInt("PixieType", pixieType);
         compound.putBoolean("TamedPixie", tamedPixie);
         if (pixieOwnerUUID != null) {
-            compound.putUUID("PixieOwnerUUID", pixieOwnerUUID);
+            compound.store("PixieOwnerUUID", UUIDUtil.CODEC, pixieOwnerUUID);
         }
         ContainerHelper.saveAllItems(compound, this.pixieItems);
     }
@@ -85,49 +90,50 @@ public class TileEntityPixieHouse extends BlockEntity {
         return ClientboundBlockEntityDataPacket.create(this);
     }
 
-    @Override
-    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
-        load(packet.getTag());
-        if (!level.isClientSide) {
-            IceAndFire.sendMSGToAll(
-                new MessageUpdatePixieHouseModel(worldPosition.asLong(), packet.getTag().getInt("HouseType")));
+    public void onDataPacket(Connection connection, ClientboundBlockEntityDataPacket packet) {
+        if (packet.getTag() != null && getLevel() != null) {
+            this.loadWithComponents(net.minecraft.world.level.storage.TagValueInput.create(net.minecraft.util.ProblemReporter.DISCARDING, getLevel().registryAccess(), packet.getTag()));
+            if (!getLevel().isClientSide()) {
+                IceAndFire.sendMSGToAll(
+                    new MessageUpdatePixieHouseModel(worldPosition.asLong(), packet.getTag().getIntOr("HouseType", 0)));
+            }
         }
     }
 
     @Override
-    public @NotNull CompoundTag getUpdateTag() {
-        return this.saveWithFullMetadata();
+    public @NotNull CompoundTag getUpdateTag(net.minecraft.core.HolderLookup.Provider registries) {
+        return this.saveWithFullMetadata(registries);
     }
 
     @Override
-    public void load(CompoundTag compound) {
-        houseType = compound.getInt("HouseType");
-        hasPixie = compound.getBoolean("HasPixie");
-        pixieType = compound.getInt("PixieType");
-        tamedPixie = compound.getBoolean("TamedPixie");
-        if (compound.hasUUID("PixieOwnerUUID")) {
-            pixieOwnerUUID = compound.getUUID("PixieOwnerUUID");
+    public void loadAdditional(ValueInput compound) {
+        houseType = compound.getIntOr("HouseType", 0);
+        hasPixie = compound.getBooleanOr("HasPixie", false);
+        pixieType = compound.getIntOr("PixieType", 0);
+        tamedPixie = compound.getBooleanOr("TamedPixie", false);
+        if (compound.read("PixieOwnerUUID", UUIDUtil.CODEC).isPresent()) {
+            pixieOwnerUUID = compound.read("PixieOwnerUUID", UUIDUtil.CODEC).orElseThrow();
         }
         this.pixieItems = NonNullList.withSize(1, ItemStack.EMPTY);
         ContainerHelper.loadAllItems(compound, pixieItems);
-        super.load(compound);
+        super.loadAdditional(compound);
     }
 
     public void releasePixie() {
         EntityPixie pixie = new EntityPixie(IafEntityRegistry.PIXIE.get(), this.level);
-        pixie.absMoveTo(this.worldPosition.getX() + 0.5F, this.worldPosition.getY() + 1F, this.worldPosition.getZ() + 0.5F,
+        pixie.snapTo(this.worldPosition.getX() + 0.5F, this.worldPosition.getY() + 1F, this.worldPosition.getZ() + 0.5F,
             ThreadLocalRandom.current().nextInt(360), 0);
         pixie.setItemInHand(InteractionHand.MAIN_HAND, pixieItems.get(0));
         pixie.setColor(this.pixieType);
-        if (!level.isClientSide) {
+        if (!level.isClientSide()) {
             level.addFreshEntity(pixie);
         }
         this.hasPixie = false;
         this.pixieType = 0;
         pixie.ticksUntilHouseAI = 500;
-        pixie.setTame(this.tamedPixie);
-        pixie.setOwnerUUID(this.pixieOwnerUUID);
-        if (!level.isClientSide) {
+        pixie.setTame(this.tamedPixie, false);
+        IafOwners.setUUID(pixie, this.pixieOwnerUUID);
+        if (!level.isClientSide()) {
             IceAndFire.sendMSGToAll(new MessageUpdatePixieHouse(worldPosition.asLong(), false, 0));
         }
     }

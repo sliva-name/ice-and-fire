@@ -3,14 +3,10 @@ package com.github.alexthe666.iceandfire.client.model;
 import com.github.alexthe666.citadel.client.model.AdvancedEntityModel;
 import com.github.alexthe666.citadel.client.model.AdvancedModelBox;
 import com.github.alexthe666.citadel.client.model.basic.BasicModelPart;
-import com.github.alexthe666.iceandfire.entity.DragonType;
-import com.github.alexthe666.iceandfire.entity.EntityDragonEgg;
-import com.github.alexthe666.iceandfire.entity.tile.TileEntityEggInIce;
+import com.github.alexthe666.iceandfire.client.render.entity.EggRenderState;
 import com.google.common.collect.ImmutableList;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.level.material.Material;
 
-public class ModelDragonEgg<T extends LivingEntity> extends AdvancedEntityModel<T> {
+public class ModelDragonEgg extends AdvancedEntityModel<EggRenderState> {
 
     public AdvancedModelBox Egg1;
     public AdvancedModelBox Egg2;
@@ -49,34 +45,14 @@ public class ModelDragonEgg<T extends LivingEntity> extends AdvancedEntityModel<
     }
 
     @Override
-    public void setupAnim(LivingEntity entity, float f, float f1, float f2, float f3, float f4) {
-        this.resetToDefaultPose();
-        this.Egg1.setPos(0.0F, 19.6F, 0.0F);
-        this.Egg4.setPos(0.0F, -0.9F, 0.0F);
-        if (entity instanceof EntityDragonEgg) {
-            EntityDragonEgg dragon = (EntityDragonEgg) entity;
-            boolean flag = false;
-            if (dragon.getEggType().dragonType == DragonType.FIRE) {
-                flag = dragon.level.getBlockState(dragon.blockPosition()).getMaterial() == Material.FIRE;
-            } else if (dragon.getEggType().dragonType == DragonType.LIGHTNING) {
-                flag = dragon.level.isRainingAt(dragon.blockPosition());
-            }
-            if (flag) {
-                this.walk(Egg1, 0.3F, 0.3F, true, 1, 0, f2, 1);
-                this.flap(Egg1, 0.3F, 0.3F, false, 0, 0, f2, 1);
-            }
+    public void setupAnim(EggRenderState state) {
+        super.setupAnim(state);
+        if (state.inverted) {
+            Egg1.rotateAngleX = -(float) Math.PI;
         }
-    }
-
-    public void renderPodium() {
-        Egg1.rotateAngleX = (float) Math.toRadians(-180);
-
-    }
-
-    public void renderFrozen(TileEntityEggInIce tile) {
-        this.resetToDefaultPose();
-        Egg1.rotateAngleX = (float) Math.toRadians(-180);
-        this.walk(Egg1, 0.3F, 0.1F, true, 1, 0, tile.ticksExisted, 1);
-        this.flap(Egg1, 0.3F, 0.1F, false, 0, 0, tile.ticksExisted, 1);
+        if (state.wobbleAmount != 0) {
+            this.walk(Egg1, 0.3F, state.wobbleAmount, true, 1, 0, state.ageInTicks, 1);
+            this.flap(Egg1, 0.3F, state.wobbleAmount, false, 0, 0, state.ageInTicks, 1);
+        }
     }
 }

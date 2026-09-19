@@ -5,52 +5,67 @@ import com.github.alexthe666.iceandfire.client.render.entity.layer.LayerPixieGlo
 import com.github.alexthe666.iceandfire.client.render.entity.layer.LayerPixieItem;
 import com.github.alexthe666.iceandfire.entity.EntityPixie;
 import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
-import net.minecraft.resources.ResourceLocation;
-import org.jetbrains.annotations.NotNull;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.ItemStack;
 
-public class RenderPixie extends MobRenderer<EntityPixie, ModelPixie> {
+public class RenderPixie extends MobRenderer<EntityPixie, PixieRenderState, EntityModel<PixieRenderState>> {
+    public static final Identifier TEXTURE_0 = PixieRenderState.textureFor(0);
+    public static final Identifier TEXTURE_1 = PixieRenderState.textureFor(1);
+    public static final Identifier TEXTURE_2 = PixieRenderState.textureFor(2);
+    public static final Identifier TEXTURE_3 = PixieRenderState.textureFor(3);
+    public static final Identifier TEXTURE_4 = PixieRenderState.textureFor(4);
+    public static final Identifier TEXTURE_5 = PixieRenderState.textureFor(5);
 
-    public static final ResourceLocation TEXTURE_0 = new ResourceLocation("iceandfire:textures/models/pixie/pixie_0.png");
-    public static final ResourceLocation TEXTURE_1 = new ResourceLocation("iceandfire:textures/models/pixie/pixie_1.png");
-    public static final ResourceLocation TEXTURE_2 = new ResourceLocation("iceandfire:textures/models/pixie/pixie_2.png");
-    public static final ResourceLocation TEXTURE_3 = new ResourceLocation("iceandfire:textures/models/pixie/pixie_3.png");
-    public static final ResourceLocation TEXTURE_4 = new ResourceLocation("iceandfire:textures/models/pixie/pixie_4.png");
-    public static final ResourceLocation TEXTURE_5 = new ResourceLocation("iceandfire:textures/models/pixie/pixie_5.png");
+    private final ModelPixie pixieModel;
 
     public RenderPixie(EntityRendererProvider.Context context) {
-        super(context, new ModelPixie(), 0.2F);
-        this.layers.add(new LayerPixieItem(this));
-        this.layers.add(new LayerPixieGlow(this));
+        this(context, new ModelPixie());
+    }
 
+    private RenderPixie(EntityRendererProvider.Context context, ModelPixie model) {
+        super(context, model.asEntityModel(), 0.2F);
+        this.pixieModel = model;
+        this.addLayer(new LayerPixieItem(this));
+        this.addLayer(new LayerPixieGlow(this));
+    }
+
+    public ModelPixie getPixieModel() {
+        return pixieModel;
     }
 
     @Override
-    public void scale(EntityPixie LivingEntityIn, PoseStack stack, float partialTickTime) {
+    public PixieRenderState createRenderState() {
+        return new PixieRenderState();
+    }
+
+    @Override
+    public void extractRenderState(EntityPixie entity, PixieRenderState state, float partialTick) {
+        super.extractRenderState(entity, state, partialTick);
+        state.mode = PixieRenderState.Mode.ENTITY;
+        state.color = entity.getColor();
+        state.sitting = entity.isPixieSitting();
+        state.orderedToSit = entity.isOrderedToSit();
+        ItemStack item = entity.getItemInHand(InteractionHand.MAIN_HAND);
+        state.holdingItem = !item.isEmpty();
+        // Retain the old FIXED item's ownerless model resolution and seed zero.
+        this.itemModelResolver.updateForTopItem(state.heldItem, item, ItemDisplayContext.FIXED, entity.level(), null, 0);
+    }
+
+    @Override
+    public void scale(PixieRenderState state, PoseStack stack) {
         stack.scale(0.55F, 0.55F, 0.55F);
-        if (LivingEntityIn.isOrderedToSit()) {
+        if (state.orderedToSit) {
             stack.translate(0F, 0.5F, 0F);
-
         }
     }
 
     @Override
-    public @NotNull ResourceLocation getTextureLocation(EntityPixie pixie) {
-        switch (pixie.getColor()) {
-            default:
-                return TEXTURE_0;
-            case 1:
-                return TEXTURE_1;
-            case 2:
-                return TEXTURE_2;
-            case 3:
-                return TEXTURE_3;
-            case 4:
-                return TEXTURE_4;
-            case 5:
-                return TEXTURE_5;
-        }
+    public Identifier getTextureLocation(PixieRenderState state) {
+        return PixieRenderState.textureFor(state.color);
     }
-
 }

@@ -12,7 +12,7 @@ import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.material.MapColor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Random;
@@ -23,20 +23,21 @@ public class BlockMyrmexBiolight extends BushBlock {
 
     public BlockMyrmexBiolight() {
         super(
-            Properties
-                .of(Material.PLANT)
+            IafBlockRegistry.id(Properties
+                .of().mapColor(MapColor.PLANT)
                 .noOcclusion()
-                .noCollission()
+                .noCollision()
                 .dynamicShape()
                 .strength(0)
                 .lightLevel((state) -> {
                     return 7;
                 })
-                .sound(SoundType.GRASS).randomTicks()
+                .sound(SoundType.GRASS).randomTicks())
         );
 
         this.registerDefaultState(this.getStateDefinition().any().setValue(CONNECTED_DOWN, Boolean.FALSE));
     }
+
 
     @Override
     public boolean canSurvive(@NotNull BlockState state, LevelReader worldIn, BlockPos pos) {
@@ -46,14 +47,14 @@ public class BlockMyrmexBiolight extends BushBlock {
 
 
     @Override
-    public @NotNull BlockState updateShape(BlockState stateIn, @NotNull Direction facing, @NotNull BlockState facingState, LevelAccessor worldIn, BlockPos currentPos, @NotNull BlockPos facingPos) {
+    protected @NotNull BlockState updateShape(@NotNull BlockState stateIn, @NotNull LevelReader worldIn, net.minecraft.world.level.ScheduledTickAccess ticks, @NotNull BlockPos currentPos, @NotNull Direction facing, @NotNull BlockPos facingPos, @NotNull BlockState facingState, @NotNull net.minecraft.util.RandomSource random) {
         boolean flag3 = worldIn.getBlockState(currentPos.below()).getBlock() == this;
         return stateIn.setValue(CONNECTED_DOWN, flag3);
     }
 
     @Override
-    public void tick(@NotNull BlockState state, ServerLevel worldIn, @NotNull BlockPos pos, @NotNull Random rand) {
-        if (!worldIn.isClientSide) {
+    public void tick(@NotNull BlockState state, ServerLevel worldIn, @NotNull BlockPos pos, @NotNull net.minecraft.util.RandomSource rand) {
+        if (!worldIn.isClientSide()) {
             this.updateState(state, worldIn, pos, state.getBlock());
         }
         if (!worldIn.getBlockState(pos.above()).canOcclude() && worldIn.getBlockState(pos.above()).getBlock() != this) {

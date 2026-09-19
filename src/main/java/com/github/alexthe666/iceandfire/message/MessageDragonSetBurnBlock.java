@@ -6,10 +6,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
-import java.util.function.Supplier;
 
 public class MessageDragonSetBurnBlock {
 
@@ -47,16 +45,16 @@ public class MessageDragonSetBurnBlock {
         public Handler() {
         }
 
-        public static void handle(MessageDragonSetBurnBlock message, Supplier<NetworkEvent.Context> context) {
-            context.get().setPacketHandled(true);
-            Player player = context.get().getSender();
-            if(context.get().getDirection().getReceptionSide() == LogicalSide.CLIENT){
+        public static void handle(MessageDragonSetBurnBlock message, CustomPayloadEvent.Context context) {
+            context.setPacketHandled(true);
+            Player player = context.getSender();
+            if(context.isClientSide()){
                 player = IceAndFire.PROXY.getClientSidePlayer();
             }
             if (player != null) {
-                if (player.level != null) {
-                    if (player.level != null) {
-                        Entity entity = player.level.getEntity(message.dragonId);
+                if (player.level() != null) {
+                    if (player.level() != null) {
+                        Entity entity = player.level().getEntity(message.dragonId);
                         if (entity != null && entity instanceof EntityDragonBase) {
                             EntityDragonBase dragon = (EntityDragonBase) entity;
                             dragon.setBreathingFire(message.breathingFire);

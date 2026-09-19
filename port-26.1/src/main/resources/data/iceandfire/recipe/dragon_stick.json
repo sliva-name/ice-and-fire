@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "S",
+    "T",
+    "T"
+  ],
+  "key": {
+    "S": "#iceandfire:dragon_skulls",
+    "T": "minecraft:stick"
+  },
+  "result": {
+    "id": "iceandfire:dragon_stick"
+  }
+}

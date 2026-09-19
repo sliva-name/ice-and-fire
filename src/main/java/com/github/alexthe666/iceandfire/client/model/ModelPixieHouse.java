@@ -4,10 +4,9 @@ import com.github.alexthe666.citadel.client.model.AdvancedEntityModel;
 import com.github.alexthe666.citadel.client.model.AdvancedModelBox;
 import com.github.alexthe666.citadel.client.model.basic.BasicModelPart;
 import com.google.common.collect.ImmutableList;
-import net.minecraft.client.model.geom.ModelPart;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
 
-public class ModelPixieHouse extends AdvancedEntityModel<LivingEntity> {
+public class ModelPixieHouse extends AdvancedEntityModel<EntityRenderState> {
     public AdvancedModelBox stalk;
     public AdvancedModelBox cap1;
     public AdvancedModelBox grass;
@@ -46,11 +45,12 @@ public class ModelPixieHouse extends AdvancedEntityModel<LivingEntity> {
         this.stalk.addChild(this.grass);
         this.stalk.addChild(this.cap1);
         this.stalk.addChild(this.grass2);
+        this.updateDefaultPose();
     }
 
     @Override
     public Iterable<AdvancedModelBox> getAllParts() {
-        return ImmutableList.of(stalk);
+        return ImmutableList.of(stalk, cap1, grass, grass2, cap2, stalk2);
     }
 
     @Override
@@ -59,14 +59,7 @@ public class ModelPixieHouse extends AdvancedEntityModel<LivingEntity> {
     }
 
     @Override
-    public void setupAnim(LivingEntity tileEntityPixieHouse, float v, float v1, float v2, float v3, float v4) {
-
-    }
-
-
-    public void setRotateAngle(ModelPart modelRenderer, float x, float y, float z) {
-        modelRenderer.xRot = x;
-        modelRenderer.yRot = y;
-        modelRenderer.zRot = z;
+    public void setupAnim(EntityRenderState state) {
+        super.setupAnim(state);
     }
 }

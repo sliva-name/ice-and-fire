@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "   ",
+    " DD",
+    "DDD"
+  ],
+  "key": {
+    "D": "#forge:storage_blocks/silver"
+  },
+  "result": {
+    "id": "iceandfire:dragonarmor_silver_head"
+  }
+}

@@ -1,11 +1,13 @@
 package com.github.alexthe666.iceandfire.entity.tile;
 
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
+
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -47,8 +49,8 @@ public class TileEntityMyrmexCocoon extends RandomizableContainerBlockEntity {
 
 
     @Override
-    public void load(@NotNull CompoundTag compound) {
-        super.load(compound);
+    public void loadAdditional(@NotNull ValueInput compound) {
+        super.loadAdditional(compound);
         this.chestContents = NonNullList.withSize(this.getContainerSize(), ItemStack.EMPTY);
 
         if (!this.tryLoadLootTable(compound)) {
@@ -57,7 +59,7 @@ public class TileEntityMyrmexCocoon extends RandomizableContainerBlockEntity {
     }
 
     @Override
-    public void saveAdditional(@NotNull CompoundTag compound) {
+    public void saveAdditional(@NotNull ValueOutput compound) {
         if (!this.trySaveLootTable(compound)) {
             ContainerHelper.saveAllItems(compound, this.chestContents);
         }
@@ -65,7 +67,7 @@ public class TileEntityMyrmexCocoon extends RandomizableContainerBlockEntity {
 
     @Override
     protected @NotNull Component getDefaultName() {
-        return new TranslatableComponent("container.myrmex_cocoon");
+        return Component.translatable("container.myrmex_cocoon");
     }
 
     @Override
@@ -93,19 +95,17 @@ public class TileEntityMyrmexCocoon extends RandomizableContainerBlockEntity {
 
     @Override
     protected void setItems(@NotNull NonNullList<ItemStack> itemsIn) {
-
+        this.chestContents = itemsIn;
     }
 
-    @Override
     public void startOpen(Player player) {
         this.unpackLootTable(null);
-        player.level.playLocalSound(this.worldPosition.getX(), this.worldPosition.getY(), this.worldPosition.getZ(), SoundEvents.SLIME_JUMP, SoundSource.BLOCKS, 1, 1, false);
+        player.level().playLocalSound(this.worldPosition.getX(), this.worldPosition.getY(), this.worldPosition.getZ(), SoundEvents.SLIME_JUMP, SoundSource.BLOCKS, 1, 1, false);
     }
 
-    @Override
     public void stopOpen(Player player) {
         this.unpackLootTable(null);
-        player.level.playLocalSound(this.worldPosition.getX(), this.worldPosition.getY(), this.worldPosition.getZ(), SoundEvents.SLIME_SQUISH, SoundSource.BLOCKS, 1, 1, false);
+        player.level().playLocalSound(this.worldPosition.getX(), this.worldPosition.getY(), this.worldPosition.getZ(), SoundEvents.SLIME_SQUISH, SoundSource.BLOCKS, 1, 1, false);
     }
 
     @Override
@@ -113,19 +113,20 @@ public class TileEntityMyrmexCocoon extends RandomizableContainerBlockEntity {
         return ClientboundBlockEntityDataPacket.create(this);
     }
 
-    @Override
-    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket packet) {
-        load(packet.getTag());
+    public void onDataPacket(Connection connection, ClientboundBlockEntityDataPacket packet) {
+        if (packet.getTag() != null && getLevel() != null) {
+            this.loadWithComponents(net.minecraft.world.level.storage.TagValueInput.create(net.minecraft.util.ProblemReporter.DISCARDING, getLevel().registryAccess(), packet.getTag()));
+        }
     }
 
     @Override
-    public @NotNull CompoundTag getUpdateTag() {
-        return this.saveWithFullMetadata();
+    public @NotNull CompoundTag getUpdateTag(net.minecraft.core.HolderLookup.Provider registries) {
+        return this.saveWithFullMetadata(registries);
     }
 
     public boolean isFull(ItemStack heldStack) {
         for (ItemStack itemstack : chestContents) {
-            if (itemstack.isEmpty() || heldStack != null && !heldStack.isEmpty() && itemstack.sameItem(heldStack) && itemstack.getCount() + heldStack.getCount() < itemstack.getMaxStackSize()) {
+            if (itemstack.isEmpty() || heldStack != null && !heldStack.isEmpty() && ItemStack.isSameItem(itemstack, heldStack) && itemstack.getCount() + heldStack.getCount() < itemstack.getMaxStackSize()) {
                 return false;
             }
         }

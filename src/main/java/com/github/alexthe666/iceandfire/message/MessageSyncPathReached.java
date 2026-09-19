@@ -4,13 +4,10 @@ import com.github.alexthe666.iceandfire.pathfinding.raycoms.MNode;
 import com.github.alexthe666.iceandfire.pathfinding.raycoms.Pathfinding;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.network.NetworkDirection;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.function.Supplier;
 
 /**
  * Message to sync the reached positions over to the client for rendering.
@@ -49,25 +46,13 @@ public class MessageSyncPathReached
         return new MessageSyncPathReached(reached);
     }
 
-    public LogicalSide getExecutionSide()
-    {
-        return LogicalSide.CLIENT;
-    }
-
-    public boolean handle(Supplier<NetworkEvent.Context> contextSupplier) {
-        contextSupplier.get().enqueueWork(() -> {
-            contextSupplier.get().setPacketHandled(true);
-
-            if (contextSupplier.get().getDirection() == NetworkDirection.PLAY_TO_CLIENT) {
-                for (final MNode node : Pathfinding.lastDebugNodesPath) {
-                    if (reached.contains(node.pos)) {
-                        node.setReachedByWorker(true);
-                    }
+    public static void handle(MessageSyncPathReached message, CustomPayloadEvent.Context context) {
+        if (context.isClientSide()) {
+            for (final MNode node : Pathfinding.lastDebugNodesPath) {
+                if (message.reached.contains(node.pos)) {
+                    node.setReachedByWorker(true);
                 }
             }
-
-        });
-        return true;
+        }
     }
-
 }

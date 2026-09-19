@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "D",
+    "T",
+    "T"
+  ],
+  "key": {
+    "D": "#forge:ingots/dragonsteel_fire",
+    "T": "#forge:bones/wither"
+  },
+  "result": {
+    "id": "iceandfire:dragonsteel_fire_shovel"
+  }
+}

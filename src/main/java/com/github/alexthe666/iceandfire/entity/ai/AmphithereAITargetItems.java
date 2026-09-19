@@ -61,8 +61,8 @@ public class AmphithereAITargetItems<T extends ItemEntity> extends TargetGoal {
             return true;
         }
 
-        if (this.mob.level.getGameTime() % 4 == 0) // only update the list every 4 ticks
-            list = this.mob.level.getEntitiesOfClass(ItemEntity.class, this.getTargetableArea(this.getFollowDistance()), this.targetEntitySelector);
+        if (this.mob.level().getGameTime() % 4 == 0) // only update the list every 4 ticks
+            list = this.mob.level().getEntitiesOfClass(ItemEntity.class, this.getTargetableArea(this.getFollowDistance()), this.targetEntitySelector);
 
         if (list.isEmpty())
             return false;
@@ -97,7 +97,7 @@ public class AmphithereAITargetItems<T extends ItemEntity> extends TargetGoal {
         if (this.targetEntity != null && this.targetEntity.isAlive() && this.mob.distanceToSqr(this.targetEntity) < 1) {
             EntityAmphithere hippo = (EntityAmphithere) this.mob;
             this.targetEntity.getItem().shrink(1);
-            this.mob.playSound(SoundEvents.GENERIC_EAT, 1, 1);
+            this.mob.playSound(SoundEvents.GENERIC_EAT.value(), 1, 1);
             hippo.heal(5);
             stop();
         }

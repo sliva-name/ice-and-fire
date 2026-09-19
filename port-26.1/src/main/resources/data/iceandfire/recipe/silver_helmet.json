@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "SSS",
+    "S S"
+  ],
+  "key": {
+    "S": "#forge:ingots/silver"
+  },
+  "result": {
+    "id": "iceandfire:armor_silver_metal_helmet"
+  }
+}

@@ -1,0 +1,24 @@
+modLoader = "javafml"
+loaderVersion = "[62,)"
+license = "LGPL"
+
+[[mods]]
+modId = "citadel"
+version = "1.11.3-26.1-port-dev"
+displayName = "Citadel (Ice and Fire subset)"
+authors = "Alexthe666"
+description = '''Ice and Fire's Forge 26.1 Citadel subset.'''
+
+[[dependencies.citadel]]
+modId = "forge"
+mandatory = true
+versionRange = "[62.0.9,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.citadel]]
+modId = "minecraft"
+mandatory = true
+versionRange = "[26.1,26.2)"
+ordering = "NONE"
+side = "BOTH"

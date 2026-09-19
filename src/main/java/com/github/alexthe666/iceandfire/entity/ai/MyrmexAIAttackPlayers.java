@@ -12,14 +12,9 @@ public class MyrmexAIAttackPlayers extends NearestAttackableTargetGoal {
 
     @SuppressWarnings("unchecked")
     public MyrmexAIAttackPlayers(EntityMyrmexBase myrmex) {
-        super(myrmex, Player.class, 10, true, true, new Predicate<Player>() {
-
-            @Override
-            public boolean test(Player entity) {
-                return entity != null && (myrmex.getHive() == null
-                    || myrmex.getHive().isPlayerReputationLowEnoughToFight(entity.getUUID()));
-            }
-        });
+        super(myrmex, Player.class, 10, true, true, (living, serverLevel) ->
+            living instanceof Player entity && (myrmex.getHive() == null
+                || myrmex.getHive().isPlayerReputationLowEnoughToFight(entity.getUUID())));
         this.myrmex = myrmex;
     }
 

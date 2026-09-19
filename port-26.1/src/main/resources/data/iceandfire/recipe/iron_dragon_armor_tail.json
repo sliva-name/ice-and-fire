@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "   ",
+    "  D",
+    "DD "
+  ],
+  "key": {
+    "D": "#forge:storage_blocks/iron"
+  },
+  "result": {
+    "id": "iceandfire:dragonarmor_iron_tail"
+  }
+}

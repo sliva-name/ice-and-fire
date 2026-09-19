@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "   ",
+    "DDD",
+    " DD"
+  ],
+  "key": {
+    "D": "#forge:storage_blocks/dragonsteel_fire"
+  },
+  "result": {
+    "id": "iceandfire:dragonarmor_dragonsteel_fire_neck"
+  }
+}

@@ -1,5 +1,11 @@
 package com.github.alexthe666.iceandfire.entity;
 
+import net.minecraft.server.level.ServerLevel;
+
+import com.github.alexthe666.iceandfire.entity.util.IafDrops;
+
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
 import com.github.alexthe666.iceandfire.entity.util.IBlacklistedFromStatues;
 import com.github.alexthe666.iceandfire.entity.util.IDeadMob;
 import com.github.alexthe666.iceandfire.enums.EnumDragonEgg;
@@ -26,7 +32,7 @@ import java.util.UUID;
 
 public class EntityDragonEgg extends LivingEntity implements IBlacklistedFromStatues, IDeadMob {
 
-    protected static final EntityDataAccessor<java.util.Optional<UUID>> OWNER_UNIQUE_ID = SynchedEntityData.defineId(EntityDragonEgg.class, EntityDataSerializers.OPTIONAL_UUID);
+    protected static final EntityDataAccessor<String> OWNER_UNIQUE_ID = SynchedEntityData.defineId(EntityDragonEgg.class, EntityDataSerializers.STRING);
     private static final EntityDataAccessor<Integer> DRAGON_TYPE = SynchedEntityData.defineId(EntityDragonEgg.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DRAGON_AGE = SynchedEntityData.defineId(EntityDragonEgg.class, EntityDataSerializers.INT);
 
@@ -43,7 +49,7 @@ public class EntityDragonEgg extends LivingEntity implements IBlacklistedFromSta
     }
 
     @Override
-    public void addAdditionalSaveData(@NotNull CompoundTag tag) {
+    public void addAdditionalSaveData(@NotNull ValueOutput tag) {
         super.addAdditionalSaveData(tag);
         tag.putInt("Color", (byte) this.getEggType().ordinal());
         tag.putInt("DragonAge", this.getDragonAge());
@@ -59,17 +65,16 @@ public class EntityDragonEgg extends LivingEntity implements IBlacklistedFromSta
     }
 
     @Override
-    public void readAdditionalSaveData(@NotNull CompoundTag tag) {
+    public void readAdditionalSaveData(@NotNull ValueInput tag) {
         super.readAdditionalSaveData(tag);
-        this.setEggType(EnumDragonEgg.values()[tag.getInt("Color")]);
-        this.setDragonAge(tag.getInt("DragonAge"));
-        String s;
-
-        if (tag.contains("OwnerUUID", 8)) {
-            s = tag.getString("OwnerUUID");
-        } else {
-            String s1 = tag.getString("Owner");
-            UUID converedUUID = OldUsersConverter.convertMobOwnerIfNecessary(this.getServer(), s1);
+        this.setEggType(EnumDragonEgg.values()[tag.getIntOr("Color", 0)]);
+        this.setDragonAge(tag.getIntOr("DragonAge", 0));
+        String s = tag.getString("OwnerUUID").orElse(null);
+        if (s == null) {
+            String s1 = tag.getStringOr("Owner", "");
+            UUID converedUUID = this.level() instanceof ServerLevel server
+                ? OldUsersConverter.convertMobOwnerIfNecessary(server.getServer(), s1)
+                : null;
             s = converedUUID == null ? s1 : converedUUID.toString();
         }
         if (!s.isEmpty()) {
@@ -78,20 +83,28 @@ public class EntityDragonEgg extends LivingEntity implements IBlacklistedFromSta
     }
 
     @Override
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.getEntityData().define(DRAGON_TYPE, 0);
-        this.getEntityData().define(DRAGON_AGE, 0);
-        this.getEntityData().define(OWNER_UNIQUE_ID, Optional.empty());
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DRAGON_TYPE, 0);
+        builder.define(DRAGON_AGE, 0);
+        builder.define(OWNER_UNIQUE_ID, "");
     }
 
     @Nullable
     public UUID getOwnerId() {
-        return this.entityData.get(OWNER_UNIQUE_ID).orElse(null);
+        String stored = this.entityData.get(OWNER_UNIQUE_ID);
+        if (stored == null || stored.isEmpty()) {
+            return null;
+        }
+        try {
+            return UUID.fromString(stored);
+        } catch (IllegalArgumentException ignored) {
+            return null;
+        }
     }
 
-    public void setOwnerId(@Nullable UUID p_184754_1_) {
-        this.entityData.set(OWNER_UNIQUE_ID, java.util.Optional.ofNullable(p_184754_1_));
+    public void setOwnerId(@Nullable UUID owner) {
+        this.entityData.set(OWNER_UNIQUE_ID, owner == null ? "" : owner.toString());
     }
 
     public EnumDragonEgg getEggType() {
@@ -103,8 +116,8 @@ public class EntityDragonEgg extends LivingEntity implements IBlacklistedFromSta
     }
 
     @Override
-    public boolean isInvulnerableTo(DamageSource i) {
-        return i.getEntity() != null && super.isInvulnerableTo(i);
+    public boolean isInvulnerableTo(@NotNull ServerLevel level, @NotNull DamageSource i) {
+        return i.getEntity() != null && super.isInvulnerableTo(level, i);
     }
 
     public int getDragonAge() {
@@ -118,7 +131,7 @@ public class EntityDragonEgg extends LivingEntity implements IBlacklistedFromSta
     @Override
     public void tick() {
         super.tick();
-        if (!level.isClientSide()) {
+        if (!this.level().isClientSide()) {
             this.setAirSupply(200);
             getEggType().dragonType.updateEggCondition(this);
         }
@@ -127,11 +140,6 @@ public class EntityDragonEgg extends LivingEntity implements IBlacklistedFromSta
     @Override
     public SoundEvent getHurtSound(@NotNull DamageSource damageSourceIn) {
         return null;
-    }
-
-    @Override
-    public @NotNull Iterable<ItemStack> getArmorSlots() {
-        return ImmutableList.of();
     }
 
     @Override
@@ -145,9 +153,9 @@ public class EntityDragonEgg extends LivingEntity implements IBlacklistedFromSta
     }
 
     @Override
-    public boolean hurt(@NotNull DamageSource var1, float var2) {
-        if (!level.isClientSide && !var1.isBypassInvul() && !isRemoved()) {
-            this.spawnAtLocation(this.getItem().getItem(), 1);
+    public boolean hurtServer(@NotNull ServerLevel level, @NotNull DamageSource var1, float var2) {
+        if (!this.level().isClientSide() && !var1.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY) && !isRemoved()) {
+            IafDrops.spawn(this, this.getItem().getItem(), 1);
         }
         this.remove(RemovalReason.KILLED);
         return true;

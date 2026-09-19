@@ -7,7 +7,6 @@ import com.github.alexthe666.iceandfire.enums.EnumTroll;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
@@ -19,13 +18,15 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Locale;
 
-public class ItemTrollArmor extends ArmorItem{
+public class ItemTrollArmor extends Item implements IafArmorIdentity {
 
     public EnumTroll troll;
+    private final EquipmentSlot armorSlot;
 
     public ItemTrollArmor(EnumTroll troll, CustomArmorMaterial material, EquipmentSlot slot) {
-        super(material, slot, new Item.Properties().tab(IceAndFire.TAB_ITEMS));
+        super(IafArmors.properties(material, slot));
         this.troll = troll;
+        this.armorSlot = slot;
     }
 
     public static String getName(EnumTroll troll, EquipmentSlot slot) {
@@ -33,7 +34,7 @@ public class ItemTrollArmor extends ArmorItem{
     }
 
     @Override
-    public @NotNull ArmorMaterial getMaterial() {
+    public CustomArmorMaterial iafMaterial() {
         return troll.material;
     }
 
@@ -48,24 +49,12 @@ public class ItemTrollArmor extends ArmorItem{
         };
     }
 
-    @Override
-    public void initializeClient(java.util.function.Consumer<net.minecraftforge.client.IItemRenderProperties> consumer) {
-        consumer.accept(new net.minecraftforge.client.IItemRenderProperties() {
-            @Override
-            @Nullable
-            public HumanoidModel<?> getArmorModel(LivingEntity LivingEntity, ItemStack itemStack, EquipmentSlot armorSlot, HumanoidModel<?> _default) {
-                return new ModelTrollArmor(armorSlot == EquipmentSlot.LEGS || armorSlot == EquipmentSlot.HEAD);
-            }
-        });
-    }
-
-    @Override
     public String getArmorTexture(ItemStack stack, Entity entity, EquipmentSlot slot, String type) {
         return "iceandfire:textures/models/armor/armor_troll_" + troll.name().toLowerCase(Locale.ROOT) + (slot == EquipmentSlot.LEGS ? "_legs.png" : ".png");
     }
 
     @Override
-    public void appendHoverText(@NotNull ItemStack stack, @Nullable Level worldIn, List<Component> tooltip, @NotNull TooltipFlag flagIn) {
-        tooltip.add(new TranslatableComponent("item.iceandfire.troll_leather_armor_" + getArmorPart(slot) + ".desc").withStyle(ChatFormatting.GREEN));
+    public void appendHoverText(@NotNull ItemStack stack, Item.TooltipContext context, @NotNull net.minecraft.world.item.component.TooltipDisplay display, @NotNull java.util.function.Consumer<Component> tooltip, @NotNull TooltipFlag flagIn) {
+        tooltip.accept(Component.translatable("item.iceandfire.troll_leather_armor_" + getArmorPart(armorSlot) + ".desc").withStyle(ChatFormatting.GREEN));
     }
 }

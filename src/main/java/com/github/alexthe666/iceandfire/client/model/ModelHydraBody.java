@@ -1,17 +1,17 @@
 package com.github.alexthe666.iceandfire.client.model;
 
-import com.github.alexthe666.citadel.animation.IAnimatedEntity;
+import com.github.alexthe666.citadel.client.model.AdvancedEntityModel;
 import com.github.alexthe666.citadel.client.model.AdvancedModelBox;
 import com.github.alexthe666.citadel.client.model.ModelAnimator;
 import com.github.alexthe666.citadel.client.model.basic.BasicModelPart;
-import com.github.alexthe666.iceandfire.entity.EntityHydra;
+import com.github.alexthe666.iceandfire.client.render.entity.HydraRenderState;
 import com.google.common.collect.ImmutableList;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.world.entity.Entity;
 
-public class ModelHydraBody extends ModelDragonBase<EntityHydra> {
+public class ModelHydraBody extends AdvancedEntityModel<HydraRenderState> implements ICustomStatueModel {
     public AdvancedModelBox BodyUpper;
     public AdvancedModelBox BodyLower;
     public AdvancedModelBox BodySpike1;
@@ -95,14 +95,20 @@ public class ModelHydraBody extends ModelDragonBase<EntityHydra> {
         this.updateDefaultPose();
     }
 
-    public void animate(IAnimatedEntity entity, float f, float f1, float f2, float f3, float f4, float f5) {
+    public void animate(HydraRenderState state) {
         this.resetToDefaultPose();
-        animator.update(entity);
+        animator.update(state.animation, state.animationTick, state.partialTick);
     }
 
     @Override
-    public void setupAnim(EntityHydra entity, float f, float f1, float f2, float f3, float f4) {
-        animate(entity, f, f1, f2, f3, f4, 1);
+    public void setupAnim(HydraRenderState state) {
+        animate(state);
+        if (state.stone) {
+            return;
+        }
+        float f = state.walkAnimationPos;
+        float f1 = state.walkAnimationSpeed;
+        float f2 = state.ageInTicks;
         float speed_walk = 0.6F;
         float speed_idle = 0.05F;
         float degree_walk = 1F;

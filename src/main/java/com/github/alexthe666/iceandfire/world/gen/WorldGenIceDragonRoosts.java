@@ -1,5 +1,7 @@
 package com.github.alexthe666.iceandfire.world.gen;
 
+import com.github.alexthe666.iceandfire.block.IafMaterials;
+
 import com.github.alexthe666.iceandfire.IafConfig;
 import com.github.alexthe666.iceandfire.block.IafBlockRegistry;
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
@@ -11,7 +13,7 @@ import com.github.alexthe666.iceandfire.world.IafWorldRegistry;
 import com.mojang.serialization.Codec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.BaseEntityBlock;
@@ -24,14 +26,13 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
 import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
-import net.minecraft.world.level.material.Material;
 
 import java.util.Random;
 
 public class WorldGenIceDragonRoosts extends Feature<NoneFeatureConfiguration> implements TypedFeature {
     private static final Direction[] HORIZONTALS = new Direction[]{Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
     private static boolean isMale;
-    public static ResourceLocation DRAGON_CHEST = new ResourceLocation("iceandfire", "chest/ice_dragon_roost");
+    public static Identifier DRAGON_CHEST = Identifier.fromNamespaceAndPath("iceandfire", "chest/ice_dragon_roost");
 
     public WorldGenIceDragonRoosts(Codec<NoneFeatureConfiguration> configFactoryIn) {
         super(configFactoryIn);
@@ -43,21 +44,21 @@ public class WorldGenIceDragonRoosts extends Feature<NoneFeatureConfiguration> i
             if (state.getBlock() instanceof BaseEntityBlock) {
                 return;
             }
-            if (state.getMaterial() == Material.GRASS) {
+            if (IafMaterials.isGrass(state)) {
                 world.setBlock(blockpos, IafBlockRegistry.FROZEN_GRASS.get().defaultBlockState(), 2);
-            } else if (state.getMaterial() == Material.DIRT && state.getBlock() == Blocks.DIRT) {
+            } else if (IafMaterials.isDirt(state) && state.getBlock() == Blocks.DIRT) {
                 world.setBlock(blockpos, IafBlockRegistry.FROZEN_DIRT.get().defaultBlockState(), 2);
-            } else if (state.getMaterial() == Material.DIRT && state.getBlock() == Blocks.GRAVEL) {
+            } else if (IafMaterials.isDirt(state) && state.getBlock() == Blocks.GRAVEL) {
                 world.setBlock(blockpos, IafBlockRegistry.FROZEN_GRAVEL.get().defaultBlockState(), 2);
-            } else if (state.getMaterial() == Material.STONE && (state.getBlock() == Blocks.COBBLESTONE || state.getBlock().getDescriptionId().contains("cobblestone"))) {
+            } else if (IafMaterials.isStone(state) && (state.getBlock() == Blocks.COBBLESTONE || state.getBlock().getDescriptionId().contains("cobblestone"))) {
                 world.setBlock(blockpos, IafBlockRegistry.FROZEN_COBBLESTONE.get().defaultBlockState(), 2);
-            } else if (state.getMaterial() == Material.STONE && state.getBlock() != IafBlockRegistry.FROZEN_COBBLESTONE.get()) {
+            } else if (IafMaterials.isStone(state) && state.getBlock() != IafBlockRegistry.FROZEN_COBBLESTONE.get()) {
                 world.setBlock(blockpos, IafBlockRegistry.FROZEN_STONE.get().defaultBlockState(), 2);
             } else if (state.getBlock() == Blocks.DIRT_PATH) {
                 world.setBlock(blockpos, IafBlockRegistry.FROZEN_DIRT_PATH.get().defaultBlockState(), 2);
-            } else if (state.getMaterial() == Material.WOOD) {
+            } else if (IafMaterials.isWood(state)) {
                 world.setBlock(blockpos, IafBlockRegistry.FROZEN_SPLINTERS.get().defaultBlockState(), 2);
-            } else if (state.getMaterial() == Material.LEAVES || state.getMaterial() == Material.PLANT) {
+            } else if (IafMaterials.isLeaves(state) || IafMaterials.isPlant(state)) {
                 world.setBlock(blockpos, Blocks.AIR.defaultBlockState(), 2);
             }
         }
@@ -66,7 +67,7 @@ public class WorldGenIceDragonRoosts extends Feature<NoneFeatureConfiguration> i
     @Override
     public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> context) {
         WorldGenLevel worldIn = context.level();
-        Random rand = context.random();
+        net.minecraft.util.RandomSource rand = context.random();
         BlockPos position = context.origin();
 
         if (rand.nextInt(IafConfig.generateDragonRoostChance) != 0 || !IafWorldRegistry.isFarEnoughFromSpawn(worldIn, position) || !IafWorldRegistry.isFarEnoughFromDangerousGen(worldIn, position, "dragon_roost")) {
@@ -79,13 +80,13 @@ public class WorldGenIceDragonRoosts extends Feature<NoneFeatureConfiguration> i
 
         isMale = new Random().nextBoolean();
         int radius = 12 + rand.nextInt(8);
-        EntityDragonBase dragon = IafEntityRegistry.ICE_DRAGON.get().create(worldIn.getLevel());
+        EntityDragonBase dragon = IafEntityRegistry.ICE_DRAGON.get().create(worldIn.getLevel(), net.minecraft.world.entity.EntitySpawnReason.STRUCTURE);
         dragon.setGender(isMale);
         dragon.growDragon(40 + radius);
         dragon.setAgingDisabled(true);
         dragon.setHealth(dragon.getMaxHealth());
         dragon.setVariant(new Random().nextInt(4));
-        dragon.absMoveTo(position.getX() + 0.5, worldIn.getHeightmapPos(Heightmap.Types.WORLD_SURFACE_WG, position).getY() + 1.5, position.getZ() + 0.5, rand.nextFloat() * 360, 0);
+        dragon.snapTo(position.getX() + 0.5, worldIn.getHeightmapPos(Heightmap.Types.WORLD_SURFACE_WG, position).getY() + 1.5, position.getZ() + 0.5, rand.nextFloat() * 360, 0);
         dragon.homePos = new HomePosition(position, worldIn.getLevel());
         dragon.hasHomePosition = true;
         dragon.setHunger(50);
@@ -163,7 +164,8 @@ public class WorldGenIceDragonRoosts extends Feature<NoneFeatureConfiguration> i
                         if (worldIn.getBlockState(height).getBlock() instanceof ChestBlock) {
                             BlockEntity tileentity1 = worldIn.getBlockEntity(height);
                             if (tileentity1 instanceof ChestBlockEntity) {
-                                ((ChestBlockEntity) tileentity1).setLootTable(DRAGON_CHEST, new Random().nextLong());
+                                ((ChestBlockEntity) tileentity1).setLootTable(com.github.alexthe666.iceandfire.entity.util.IafLoot.table(DRAGON_CHEST));
+                                ((ChestBlockEntity) tileentity1).setLootTableSeed(new Random().nextLong());
                             }
                         }
                     }

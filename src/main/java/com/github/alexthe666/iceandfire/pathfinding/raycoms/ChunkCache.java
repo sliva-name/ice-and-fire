@@ -20,7 +20,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.border.WorldBorder;
 import net.minecraft.world.level.chunk.ChunkAccess;
-import net.minecraft.world.level.chunk.ChunkStatus;
+import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.levelgen.Heightmap;
@@ -107,7 +107,7 @@ public class ChunkCache implements LevelReader {
     @NotNull
     @Override
     public BlockState getBlockState(BlockPos pos) {
-        if (pos.getY() >= getMinBuildHeight() && pos.getY() < getMaxBuildHeight()) {
+        if (pos.getY() >= getMinY() && pos.getY() < getMaxY() + 1) {
             int i = (pos.getX() >> 4) - this.chunkX;
             int j = (pos.getZ() >> 4) - this.chunkZ;
 
@@ -125,7 +125,7 @@ public class ChunkCache implements LevelReader {
 
     @Override
     public FluidState getFluidState(final BlockPos pos) {
-        if (pos.getY() >= getMinBuildHeight() && pos.getY() < getMaxBuildHeight()) {
+        if (pos.getY() >= getMinY() && pos.getY() < getMaxY() + 1) {
             int i = (pos.getX() >> 4) - this.chunkX;
             int j = (pos.getZ() >> 4) - this.chunkZ;
 
@@ -241,6 +241,20 @@ public class ChunkCache implements LevelReader {
     }
 
     @Override
+    public net.minecraft.world.attribute.EnvironmentAttributeReader environmentAttributes() {
+        return this.world.environmentAttributes();
+    }
+
+    @Override
+    public net.minecraft.world.flag.FeatureFlagSet enabledFeatures() {
+        return this.world.enabledFeatures();
+    }
+
+    @Override
+    public net.minecraft.core.RegistryAccess registryAccess() {
+        return this.world.registryAccess();
+    }
+
     public float getShade(final @NotNull Direction direction, final boolean b) {
         return 0;
     }

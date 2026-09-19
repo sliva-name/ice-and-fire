@@ -6,6 +6,6 @@ import net.minecraft.world.item.Item;
 public class ItemDragonBone extends Item {
 
     public ItemDragonBone() {
-        super(new Item.Properties().tab(IceAndFire.TAB_ITEMS));
+        super(IafItemRegistry.defaultBuilder());
     }
 }

@@ -6,7 +6,6 @@ import com.github.alexthe666.iceandfire.entity.IafEntityRegistry;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -16,18 +15,13 @@ import org.jetbrains.annotations.NotNull;
 public class ItemLichStaff extends Item {
 
     public ItemLichStaff() {
-        super(new Item.Properties().durability(100).tab(IceAndFire.TAB_ITEMS));
+        super(IafItemRegistry.defaultBuilder().durability(100).repairable(net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.ITEM, net.minecraft.resources.Identifier.fromNamespaceAndPath(IceAndFire.MODID, "repairs_lich_staff"))));
     }
 
     @Override
-    public boolean isValidRepairItem(@NotNull ItemStack toRepair, ItemStack repair) {
-        return repair.getItem() == IafItemRegistry.DREAD_SHARD.get() || super.isValidRepairItem(toRepair, repair);
-    }
-
-    @Override
-    public @NotNull InteractionResultHolder<ItemStack> use(Level worldIn, Player playerIn, @NotNull InteractionHand hand) {
+    public @NotNull InteractionResult use(Level worldIn, Player playerIn, @NotNull InteractionHand hand) {
         ItemStack itemStackIn = playerIn.getItemInHand(hand);
-        if (!worldIn.isClientSide) {
+        if (!worldIn.isClientSide()) {
             playerIn.startUsingItem(hand);
             playerIn.swing(hand);
             double d2 = playerIn.getLookAngle().x;
@@ -44,11 +38,9 @@ public class ItemLichStaff extends Item {
             worldIn.addFreshEntity(charge);
             charge.shoot(d2, d3, d4, 1, 1);
             playerIn.playSound(SoundEvents.ZOMBIE_INFECT, 1F, 0.75F + 0.5F * playerIn.getRandom().nextFloat());
-            itemStackIn.hurtAndBreak(1, playerIn, (player) -> {
-                player.broadcastBreakEvent(hand);
-            });
-            playerIn.getCooldowns().addCooldown(this, 4);
+            itemStackIn.hurtAndBreak(1, playerIn, hand);
+            playerIn.getCooldowns().addCooldown(itemStackIn, 4);
         }
-        return new InteractionResultHolder<ItemStack>(InteractionResult.SUCCESS, itemStackIn);
+        return InteractionResult.SUCCESS;
     }
 }

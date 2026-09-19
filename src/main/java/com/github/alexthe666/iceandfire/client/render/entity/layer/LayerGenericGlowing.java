@@ -1,35 +1,32 @@
 package com.github.alexthe666.iceandfire.client.render.entity.layer;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.model.EntityModel;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.entity.LivingEntityRenderer;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
+import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.LivingEntity;
-import org.jetbrains.annotations.NotNull;
+import net.minecraft.resources.Identifier;
 
-public class LayerGenericGlowing<T extends LivingEntity, M extends EntityModel<T>> extends RenderLayer<T, M> {
-    private final LivingEntityRenderer render;
-    private final ResourceLocation texture;
+/**
+ * Full-model emissive pass, matching the original generic glowing layer.
+ * Renderers construct it with their own extracted state type.
+ */
+public class LayerGenericGlowing<S extends LivingEntityRenderState, M extends EntityModel<? super S>> extends RenderLayer<S, M> {
+    private final Identifier texture;
 
-    public LayerGenericGlowing(LivingEntityRenderer renderIn, ResourceLocation texture) {
+    public LayerGenericGlowing(RenderLayerParent<S, M> renderIn, Identifier texture) {
         super(renderIn);
-        this.render = renderIn;
         this.texture = texture;
     }
 
-    public boolean shouldCombineTextures() {
-        return true;
-    }
-
     @Override
-    public void render(@NotNull PoseStack matrixStackIn, MultiBufferSource bufferIn, int packedLightIn, @NotNull LivingEntity entity, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch) {
-        RenderType eyes = RenderType.eyes(texture);
-        VertexConsumer ivertexbuilder = bufferIn.getBuffer(eyes);
-        this.getParentModel().renderToBuffer(matrixStackIn, ivertexbuilder, packedLightIn, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
+    public void submit(PoseStack poseStack, SubmitNodeCollector collector, int lightCoords, S state, float yRot, float xRot) {
+        if (!state.isInvisible) {
+            collector.order(1).submitModel(getParentModel(), state, poseStack, RenderTypes.eyes(texture),
+                lightCoords, OverlayTexture.NO_OVERLAY, state.outlineColor, null);
+        }
     }
 }

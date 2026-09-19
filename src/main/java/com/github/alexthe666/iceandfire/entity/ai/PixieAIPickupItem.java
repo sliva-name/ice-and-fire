@@ -58,8 +58,8 @@ public class PixieAIPickupItem<T extends ItemEntity> extends TargetGoal {
         EntityPixie pixie = (EntityPixie) this.mob;
         if (pixie.isPixieSitting()) return false;
 
-        if (this.mob.level.getGameTime() % 4 == 0) // only update the list every 4 ticks
-            list = this.mob.level.getEntitiesOfClass(ItemEntity.class, this.getTargetableArea(this.getFollowDistance()), this.targetEntitySelector);
+        if (this.mob.level().getGameTime() % 4 == 0) // only update the list every 4 ticks
+            list = this.mob.level().getEntitiesOfClass(ItemEntity.class, this.getTargetableArea(this.getFollowDistance()), this.targetEntitySelector);
 
         if (list.isEmpty()) {
             return false;
@@ -97,14 +97,13 @@ public class PixieAIPickupItem<T extends ItemEntity> extends TargetGoal {
                 if (this.targetEntity.getItem().getItem() == Items.SUGAR) {
                     pixie.heal(5);
                 } else if (this.targetEntity.getItem().getItem() == Items.CAKE) {
-                    if (!pixie.isTame() && this.targetEntity.getThrower() != null && this.mob.level.getPlayerByUUID(this.targetEntity.getThrower()) != null) {
-                        Player owner = this.mob.level.getPlayerByUUID(this.targetEntity.getThrower());
-                        pixie.setTame(true);
+                    if (!pixie.isTame() && this.targetEntity.getOwner() instanceof Player owner) {
+                        pixie.setTame(true, false);
                         if (owner != null) {
                             pixie.tame(owner);
                         }
                         pixie.setPixieSitting(true);
-                        pixie.setOnGround(true);  //  Entity.onGround = true
+                        pixie.setOnGround(true);  //  Entity.onGround() = true
                     }
                 }
 

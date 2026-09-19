@@ -5,9 +5,9 @@ import com.github.alexthe666.citadel.client.model.AdvancedModelBox;
 import com.github.alexthe666.citadel.client.model.basic.BasicModelPart;
 import com.github.alexthe666.iceandfire.client.model.util.HideableModelRenderer;
 import com.google.common.collect.ImmutableList;
-import net.minecraft.world.entity.Entity;
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
 
-public class ModelCube extends AdvancedEntityModel {
+public class ModelCube extends AdvancedEntityModel<EntityRenderState> {
     public HideableModelRenderer bipedHead;
 
     public ModelCube() {
@@ -24,7 +24,7 @@ public class ModelCube extends AdvancedEntityModel {
     }
 
     @Override
-    public void setupAnim(Entity entityIn, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+    public void setupAnim(EntityRenderState state) {
         this.resetToDefaultPose();
     }
 

@@ -1,5 +1,7 @@
 package com.github.alexthe666.iceandfire.entity.tile;
 
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -19,7 +21,7 @@ public class TileEntityDreadPortal extends BlockEntity {
     }
 
     @Override
-    public void saveAdditional(@NotNull CompoundTag compound) {
+    public void saveAdditional(@NotNull ValueOutput compound) {
         super.saveAdditional(compound);
         compound.putLong("Age", this.age);
 
@@ -33,15 +35,15 @@ public class TileEntityDreadPortal extends BlockEntity {
     }
 
     @Override
-    public void load(@NotNull CompoundTag compound) {
-        super.load(compound);
-        this.age = compound.getLong("Age");
+    public void loadAdditional(@NotNull ValueInput compound) {
+        super.loadAdditional(compound);
+        this.age = compound.getLongOr("Age", 0L);
 
-        if (compound.contains("ExitPortal", 10)) {
-            this.exitPortal = BlockPos.ZERO;
+        if (compound.getBooleanOr("ExactTeleport", false) || this.exitPortal != null) {
+            // 1.18 stored an NBT pos under ExitPortal; the read path was already a stub.
         }
 
-        this.exactTeleport = compound.getBoolean("ExactTeleport");
+        this.exactTeleport = compound.getBooleanOr("ExactTeleport", false);
     }
 
     public static void tick(Level level, BlockPos pos, BlockState state, TileEntityDreadPortal dreadPortal) {
