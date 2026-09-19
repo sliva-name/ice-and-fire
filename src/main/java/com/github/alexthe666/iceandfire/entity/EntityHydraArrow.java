@@ -39,7 +39,11 @@ public class EntityHydraArrow extends AbstractArrow {
     }
 
     public EntityHydraArrow(EntityType t, Level worldIn, LivingEntity shooter) {
-        super(t, shooter, worldIn, new ItemStack(IafItemRegistry.HYDRA_ARROW.get()), ItemStack.EMPTY);
+        this(t, worldIn, shooter, ItemStack.EMPTY);
+    }
+
+    public EntityHydraArrow(EntityType t, Level worldIn, LivingEntity shooter, ItemStack weapon) {
+        super(t, shooter, worldIn, new ItemStack(IafItemRegistry.HYDRA_ARROW.get()), IafArrows.firedFrom(weapon));
         this.setBaseDamage(5F);
     }
 

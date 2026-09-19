@@ -17,8 +17,7 @@ public class ItemDragonArrow extends ArrowItem {
 
     @Override
     public @NotNull AbstractArrow createArrow(@NotNull Level worldIn, @NotNull ItemStack stack, @NotNull LivingEntity shooter, @NotNull ItemStack weapon) {
-        EntityDragonArrow arrowentity = new EntityDragonArrow(IafEntityRegistry.DRAGON_ARROW.get(), shooter, worldIn);
-        return arrowentity;
+        return new EntityDragonArrow(IafEntityRegistry.DRAGON_ARROW.get(), shooter, worldIn, weapon);
     }
 
     @Override

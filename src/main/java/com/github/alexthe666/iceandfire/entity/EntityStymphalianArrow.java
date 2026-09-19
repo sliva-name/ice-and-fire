@@ -28,7 +28,11 @@ public class EntityStymphalianArrow extends AbstractArrow {
         this(IafEntityRegistry.STYMPHALIAN_ARROW.get(), world);
     }
     public EntityStymphalianArrow(EntityType t, Level worldIn, LivingEntity shooter) {
-        super(t, shooter, worldIn, new ItemStack(IafItemRegistry.STYMPHALIAN_ARROW.get()), ItemStack.EMPTY);
+        this(t, worldIn, shooter, ItemStack.EMPTY);
+    }
+
+    public EntityStymphalianArrow(EntityType t, Level worldIn, LivingEntity shooter, ItemStack weapon) {
+        super(t, shooter, worldIn, new ItemStack(IafItemRegistry.STYMPHALIAN_ARROW.get()), IafArrows.firedFrom(weapon));
         this.setBaseDamage(3.5F);
     }
 

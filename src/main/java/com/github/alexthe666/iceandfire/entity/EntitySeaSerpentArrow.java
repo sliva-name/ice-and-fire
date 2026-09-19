@@ -29,7 +29,11 @@ public class EntitySeaSerpentArrow extends AbstractArrow {
     }
 
     public EntitySeaSerpentArrow(EntityType t, Level worldIn, LivingEntity shooter) {
-        super(t, shooter, worldIn, new ItemStack(IafItemRegistry.SEA_SERPENT_ARROW.get()), ItemStack.EMPTY);
+        this(t, worldIn, shooter, ItemStack.EMPTY);
+    }
+
+    public EntitySeaSerpentArrow(EntityType t, Level worldIn, LivingEntity shooter, ItemStack weapon) {
+        super(t, shooter, worldIn, new ItemStack(IafItemRegistry.SEA_SERPENT_ARROW.get()), IafArrows.firedFrom(weapon));
         this.setBaseDamage(3F);
     }
 

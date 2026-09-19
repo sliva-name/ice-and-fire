@@ -31,7 +31,11 @@ public class EntityAmphithereArrow extends AbstractArrow {
     }
 
     public EntityAmphithereArrow(EntityType type, LivingEntity shooter, Level worldIn) {
-        super(type, shooter, worldIn, new ItemStack(IafItemRegistry.AMPHITHERE_ARROW.get()), ItemStack.EMPTY);
+        this(type, shooter, worldIn, ItemStack.EMPTY);
+    }
+
+    public EntityAmphithereArrow(EntityType type, LivingEntity shooter, Level worldIn, ItemStack weapon) {
+        super(type, shooter, worldIn, new ItemStack(IafItemRegistry.AMPHITHERE_ARROW.get()), IafArrows.firedFrom(weapon));
         this.setBaseDamage(2.5F);
     }
     @Override

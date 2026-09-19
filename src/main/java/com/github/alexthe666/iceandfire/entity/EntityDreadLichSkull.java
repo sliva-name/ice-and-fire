@@ -39,14 +39,14 @@ public class EntityDreadLichSkull extends AbstractArrow {
 
     public EntityDreadLichSkull(EntityType<? extends AbstractArrow> type, Level worldIn, LivingEntity shooter,
                                 double x, double y, double z) {
-        super(type, shooter, worldIn, ItemStack.EMPTY, ItemStack.EMPTY);
+        super(type, shooter, worldIn, ItemStack.EMPTY, null);
         this.setBaseDamage(6);
         this.iafBaseDamage = 6;
     }
 
     public EntityDreadLichSkull(EntityType<? extends AbstractArrow> type, Level worldIn, LivingEntity shooter,
                                 double dmg) {
-        super(type, shooter, worldIn, ItemStack.EMPTY, ItemStack.EMPTY);
+        super(type, shooter, worldIn, ItemStack.EMPTY, null);
         this.setBaseDamage(dmg);
         this.iafBaseDamage = dmg;
     }
