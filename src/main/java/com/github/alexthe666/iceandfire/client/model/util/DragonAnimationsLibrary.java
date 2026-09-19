@@ -83,7 +83,9 @@ public class DragonAnimationsLibrary {
             result = new TabulaModel<>(TabulaModelHandlerHelper.loadTabulaModel(location));
         }
         catch(IOException | NullPointerException e) {
-            LOGGER.warn("Could not load " + location + ": " + e.getMessage());
+            if (!isExpectedMissingFireSwim(pose, modelType)) {
+                LOGGER.warn("Could not load " + location + ": " + e.getMessage());
+            }
             return;
         }
 
@@ -97,6 +99,12 @@ public class DragonAnimationsLibrary {
      * files log as {@code firedragon_swimming.tbl}. Reuse Swim4 rather than
      * leaving a null slot that NPEs the swim animator.
      */
+    private static boolean isExpectedMissingFireSwim(IEnumDragonPoses pose, IEnumDragonModelTypes modelType) {
+        return "fire".equals(modelType.getModelType())
+            && pose instanceof EnumDragonPoses dragonPose
+            && (dragonPose == EnumDragonPoses.SWIM_POSE || dragonPose == EnumDragonPoses.SWIM5);
+    }
+
     private static void aliasMissingPose(IEnumDragonPoses pose, IEnumDragonModelTypes modelType) {
         if (models.containsKey(toKey(pose, modelType)) || !(pose instanceof EnumDragonPoses dragonPose)) {
             return;
@@ -112,8 +120,6 @@ public class DragonAnimationsLibrary {
         if (source == null) {
             return;
         }
-        LOGGER.warn("Missing tabula pose " + pose.getPose() + modelType.getModelType()
-            + "; using " + fallback.getPose());
         models.put(toKey(pose, modelType), source);
     }
 

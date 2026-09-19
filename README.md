@@ -2,11 +2,11 @@
 
 [![CurseForge downloads](http://cf.way2muchnoise.eu/full_264231_downloads.svg)](https://www.curseforge.com/minecraft/mc-mods/ice-and-fire-dragons)
 
-# Ice and Fire (Minecraft 26.1 port)
+# Ice and Fire (Minecraft 26.2 port)
 
-This branch is an **unofficial port** of Ice and Fire to **Minecraft 26.1 / Forge 62**. It is not an official Alexthe666 release.
+This branch is an **unofficial port** of Ice and Fire to **Minecraft 26.2 / Forge 65**. It is not an official Alexthe666 release.
 
-Playable jars: put **both** `iceandfire-*-26.1-port.jar` and `citadel-iceandfire-subset-*-26.1-port.jar` into the `mods` folder. You need Java 25, Minecraft 26.1, and Forge 26.1-62.0.9.
+Playable jars: put **both** `iceandfire-*-26.2-port.jar` and `citadel-iceandfire-subset-*-26.2-port.jar` into the `mods` folder. You need Java 25, Minecraft 26.2, and Forge 26.2-65.1.3.
 
 # Ice and Fire
 

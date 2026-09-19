@@ -1,0 +1,7 @@
+logs/
+citadel/logs/
+run/
+.gradle/
+build/
+*.jar
+!gradle/wrapper/gradle-wrapper.jar

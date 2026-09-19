@@ -1,0 +1,513 @@
+plugins {
+    id 'java'
+    // Must be applied before ForgeGradle so `minecraft.accessTransformers` is honoured.
+    id 'net.minecraftforge.accesstransformers' version '5.0.3'
+    id 'net.minecraftforge.gradle' version '7.0.17'
+}
+
+version = '2.1.13-26.2-port'
+group = 'com.github.alexthe667'
+base.archivesName = 'iceandfire'
+java.toolchain.languageVersion = JavaLanguageVersion.of(25)
+
+minecraft {
+    // Official (Mojang) names. Opens the private client ID mappers used to register the
+    // mod's special item model renderers and item model properties (see IafItemModelRegistry).
+    accessTransformers = files('src/main/resources/META-INF/accesstransformer.cfg')
+    runs {
+        configureEach {
+            workingDir = layout.projectDirectory.dir('run')
+            args '--mixin.config=iceandfire.mixins.json'
+        }
+        register('client')
+        register('server') {
+            args '--nogui'
+        }
+    }
+}
+
+// Compile the 26.1 Java tree, with port-26.2 overlays winning for files that exist here.
+def overlayJava = layout.projectDirectory.dir('src/main/java').asFile
+sourceSets.main.java.setSrcDirs(['src/main/java', '../src/main/java'])
+sourceSets.main.java.exclude 'com/github/alexthe666/iceandfire/world/gen/mixin/**'
+sourceSets.main.java.filter.exclude { FileTreeElement element ->
+    def abs = element.file.absolutePath.replace('\\', '/')
+    if (abs.contains('/port-26.2/src/main/java/')) {
+        return false
+    }
+    return new File(overlayJava, element.relativePath.pathString.replace('\\', '/')).isFile()
+}
+sourceSets.main.resources.srcDir '../src/main/resources'
+sourceSets.main.resources.srcDir '../port-26.1/src/main/resources'
+sourceSets.main.resources.srcDir 'src/main/resources'
+sourceSets {
+    jeiApi {
+        java.srcDirs = ['jei-api']
+    }
+}
+
+repositories {
+    minecraft.mavenizer(it)
+    maven fg.forgeMaven
+    maven fg.minecraftLibsMaven
+    mavenCentral()
+}
+
+def forgeDep = minecraft.dependency('net.minecraftforge:forge:26.2-65.1.3')
+dependencies {
+    implementation forgeDep
+    annotationProcessor 'net.minecraftforge:eventbus-validator:7.0.1'
+    implementation project(':citadel')
+    // Share the same Forge dependency so run metadata is registered once.
+    jeiApiImplementation forgeDep
+    // No 26.2 JEI: compile against a local 1.18 plugin host so categories stay in-tree.
+    implementation sourceSets.jeiApi.output
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.compilerArgs.addAll(['-Xmaxerrs', '1000'])
+}
+
+def overlayResources = layout.projectDirectory.dir('src/main/resources').asFile
+def overlay26_1Resources = file('../port-26.1/src/main/resources')
+tasks.named('processResources', Copy) {
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    eachFile { details ->
+        def rel = details.relativePath.pathString.replace('\\', '/')
+        def abs = details.file.absolutePath.replace('\\', '/')
+        def overlay26_2 = abs.contains('/port-26.2/src/main/resources/')
+        def overlay26_1 = abs.contains('/port-26.1/src/main/resources/')
+        // 26.2 overlay wins, then 26.1 overlay, then the 1.18 copy.
+        if (!overlay26_2 && new File(overlayResources, rel).isFile()) {
+            details.exclude()
+            return
+        }
+        if (!overlay26_2 && !overlay26_1 && new File(overlay26_1Resources, rel).isFile()) {
+            details.exclude()
+            return
+        }
+        def overlay = overlay26_2 || overlay26_1
+        // The 1.18 SRG-name access transformer is not valid for 26.x.
+        if (rel == 'META-INF/accesstransformer.cfg' && !overlay) {
+            details.exclude()
+        }
+        if (rel.contains('/tags/items/') || rel.contains('/tags/blocks/') || rel.contains('/tags/entity_types/')) {
+            details.exclude()
+        }
+        if (rel.contains('/recipes/') || rel.contains('/loot_tables/') || rel.contains('/advancements/')) {
+            details.exclude()
+        }
+        // 26.1 leftover: pixies are types 0-4, but items/pixie_jar_5.json still
+        // pulls models/item/pixie_jar_5.json and the missing jar_5 texture.
+        if (rel == 'assets/iceandfire/items/pixie_jar_5.json') {
+            details.exclude()
+        }
+        if (rel.contains('/models/tabula/') && rel != rel.toLowerCase()) {
+            details.relativePath = details.relativePath.parent.append(true, details.name.toLowerCase())
+        }
+        // 26.x structure NBT lives at data/<ns>/structure/, not the 1.18 structures/ folder.
+        if (rel.contains('/structures/')) {
+            details.relativePath = RelativePath.parse(true, rel.replace('/structures/', '/structure/'))
+        }
+    }
+    // 26.2 renamed entity predicate field `type` (`minecraft:type`) to
+    // `minecraft:entity_type`. 26.1 advancements still use the old key.
+    filteringCharset = 'UTF-8'
+    filesMatching('data/iceandfire/advancement/**/*.json') {
+        filter { String line ->
+            line.replace('"type": "iceandfire:', '"minecraft:entity_type": "iceandfire:')
+        }
+    }
+    doLast {
+        def fireDir = destinationDir.toPath().resolve('assets/iceandfire/models/tabula/firedragon')
+        def swim4 = fireDir.resolve('firedragon_swim4.tbl')
+        if (java.nio.file.Files.isRegularFile(swim4)) {
+            java.nio.file.Files.copy(swim4, fireDir.resolve('firedragon_swimming.tbl'),
+                java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+            java.nio.file.Files.copy(swim4, fireDir.resolve('firedragon_swim5.tbl'),
+                java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+        }
+    }
+}
+
+// A focused source-only regression probe, independent of unported entities/renderers.
+// This does not change the all-source main compilation or use old mod binaries.
+def hydraTestOutput = layout.buildDirectory.dir('model-tests/hydra')
+tasks.register('compileHydraModelTest', JavaCompile) {
+    dependsOn ':citadel:classes'
+    source files(
+        '../src/main/java/com/github/alexthe666/iceandfire/client/model/ICustomStatueModel.java',
+        '../src/main/java/com/github/alexthe666/iceandfire/client/model/ModelHydraBody.java',
+        '../src/main/java/com/github/alexthe666/iceandfire/client/model/ModelHydraHead.java',
+        '../src/main/java/com/github/alexthe666/iceandfire/client/render/entity/HydraRenderState.java',
+        'src/modelTest/java/HydraModelTest.java'
+    )
+    classpath = sourceSets.main.compileClasspath
+    destinationDirectory = hydraTestOutput
+    javaCompiler = javaToolchains.compilerFor { languageVersion = JavaLanguageVersion.of(25) }
+    options.sourcepath = files()
+    options.compilerArgs.add('-proc:none')
+}
+tasks.register('hydraModelTest', JavaExec) {
+    dependsOn 'compileHydraModelTest'
+    classpath = files(hydraTestOutput) + sourceSets.main.compileClasspath
+    mainClass = 'HydraModelTest'
+    javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(25) }
+}
+
+def myrmexTestOutput = layout.buildDirectory.dir('model-tests/myrmex')
+tasks.register('compileMyrmexModelTest', JavaCompile) {
+    dependsOn ':citadel:classes'
+    source fileTree('../src/main/java/com/github/alexthe666/iceandfire/client/model') {
+        include 'ModelMyrmex*.java', 'ModelUtils.java', 'ICustomStatueModel.java'
+    }
+    source files(
+        '../src/main/java/com/github/alexthe666/iceandfire/client/render/entity/MyrmexRenderState.java',
+        'src/modelTest/java/MyrmexModelTest.java'
+    )
+    classpath = sourceSets.main.compileClasspath
+    destinationDirectory = myrmexTestOutput
+    javaCompiler = javaToolchains.compilerFor { languageVersion = JavaLanguageVersion.of(25) }
+    options.sourcepath = files()
+    options.compilerArgs.add('-proc:none')
+}
+tasks.register('myrmexModelTest', JavaExec) {
+    dependsOn 'compileMyrmexModelTest'
+    classpath = files(myrmexTestOutput) + sourceSets.main.compileClasspath
+    mainClass = 'MyrmexModelTest'
+    javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(25) }
+}
+
+def pixieTestOutput = layout.buildDirectory.dir('model-tests/pixie')
+tasks.register('compilePixieModelTest', JavaCompile) {
+    dependsOn ':citadel:classes'
+    source files(
+        '../src/main/java/com/github/alexthe666/iceandfire/client/model/ModelPixie.java',
+        '../src/main/java/com/github/alexthe666/iceandfire/client/model/ModelPixieHouse.java',
+        '../src/main/java/com/github/alexthe666/iceandfire/client/render/entity/PixieRenderState.java',
+        '../src/main/java/com/github/alexthe666/iceandfire/client/render/tile/JarRenderState.java',
+        '../src/main/java/com/github/alexthe666/iceandfire/client/render/tile/PixieHouseRenderState.java',
+        'src/modelTest/java/PixieModelTest.java'
+    )
+    classpath = sourceSets.main.compileClasspath
+    destinationDirectory = pixieTestOutput
+    javaCompiler = javaToolchains.compilerFor { languageVersion = JavaLanguageVersion.of(25) }
+    options.sourcepath = files()
+    options.compilerArgs.add('-proc:none')
+}
+tasks.register('pixieModelTest', JavaExec) {
+    dependsOn 'compilePixieModelTest'
+    classpath = files(pixieTestOutput) + sourceSets.main.compileClasspath
+    mainClass = 'PixieModelTest'
+    javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(25) }
+}
+
+def trollTestOutput = layout.buildDirectory.dir('model-tests/troll')
+tasks.register('compileTrollModelTest', JavaCompile) {
+    dependsOn ':citadel:classes'
+    source files(
+        '../src/main/java/com/github/alexthe666/iceandfire/client/model/ICustomStatueModel.java',
+        '../src/main/java/com/github/alexthe666/iceandfire/client/model/ModelTroll.java',
+        '../src/main/java/com/github/alexthe666/iceandfire/client/render/entity/TrollRenderState.java',
+        'src/modelTest/java/TrollModelTest.java'
+    )
+    classpath = sourceSets.main.compileClasspath
+    destinationDirectory = trollTestOutput
+    javaCompiler = javaToolchains.compilerFor { languageVersion = JavaLanguageVersion.of(25) }
+    options.sourcepath = files()
+    options.compilerArgs.add('-proc:none')
+}
+tasks.register('trollModelTest', JavaExec) {
+    dependsOn 'compileTrollModelTest'
+    classpath = files(trollTestOutput) + sourceSets.main.compileClasspath
+    mainClass = 'TrollModelTest'
+    javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(25) }
+}
+
+def amphithereTestOutput = layout.buildDirectory.dir('model-tests/amphithere')
+tasks.register('compileAmphithereModelTest', JavaCompile) {
+    dependsOn ':citadel:classes'
+    source files(
+        '../src/main/java/com/github/alexthe666/iceandfire/client/model/ICustomStatueModel.java',
+        '../src/main/java/com/github/alexthe666/iceandfire/client/model/ModelAmphithere.java',
+        '../src/main/java/com/github/alexthe666/iceandfire/client/render/entity/AmphithereRenderState.java',
+        'src/modelTest/java/AmphithereModelTest.java'
+    )
+    classpath = sourceSets.main.compileClasspath
+    destinationDirectory = amphithereTestOutput
+    javaCompiler = javaToolchains.compilerFor { languageVersion = JavaLanguageVersion.of(25) }
+    options.sourcepath = files()
+    options.compilerArgs.add('-proc:none')
+}
+tasks.register('amphithereModelTest', JavaExec) {
+    dependsOn 'compileAmphithereModelTest'
+    classpath = files(amphithereTestOutput) + sourceSets.main.compileClasspath
+    mainClass = 'AmphithereModelTest'
+    javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(25) }
+}
+
+def cyclopsTestOutput = layout.buildDirectory.dir('model-tests/cyclops')
+tasks.register('compileCyclopsModelTest', JavaCompile) {
+    dependsOn ':citadel:classes'
+    source files(
+        '../src/main/java/com/github/alexthe666/iceandfire/client/model/ICustomStatueModel.java',
+        '../src/main/java/com/github/alexthe666/iceandfire/client/model/ModelCyclops.java',
+        '../src/main/java/com/github/alexthe666/iceandfire/client/render/entity/CyclopsRenderState.java',
+        'src/modelTest/java/CyclopsModelTest.java'
+    )
+    classpath = sourceSets.main.compileClasspath
+    destinationDirectory = cyclopsTestOutput
+    javaCompiler = javaToolchains.compilerFor { languageVersion = JavaLanguageVersion.of(25) }
+    options.sourcepath = files()
+    options.compilerArgs.add('-proc:none')
+}
+tasks.register('cyclopsModelTest', JavaExec) {
+    dependsOn 'compileCyclopsModelTest'
+    classpath = files(cyclopsTestOutput) + sourceSets.main.compileClasspath
+    mainClass = 'CyclopsModelTest'
+    javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(25) }
+}
+
+def seaSerpentTestOutput = layout.buildDirectory.dir('model-tests/sea-serpent')
+tasks.register('compileSeaSerpentModelTest', JavaCompile) {
+    dependsOn ':citadel:classes'
+    source files(
+        '../src/main/java/com/github/alexthe666/iceandfire/client/model/animator/IceAndFireTabulaModelAnimator.java',
+        '../src/main/java/com/github/alexthe666/iceandfire/client/model/animator/SeaSerpentTabulaModelAnimator.java',
+        '../src/main/java/com/github/alexthe666/iceandfire/client/model/util/EnumSeaSerpentAnimations.java',
+        '../src/main/java/com/github/alexthe666/iceandfire/client/model/util/TabulaModelHandlerHelper.java',
+        '../src/main/java/com/github/alexthe666/iceandfire/client/render/entity/SeaSerpentRenderState.java',
+        '../src/main/java/com/github/alexthe666/iceandfire/client/render/entity/layer/LayerSeaSerpentAncient.java',
+        '../src/main/java/com/github/alexthe666/iceandfire/client/model/IFChainBuffer.java',
+        '../src/main/java/com/github/alexthe666/iceandfire/entity/util/IFlapable.java',
+        '../src/main/java/com/github/alexthe666/iceandfire/util/IAFMath.java',
+        'src/modelTest/java/SeaSerpentModelTest.java'
+    )
+    classpath = sourceSets.main.compileClasspath
+    destinationDirectory = seaSerpentTestOutput
+    javaCompiler = javaToolchains.compilerFor { languageVersion = JavaLanguageVersion.of(25) }
+    options.sourcepath = files()
+    options.compilerArgs.add('-proc:none')
+}
+tasks.register('seaSerpentModelTest', JavaExec) {
+    dependsOn 'compileSeaSerpentModelTest'
+    classpath = files(seaSerpentTestOutput, '../src/main/resources') + sourceSets.main.compileClasspath
+    mainClass = 'SeaSerpentModelTest'
+    javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(25) }
+}
+
+// Source-only probes do not narrow the production source set.
+def focusedProbes = [
+    dreadBeastModel: [
+        main: 'DreadBeastModelTest',
+        sources: [
+            '../src/main/java/com/github/alexthe666/iceandfire/client/model/ICustomStatueModel.java',
+            '../src/main/java/com/github/alexthe666/iceandfire/client/model/ModelDreadBeast.java',
+            '../src/main/java/com/github/alexthe666/iceandfire/client/render/entity/DreadBeastRenderState.java',
+            '../src/main/java/com/github/alexthe666/iceandfire/client/render/entity/layer/LayerGenericGlowing.java',
+            'src/modelTest/java/DreadBeastModelTest.java'
+        ]
+    ],
+    hippogryphModel: [
+        main: 'HippogryphModelTest',
+        sources: [
+            '../src/main/java/com/github/alexthe666/iceandfire/client/model/ICustomStatueModel.java',
+            '../src/main/java/com/github/alexthe666/iceandfire/client/model/ModelDragonBase.java',
+            '../src/main/java/com/github/alexthe666/iceandfire/client/model/ModelHippogryph.java',
+            '../src/main/java/com/github/alexthe666/iceandfire/client/render/entity/HippogryphRenderState.java',
+            'src/modelTest/java/HippogryphModelTest.java'
+        ]
+    ],
+    dreadHumanoidModel: [
+        main: 'DreadHumanoidModelTest',
+        sources: [
+            '../src/main/java/com/github/alexthe666/iceandfire/client/model/ICustomStatueModel.java',
+            '../src/main/java/com/github/alexthe666/iceandfire/client/model/BasicHeadedModel.java',
+            '../src/main/java/com/github/alexthe666/iceandfire/client/model/ArmedCitadelEntityModel.java',
+            '../src/main/java/com/github/alexthe666/iceandfire/client/model/util/HideableModelRenderer.java',
+            '../src/main/java/com/github/alexthe666/iceandfire/client/model/ModelBipedBase.java',
+            '../src/main/java/com/github/alexthe666/iceandfire/client/model/ModelDreadBase.java',
+            '../src/main/java/com/github/alexthe666/iceandfire/client/model/ModelDreadGhoul.java',
+            '../src/main/java/com/github/alexthe666/iceandfire/client/model/ModelDreadKnight.java',
+            '../src/main/java/com/github/alexthe666/iceandfire/client/model/ModelDreadLich.java',
+            '../src/main/java/com/github/alexthe666/iceandfire/client/model/ModelDreadThrall.java',
+            '../src/main/java/com/github/alexthe666/iceandfire/client/render/entity/DreadHumanoidRenderState.java',
+            '../src/main/java/com/github/alexthe666/iceandfire/client/render/entity/layer/IHasArmorVariantResource.java',
+            '../src/main/java/com/github/alexthe666/iceandfire/client/render/entity/layer/LayerBipedArmor.java',
+            '../src/main/java/com/github/alexthe666/iceandfire/client/render/entity/layer/LayerBipedArmorMultiple.java',
+            '../src/main/java/com/github/alexthe666/iceandfire/client/render/entity/layer/LayerDreadItemInHand.java',
+            '../src/main/java/com/github/alexthe666/iceandfire/client/render/entity/layer/LayerGenericGlowing.java',
+            'src/modelTest/java/DreadHumanoidModelTest.java'
+        ]
+    ],
+    dreadScuttlerModel: [
+        main: 'DreadScuttlerModelTest',
+        sources: [
+            '../src/main/java/com/github/alexthe666/iceandfire/client/model/ICustomStatueModel.java',
+            '../src/main/java/com/github/alexthe666/iceandfire/client/model/ModelDragonBase.java',
+            '../src/main/java/com/github/alexthe666/iceandfire/client/model/ModelDreadScuttler.java',
+            '../src/main/java/com/github/alexthe666/iceandfire/client/render/entity/DreadScuttlerRenderState.java',
+            'src/modelTest/java/DreadScuttlerModelTest.java'
+        ]
+    ],
+    dragonLayer: [
+        main: 'DragonLayerTest',
+        sources: file('src/modelTest/java/DragonLayerTest.sources').readLines('UTF-8')
+            .collect { it.trim() }.findAll { it && !it.startsWith('#') }
+            .collect { '../' + it }
+    ],
+    lightningRender: [
+        main: 'LightningRenderTest',
+        sources: [
+            '../src/main/java/com/github/alexthe666/iceandfire/client/particle/LightningRender.java',
+            'src/modelTest/java/LightningRenderTest.java'
+        ]
+    ],
+    citadelPersistence: [
+        main: 'CitadelPersistenceTest',
+        sources: ['src/modelTest/java/CitadelPersistenceTest.java']
+    ],
+    explosionApi: [
+        main: 'ExplosionApiProbe',
+        sources: [
+            '../src/main/java/com/github/alexthe666/iceandfire/entity/util/IafExplosion.java',
+            '../src/main/java/com/github/alexthe666/iceandfire/entity/util/BlockBreakExplosion.java',
+            '../src/main/java/com/github/alexthe666/iceandfire/entity/util/BlockLaunchExplosion.java',
+            'src/modelTest/java/ExplosionApiProbe.java'
+        ]
+    ],
+    explosionInteraction: [
+        main: 'ExplosionInteractionProbe',
+        sources: ['src/modelTest/java/ExplosionInteractionProbe.java']
+    ],
+    recipeApi: [
+        main: 'RecipeApiProbe',
+        sources: ['src/modelTest/java/RecipeApiProbe.java']
+    ],
+    materialApi: [
+        main: 'MaterialApiProbe',
+        sources: [
+            '../src/main/java/com/github/alexthe666/iceandfire/block/IafMaterials.java',
+            'src/modelTest/java/MaterialApiProbe.java'
+        ]
+    ],
+    dragonForgeRecipe: [
+        main: 'DragonForgeRecipeTest',
+        sources: [
+            '../src/main/java/com/github/alexthe666/iceandfire/recipe/DragonForgeRecipe.java',
+            '../src/main/java/com/github/alexthe666/iceandfire/recipe/IafRecipeSerializers.java',
+            'src/modelTest/java/DragonForgeRecipeTest.java'
+        ]
+    ],
+    listeningContainer: [
+        main: 'IafListeningContainerTest',
+        sources: [
+            '../src/main/java/com/github/alexthe666/iceandfire/entity/util/IafListeningContainer.java',
+            'src/modelTest/java/IafListeningContainerTest.java'
+        ]
+    ],
+    pathTypes: [
+        main: 'IafPathTypesTest',
+        sources: [
+            '../src/main/java/com/github/alexthe666/iceandfire/pathfinding/IafPathTypes.java',
+            'src/modelTest/java/IafPathTypesTest.java'
+        ]
+    ],
+    spawnApi: [
+        main: 'SpawnApiProbe',
+        sources: ['src/modelTest/java/SpawnApiProbe.java']
+    ],
+    iafOffers: [
+        main: 'IafOffersTest',
+        sources: [
+            '../src/main/java/com/github/alexthe666/iceandfire/entity/util/IafItemListing.java',
+            '../src/main/java/com/github/alexthe666/iceandfire/entity/util/IafOffers.java',
+            'src/modelTest/java/IafOffersTest.java'
+        ]
+    ],
+    jigsawStructures: [
+        main: 'IafJigsawStructuresTest',
+        sources: ['src/modelTest/java/IafJigsawStructuresTest.java']
+    ],
+    worldData: [
+        main: 'WorldDataProbe',
+        sources: [
+            '../src/main/java/com/github/alexthe666/iceandfire/world/IafWorldData.java',
+            '../src/main/java/com/github/alexthe666/iceandfire/world/DragonPosWorldData.java',
+            'src/modelTest/java/WorldDataProbe.java'
+        ]
+    ],
+    stoneStatueModel: [
+        main: 'StoneStatueModelTest',
+        sources: [
+            '../src/main/java/com/github/alexthe666/iceandfire/client/model/ICustomStatueModel.java',
+            '../src/main/java/com/github/alexthe666/iceandfire/client/model/ModelDragonBase.java',
+            '../src/main/java/com/github/alexthe666/iceandfire/client/model/ModelTroll.java',
+            '../src/main/java/com/github/alexthe666/iceandfire/client/model/ModelHippogryph.java',
+            '../src/main/java/com/github/alexthe666/iceandfire/client/model/ModelHippocampus.java',
+            '../src/main/java/com/github/alexthe666/iceandfire/client/model/ModelGuardianStatue.java',
+            '../src/main/java/com/github/alexthe666/iceandfire/client/render/entity/TrollRenderState.java',
+            '../src/main/java/com/github/alexthe666/iceandfire/client/render/entity/HippogryphRenderState.java',
+            '../src/main/java/com/github/alexthe666/iceandfire/client/render/entity/HippocampusRenderState.java',
+            '../src/main/java/com/github/alexthe666/iceandfire/client/render/entity/GuardianStatueRenderState.java',
+            '../src/main/java/com/github/alexthe666/iceandfire/client/render/entity/HydraRenderState.java',
+            '../src/main/java/com/github/alexthe666/iceandfire/client/render/entity/StoneStatueRenderState.java',
+            '../src/main/java/com/github/alexthe666/iceandfire/client/render/entity/StoneStatuePose.java',
+            'src/modelTest/java/StoneStatueModelTest.java'
+        ]
+    ]
+]
+focusedProbes.each { name, probe ->
+    def output = layout.buildDirectory.dir("model-tests/${name}")
+    def compileTask = tasks.register("compile${probe.main}", JavaCompile) {
+        dependsOn ':citadel:classes'
+        source files(probe.sources)
+        classpath = sourceSets.main.compileClasspath
+        destinationDirectory = output
+        javaCompiler = javaToolchains.compilerFor { languageVersion = JavaLanguageVersion.of(25) }
+        options.sourcepath = files()
+        options.compilerArgs.add('-proc:none')
+    }
+    tasks.register("${name}Test", JavaExec) {
+        dependsOn compileTask
+        classpath = files(output, '../src/main/resources') + sourceSets.main.compileClasspath
+        mainClass = probe.main
+        javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(25) }
+    }
+}
+
+tasks.register('writeCompileClasspath') {
+    doLast {
+        file('.gradle/port-tools/compile-classpath.txt').text = sourceSets.main.compileClasspath.asPath
+    }
+}
+
+def mixinsClasses = layout.buildDirectory.dir('classes/java/mixins')
+tasks.register('compileMixinsJava', JavaCompile) {
+    dependsOn compileJava, processResources
+    source fileTree('../src/main/java') {
+        include 'com/github/alexthe666/iceandfire/world/gen/mixin/**'
+    }
+    classpath = sourceSets.main.compileClasspath + files(layout.buildDirectory.dir('sourceSets/main'))
+    destinationDirectory = mixinsClasses
+    javaCompiler = javaToolchains.compilerFor { languageVersion = JavaLanguageVersion.of(25) }
+    options.encoding = 'UTF-8'
+    options.release = 21
+    options.compilerArgs.addAll(['-Xmaxerrs', '1000', '-proc:none'])
+}
+tasks.named('classes') {
+    dependsOn compileMixinsJava
+    doLast {
+        copy {
+            from tasks.named('compileMixinsJava', JavaCompile)
+            into tasks.named('compileJava', JavaCompile).get().destinationDirectory
+        }
+    }
+}
+
+tasks.named('jar') {
+    manifest {
+        attributes['MixinConfigs'] = 'iceandfire.mixins.json'
+    }
+}

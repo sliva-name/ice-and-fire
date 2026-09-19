@@ -1,0 +1,71 @@
+plugins {
+    id 'java-library'
+    id 'net.minecraftforge.accesstransformers'
+    id 'net.minecraftforge.gradle'
+}
+
+minecraft {
+    // Same AT as the root project: both projects mavenize into one shared repo, so the
+    // dependency jars must be identical or the last run wins and drops the transforms.
+    accessTransformers = files('../src/main/resources/META-INF/accesstransformer.cfg')
+}
+
+version = '1.11.3-26.2-port'
+group = 'com.github.alexthe666'
+base.archivesName = 'citadel-iceandfire-subset'
+java.toolchain.languageVersion = JavaLanguageVersion.of(25)
+
+repositories {
+    minecraft.mavenizer(it)
+    maven fg.forgeMaven
+    maven fg.minecraftLibsMaven
+    mavenCentral()
+}
+
+dependencies {
+    implementation minecraft.dependency('net.minecraftforge:forge:26.2-65.1.3')
+    annotationProcessor 'net.minecraftforge:eventbus-validator:7.0.1'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+tasks.register('animationApiTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.github.alexthe666.citadel.animation.AnimationApiTest'
+}
+
+tasks.register('tabulaAssetsTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath + files('../../src/main/resources')
+    mainClass = 'com.github.alexthe666.citadel.client.model.TabulaAssetsTest'
+    args file('../../src/main/resources').absolutePath
+}
+
+tasks.register('modelFoundationTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.github.alexthe666.citadel.client.model.ModelFoundationTest'
+}
+
+tasks.register('modelAnimatorTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.github.alexthe666.citadel.client.model.ModelAnimatorTest'
+}
+
+tasks.register('tabulaModelTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.github.alexthe666.citadel.client.model.TabulaModelTest'
+    args file('../../src/main/resources').absolutePath
+}
+
+// Regression suites are plain Java entry points, not JUnit-discovered tests.
+// Keep Gradle's standard test/check lifecycle running all five suites.
+tasks.named('test') {
+    dependsOn 'animationApiTest', 'tabulaAssetsTest', 'modelFoundationTest', 'modelAnimatorTest', 'tabulaModelTest'
+    exclude '**/*'
+}
