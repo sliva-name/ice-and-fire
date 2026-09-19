@@ -2,10 +2,8 @@ package com.github.alexthe666.iceandfire.item;
 
 import com.github.alexthe666.citadel.server.item.CustomArmorMaterial;
 import com.github.alexthe666.iceandfire.IceAndFire;
-import com.github.alexthe666.iceandfire.client.model.armor.ModelSeaSerpentArmor;
 import com.github.alexthe666.iceandfire.enums.EnumSeaSerpent;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -54,8 +52,7 @@ public class ItemSeaSerpentArmor extends Item implements IafArmorIdentity {
     // Textures: assets/iceandfire/equipment/sea_serpent_scales_<color>.json (1.18 getArmorTexture is gone in 26.1).
     @Override
     public void initializeClient(java.util.function.Consumer<net.minecraftforge.client.extensions.common.IClientItemExtensions> consumer) {
-        consumer.accept(com.github.alexthe666.iceandfire.client.render.IafArmorRenderProperties.armorModel(
-            (stack, inner) -> new ModelSeaSerpentArmor(inner)));
+        IafArmors.initClient(this, consumer);
     }
 
     @Override

@@ -12,6 +12,8 @@ import net.minecraft.world.item.equipment.ArmorMaterial;
 import net.minecraft.world.item.equipment.ArmorType;
 import net.minecraft.world.item.equipment.EquipmentAsset;
 import net.minecraft.world.item.equipment.EquipmentAssets;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.loading.FMLEnvironment;
 
 /**
  * 1.18 {@code ArmorItem} is gone. Defense stays FEET/LEGS/CHEST/HEAD;
@@ -62,5 +64,23 @@ public final class IafArmors {
 
     public static boolean isIafArmor(ItemStack stack) {
         return stack.getItem() instanceof IafArmorIdentity;
+    }
+
+    /**
+     * Client armor models live in {@code IafArmorRenderProperties}. This uses a
+     * string class name so dedicated-server DistCleaner never sees
+     * {@code HumanoidModel} in common item bytecode.
+     */
+    public static void initClient(Item item, java.util.function.Consumer<net.minecraftforge.client.extensions.common.IClientItemExtensions> consumer) {
+        if (FMLEnvironment.dist != Dist.CLIENT) {
+            return;
+        }
+        try {
+            Class.forName("com.github.alexthe666.iceandfire.client.render.IafArmorRenderProperties")
+                .getMethod("register", Item.class, java.util.function.Consumer.class)
+                .invoke(null, item, consumer);
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException("Failed to register Ice and Fire armor client extensions", e);
+        }
     }
 }

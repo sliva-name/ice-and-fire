@@ -1,13 +1,37 @@
 package com.github.alexthe666.iceandfire.client.render;
 
+import com.github.alexthe666.citadel.server.item.CustomArmorMaterial;
+import com.github.alexthe666.iceandfire.client.model.armor.ModelCopperArmor;
+import com.github.alexthe666.iceandfire.client.model.armor.ModelDeathWormArmor;
+import com.github.alexthe666.iceandfire.client.model.armor.ModelDragonsteelFireArmor;
+import com.github.alexthe666.iceandfire.client.model.armor.ModelDragonsteelIceArmor;
+import com.github.alexthe666.iceandfire.client.model.armor.ModelDragonsteelLightningArmor;
+import com.github.alexthe666.iceandfire.client.model.armor.ModelFireDragonScaleArmor;
+import com.github.alexthe666.iceandfire.client.model.armor.ModelIceDragonScaleArmor;
+import com.github.alexthe666.iceandfire.client.model.armor.ModelLightningDragonScaleArmor;
+import com.github.alexthe666.iceandfire.client.model.armor.ModelSeaSerpentArmor;
+import com.github.alexthe666.iceandfire.client.model.armor.ModelSilverArmor;
+import com.github.alexthe666.iceandfire.client.model.armor.ModelTrollArmor;
+import com.github.alexthe666.iceandfire.entity.DragonType;
+import com.github.alexthe666.iceandfire.item.IafArmorIdentity;
+import com.github.alexthe666.iceandfire.item.IafItemRegistry;
+import com.github.alexthe666.iceandfire.item.ItemCopperArmor;
+import com.github.alexthe666.iceandfire.item.ItemDeathwormArmor;
+import com.github.alexthe666.iceandfire.item.ItemDragonsteelArmor;
+import com.github.alexthe666.iceandfire.item.ItemScaleArmor;
+import com.github.alexthe666.iceandfire.item.ItemSeaSerpentArmor;
+import com.github.alexthe666.iceandfire.item.ItemSilverArmor;
+import com.github.alexthe666.iceandfire.item.ItemTrollArmor;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.client.extensions.common.IClientItemExtensions;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 
 /**
  * 26.1 replacement for the 1.18 {@code IItemRenderProperties#getArmorModel} anonymous classes.
@@ -18,6 +42,45 @@ import java.util.function.BiFunction;
  */
 public final class IafArmorRenderProperties {
     private IafArmorRenderProperties() {
+    }
+
+    public static void register(Item item, Consumer<IClientItemExtensions> consumer) {
+        if (item instanceof ItemTrollArmor) {
+            consumer.accept(armorModel((stack, inner) -> new ModelTrollArmor(inner)));
+        } else if (item instanceof ItemCopperArmor) {
+            consumer.accept(armorModel((stack, inner) -> new ModelCopperArmor(inner)));
+        } else if (item instanceof ItemSilverArmor) {
+            consumer.accept(armorModel((stack, inner) -> new ModelSilverArmor(inner)));
+        } else if (item instanceof ItemDeathwormArmor) {
+            consumer.accept(armorModel((stack, inner) -> new ModelDeathWormArmor(ModelDeathWormArmor.getBakedModel(inner))));
+        } else if (item instanceof ItemSeaSerpentArmor) {
+            consumer.accept(armorModel((stack, inner) -> new ModelSeaSerpentArmor(inner)));
+        } else if (item instanceof ItemScaleArmor scale) {
+            consumer.accept(armorModel((stack, inner) -> {
+                DragonType dragonType = scale.armor_type.eggType.dragonType;
+                if (DragonType.FIRE == dragonType) {
+                    return new ModelFireDragonScaleArmor(inner);
+                }
+                if (DragonType.ICE == dragonType) {
+                    return new ModelIceDragonScaleArmor(inner);
+                }
+                if (DragonType.LIGHTNING == dragonType) {
+                    return new ModelLightningDragonScaleArmor(inner);
+                }
+                return null;
+            }));
+        } else if (item instanceof ItemDragonsteelArmor) {
+            CustomArmorMaterial material = ((IafArmorIdentity) item).iafMaterial();
+            consumer.accept(armorModel((stack, inner) -> {
+                if (material == IafItemRegistry.DRAGONSTEEL_FIRE_ARMOR_MATERIAL) {
+                    return new ModelDragonsteelFireArmor(inner);
+                }
+                if (material == IafItemRegistry.DRAGONSTEEL_ICE_ARMOR_MATERIAL) {
+                    return new ModelDragonsteelIceArmor(inner);
+                }
+                return new ModelDragonsteelLightningArmor(inner);
+            }));
+        }
     }
 
     /** {@code factory(stack, inner)} builds the model; {@code inner} is the 1.18 legs/head layer flag. */
