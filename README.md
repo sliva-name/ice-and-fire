@@ -6,7 +6,7 @@
 
 This branch is an **unofficial port** of Ice and Fire to **Minecraft 26.2 / Forge 65**. It is not an official Alexthe666 release.
 
-Playable jars: put **both** `iceandfire-*-26.2-port.jar` and `citadel-iceandfire-subset-*-26.2-port.jar` into the `mods` folder. You need Java 25, Minecraft 26.2, and Forge 26.2-65.1.3.
+Playable jars: put **both** `iceandfire-*-26.2-port.jar` and `citadel-iceandfire-subset-*-26.2-port.jar` into the `mods` folder. You need Java 25, Minecraft 26.2, and Forge 26.2-65.0.0 or newer.
 
 # Ice and Fire
 

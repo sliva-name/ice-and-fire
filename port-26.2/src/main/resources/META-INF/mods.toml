@@ -27,7 +27,7 @@ side = "BOTH"
 [[dependencies.iceandfire]]
 modId = "forge"
 mandatory = true
-versionRange = "[65.1.3,)"
+    versionRange = "[65.0.0,)"
 ordering = "NONE"
 side = "BOTH"
 
