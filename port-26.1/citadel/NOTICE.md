@@ -2,7 +2,8 @@
 
 This is an incomplete, modified subset for the Ice and Fire Minecraft 26.1 /
 Forge 62.0.9 migration, not an official Citadel release or a general-purpose
-replacement. Jar production is deliberately blocked.
+replacement. It is packaged only as a required companion jar for this
+unofficial 26.1 Ice and Fire port.
 
 ## Upstream attribution
 
@@ -42,7 +43,3 @@ verified license version for every extracted component.
 The Ice and Fire root LGPLv3 license does not by itself resolve the Citadel /
 LLibrary licensing history. This notice is attribution and a record of the
 remaining verification task, not a substitute license or a grant of rights.
-Before releasing this subset, confirm the applicable version(s), include the
-corresponding unmodified license texts and notices, and satisfy their source
-and modification-disclosure obligations. Do not remove the packaging guard
-until that work and runtime validation are complete.

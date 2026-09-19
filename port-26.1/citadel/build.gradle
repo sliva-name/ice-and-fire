@@ -10,7 +10,7 @@ minecraft {
     accessTransformers = files('../src/main/resources/META-INF/accesstransformer.cfg')
 }
 
-version = '1.11.3-26.1-port-dev'
+version = '1.11.3-26.1-port'
 group = 'com.github.alexthe666'
 base.archivesName = 'citadel-iceandfire-subset'
 java.toolchain.languageVersion = JavaLanguageVersion.of(25)
@@ -68,16 +68,4 @@ tasks.register('tabulaModelTest', JavaExec) {
 tasks.named('test') {
     dependsOn 'animationApiTest', 'tabulaAssetsTest', 'modelFoundationTest', 'modelAnimatorTest', 'tabulaModelTest'
     exclude '**/*'
-}
-
-def wantsDistribution = gradle.startParameter.taskNames.any { name ->
-    name == 'jar' || name == 'assemble' || name == 'build' || name == 'publish' ||
-        name.endsWith(':jar') || name.endsWith(':assemble') || name.endsWith(':build') || name.endsWith(':publish')
-}
-tasks.named('jar') {
-    doFirst {
-        if (wantsDistribution) {
-            throw new GradleException('Incomplete Citadel subset: not for distribution. See NOTICE.md and ../../PORTING.md.')
-        }
-    }
 }

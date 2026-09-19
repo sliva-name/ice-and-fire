@@ -8,11 +8,11 @@ accessTransformers = [
 
 [[mods]]
 modId = "iceandfire"
-version = "2.1.13-26.1-port-dev"
-displayName = "Ice and Fire"
-displayURL = "https://www.curseforge.com/minecraft/mc-mods/ice-and-fire-dragons"
-authors = "Alexthe666, TheBv"
-description = '''Dragons and other mythological creatures in minecraft.'''
+version = "2.1.13-26.1-port"
+displayName = "Ice and Fire (26.1 port)"
+displayURL = "https://github.com/sliva-name/ice-and-fire"
+authors = "Alexthe666, TheBv; 26.1 port by sliva-name"
+description = '''Unofficial port of Ice and Fire to Minecraft 26.1 (Forge 62). Dragons and other mythological creatures.'''
 
 [[mixins]]
 config = "iceandfire.mixins.json"

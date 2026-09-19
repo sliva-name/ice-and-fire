@@ -4,10 +4,10 @@ license = "LGPL"
 
 [[mods]]
 modId = "citadel"
-version = "1.11.3-26.1-port-dev"
-displayName = "Citadel (Ice and Fire subset)"
-authors = "Alexthe666"
-description = '''Ice and Fire's Forge 26.1 Citadel subset.'''
+version = "1.11.3-26.1-port"
+displayName = "Citadel (Ice and Fire 26.1 subset)"
+authors = "Alexthe666; 26.1 subset for Ice and Fire"
+description = '''Required Citadel subset for the unofficial Ice and Fire Minecraft 26.1 port. Not an official Citadel release.'''
 
 [[dependencies.citadel]]
 modId = "forge"

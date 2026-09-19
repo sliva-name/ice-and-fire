@@ -2,6 +2,12 @@
 
 [![CurseForge downloads](http://cf.way2muchnoise.eu/full_264231_downloads.svg)](https://www.curseforge.com/minecraft/mc-mods/ice-and-fire-dragons)
 
+# Ice and Fire (Minecraft 26.1 port)
+
+This branch is an **unofficial port** of Ice and Fire to **Minecraft 26.1 / Forge 62**. It is not an official Alexthe666 release.
+
+Playable jars: put **both** `iceandfire-*-26.1-port.jar` and `citadel-iceandfire-subset-*-26.1-port.jar` into the `mods` folder. You need Java 25, Minecraft 26.1, and Forge 26.1-62.0.9.
+
 # Ice and Fire
 
 Ice and Fire is a minecraft mod created by Raptorfarian and Alexthe666 which adds various mythical creatures like dragons, hypogriffs, faries and many more to the game!
