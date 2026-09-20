@@ -41,6 +41,7 @@ public class IafClientSetup {
 
 
     public static void clientInit() {
+        loadClientModels();
         ParticleEngine.registerParticleGroup(IafParticleRenderTypes.APPEARANCE, IafAppearanceParticleGroup::new);
         EntityRenderers.register(IafEntityRegistry.FIRE_DRAGON.get(), x -> new RenderDragonBase(x, FIRE_DRAGON_BASE_MODEL, 0));
         EntityRenderers.register(IafEntityRegistry.ICE_DRAGON.get(), manager -> new RenderDragonBase(manager, ICE_DRAGON_BASE_MODEL, 1));
@@ -86,7 +87,6 @@ public class IafClientSetup {
         EntityRenderers.register(IafEntityRegistry.DREAD_SCUTTLER.get(), RenderDreadScuttler::new);
         EntityRenderers.register(IafEntityRegistry.DREAD_GHOUL.get(), RenderDreadGhoul::new);
         EntityRenderers.register(IafEntityRegistry.DREAD_BEAST.get(), RenderDreadBeast::new);
-        EntityRenderers.register(IafEntityRegistry.DREAD_SCUTTLER.get(), RenderDreadScuttler::new);
         EntityRenderers.register(IafEntityRegistry.DREAD_THRALL.get(), RenderDreadThrall::new);
         EntityRenderers.register(IafEntityRegistry.DREAD_LICH.get(), RenderDreadLich::new);
         EntityRenderers.register(IafEntityRegistry.DREAD_LICH_SKULL.get(), RenderDreadLichSkull::new);
@@ -118,21 +118,28 @@ public class IafClientSetup {
 
     @SubscribeEvent
     public static void setupClient(FMLClientSetupEvent event) {
-        event.enqueueWork(() -> {
-            IafGuiRegistry.register();
-            EnumSeaSerpentAnimations.initializeSerpentModels();
-            DragonAnimationsLibrary.register(EnumDragonPoses.values(), EnumDragonModelTypes.values());
+        event.enqueueWork(IafGuiRegistry::register);
+    }
 
-            try {
-                SEA_SERPENT_BASE_MODEL = new TabulaModel<>(TabulaModelHandlerHelper.loadTabulaModel("/assets/iceandfire/models/tabula/seaserpent/seaserpent"), new SeaSerpentTabulaModelAnimator());
-                FIRE_DRAGON_BASE_MODEL = new TabulaModel<>(TabulaModelHandlerHelper.loadTabulaModel("/assets/iceandfire/models/tabula/firedragon/firedragon_Ground"), new FireDragonTabulaModelAnimator());
-                ICE_DRAGON_BASE_MODEL = new TabulaModel<>(TabulaModelHandlerHelper.loadTabulaModel("/assets/iceandfire/models/tabula/icedragon/icedragon_Ground"), new IceDragonTabulaModelAnimator());
-                LIGHTNING_DRAGON_BASE_MODEL = new TabulaModel<>(TabulaModelHandlerHelper.loadTabulaModel("/assets/iceandfire/models/tabula/lightningdragon/lightningdragon_Ground"), new LightningTabulaDragonAnimator());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            // Block cutout/translucent layers and item predicates are data-driven in 26.1.
-        });
+    /**
+     * Tabula geometry must exist before renderer factories run. A later
+     * {@code FMLClientSetupEvent} queue is too late if 26.x constructs
+     * renderers while registering them.
+     */
+    private static void loadClientModels() {
+        if (FIRE_DRAGON_BASE_MODEL != null) {
+            return;
+        }
+        EnumSeaSerpentAnimations.initializeSerpentModels();
+        DragonAnimationsLibrary.register(EnumDragonPoses.values(), EnumDragonModelTypes.values());
+        try {
+            SEA_SERPENT_BASE_MODEL = new TabulaModel<>(TabulaModelHandlerHelper.loadTabulaModel("/assets/iceandfire/models/tabula/seaserpent/seaserpent"), new SeaSerpentTabulaModelAnimator());
+            FIRE_DRAGON_BASE_MODEL = new TabulaModel<>(TabulaModelHandlerHelper.loadTabulaModel("/assets/iceandfire/models/tabula/firedragon/firedragon_Ground"), new FireDragonTabulaModelAnimator());
+            ICE_DRAGON_BASE_MODEL = new TabulaModel<>(TabulaModelHandlerHelper.loadTabulaModel("/assets/iceandfire/models/tabula/icedragon/icedragon_Ground"), new IceDragonTabulaModelAnimator());
+            LIGHTNING_DRAGON_BASE_MODEL = new TabulaModel<>(TabulaModelHandlerHelper.loadTabulaModel("/assets/iceandfire/models/tabula/lightningdragon/lightningdragon_Ground"), new LightningTabulaDragonAnimator());
+        } catch (IOException e) {
+            throw new IllegalStateException("Unable to load Ice and Fire Tabula models", e);
+        }
     }
 
 }

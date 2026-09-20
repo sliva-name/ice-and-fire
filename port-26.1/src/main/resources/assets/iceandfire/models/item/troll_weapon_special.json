@@ -105,5 +105,6 @@
   },
   "textures": {
     "particle": "minecraft:block/oak_planks"
-  }
+  },
+  "gui_light": "front"
 }

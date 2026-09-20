@@ -1,4 +1,5 @@
 {
+  "render_type": "minecraft:translucent",
   "parent": "iceandfire:block/dragon_ice",
   "display": {
     "thirdperson": {

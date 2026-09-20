@@ -1,4 +1,5 @@
 {
+  "render_type": "minecraft:translucent",
   "parent": "block/cube",
   "textures": {
     "particle": "iceandfire:block/myrmex_jungle_resin_glass_all",
@@ -10,4 +11,3 @@
     "west": "iceandfire:block/myrmex_jungle_resin_glass_down"
   }
 }
-

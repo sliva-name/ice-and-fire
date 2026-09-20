@@ -50,7 +50,7 @@ public class RenderTrollWeapon implements SpecialModelRenderer<Identifier> {
         // submitModel goes through the living-entity pipeline (Y-flip). 1.18 ISTER did not.
         collector.submitModelPart(model.root(), poses,
             RenderTypes.entityCutoutCull(texture == null ? textureFor(EnumTroll.Weapon.AXE) : texture),
-            light, overlay, null, false, hasFoil, -1, null, outlineColor);
+            light, overlay, null, -1, null, outlineColor);
         poses.popPose();
     }
 

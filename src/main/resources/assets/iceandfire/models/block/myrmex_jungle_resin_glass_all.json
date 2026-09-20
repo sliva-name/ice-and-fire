@@ -1,4 +1,5 @@
 {
+  "render_type": "minecraft:translucent",
   "parent": "block/cube_all",
   "textures": {
     "all": "iceandfire:block/myrmex_jungle_resin_glass_all"

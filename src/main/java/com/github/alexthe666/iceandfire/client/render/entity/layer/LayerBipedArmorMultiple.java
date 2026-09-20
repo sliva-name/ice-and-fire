@@ -13,9 +13,10 @@ public class LayerBipedArmorMultiple<M extends EntityModel<DreadHumanoidRenderSt
 
     public LayerBipedArmorMultiple(RenderLayerParent<DreadHumanoidRenderState, M> renderer,
                                    IHasArmorVariantResource resources, ModelBipedBase body,
-                                   ModelBipedBase modelLeggings, ModelBipedBase modelArmor,
+                                   ModelBipedBase modelLeggings, ModelBipedBase modelChest,
+                                   ModelBipedBase modelFeet, ModelBipedBase modelHead,
                                    Identifier defaultArmor, Identifier defaultLegArmor) {
-        super(renderer, body, modelLeggings, modelArmor, defaultArmor, defaultLegArmor);
+        super(renderer, body, modelLeggings, modelChest, modelFeet, modelHead, defaultArmor, defaultLegArmor);
         this.resources = resources;
     }
 

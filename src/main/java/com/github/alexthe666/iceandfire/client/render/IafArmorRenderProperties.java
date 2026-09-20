@@ -1,6 +1,7 @@
 package com.github.alexthe666.iceandfire.client.render;
 
 import com.github.alexthe666.citadel.server.item.CustomArmorMaterial;
+import com.github.alexthe666.iceandfire.client.model.armor.ArmorModelBase;
 import com.github.alexthe666.iceandfire.client.model.armor.ModelCopperArmor;
 import com.github.alexthe666.iceandfire.client.model.armor.ModelDeathWormArmor;
 import com.github.alexthe666.iceandfire.client.model.armor.ModelDragonsteelFireArmor;
@@ -23,6 +24,8 @@ import com.github.alexthe666.iceandfire.item.ItemSeaSerpentArmor;
 import com.github.alexthe666.iceandfire.item.ItemSilverArmor;
 import com.github.alexthe666.iceandfire.item.ItemTrollArmor;
 import net.minecraft.client.model.HumanoidModel;
+import net.minecraft.client.model.Model;
+import net.minecraft.client.renderer.entity.state.HumanoidRenderState;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.Item;
@@ -86,15 +89,50 @@ public final class IafArmorRenderProperties {
     /** {@code factory(stack, inner)} builds the model; {@code inner} is the 1.18 legs/head layer flag. */
     public static IClientItemExtensions armorModel(BiFunction<ItemStack, Boolean, HumanoidModel<?>> factory) {
         return new IClientItemExtensions() {
+            private final HumanoidModel<?>[] bySlot = new HumanoidModel<?>[4];
+
             @Override
             public @NotNull HumanoidModel<?> getHumanoidArmorModel(LivingEntityRenderState state, ItemStack stack, EquipmentSlot slot, HumanoidModel<?> original) {
-                boolean inner = slot == EquipmentSlot.LEGS || slot == EquipmentSlot.HEAD;
-                HumanoidModel<?> model = factory.apply(stack, inner);
-                if (model == null) {
+                int index = slotIndex(slot);
+                if (index < 0) {
                     return original;
                 }
-                setPartVisibility(model, slot);
+                if (bySlot[index] == null) {
+                    boolean inner = slot == EquipmentSlot.LEGS || slot == EquipmentSlot.HEAD;
+                    HumanoidModel<?> model = factory.apply(stack, inner);
+                    if (model == null) {
+                        return original;
+                    }
+                    bySlot[index] = model;
+                }
+                HumanoidModel<?> model = bySlot[index];
+                if (model instanceof ArmorModelBase armor) {
+                    armor.setVisibleSlot(slot);
+                } else {
+                    setPartVisibility(model, slot);
+                }
                 return model;
+            }
+
+            @Override
+            public @NotNull Model getGenericArmorModel(HumanoidRenderState state, ItemStack stack, EquipmentSlot slot, HumanoidModel<?> original) {
+                // Do not copyFrom the stripped vanilla slot mesh. That overwrites pivots
+                // on a full custom tree and is what made player armor sit crooked.
+                HumanoidModel<?> model = getHumanoidArmorModel(state, stack, slot, original);
+                if (model instanceof ArmorModelBase armor) {
+                    armor.setVisibleSlot(slot);
+                }
+                return model;
+            }
+
+            private static int slotIndex(EquipmentSlot slot) {
+                return switch (slot) {
+                    case HEAD -> 0;
+                    case CHEST -> 1;
+                    case LEGS -> 2;
+                    case FEET -> 3;
+                    default -> -1;
+                };
             }
         };
     }

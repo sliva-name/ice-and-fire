@@ -81,6 +81,14 @@ tasks.named('processResources', Copy) {
         if (rel.contains('/recipes/') || rel.contains('/loot_tables/') || rel.contains('/advancements/')) {
             details.exclude()
         }
+        // Leftover 1.18 assets: pixies are types 0-4, and ancient_stone_stairs
+        // is a Fossil integration item that is not registered here.
+        if (rel == 'assets/iceandfire/items/pixie_jar_5.json'
+            || rel == 'assets/iceandfire/items/ancient_stone_stairs.json'
+            || rel == 'assets/iceandfire/models/item/ancient_stone_stairs.json'
+            || rel == 'assets/iceandfire/blockstates/pixie_jar_5.json') {
+            details.exclude()
+        }
         if (rel.contains('/models/tabula/') && rel != rel.toLowerCase()) {
             details.relativePath = details.relativePath.parent.append(true, details.name.toLowerCase())
         }

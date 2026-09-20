@@ -1,9 +1,27 @@
 {
   "model": {
-    "type": "minecraft:special",
-    "base": "iceandfire:item/deathworm_gauntlet_white_special",
-    "model": {
-      "type": "iceandfire:deathworm_gauntlet"
+    "type": "minecraft:select",
+    "property": "minecraft:display_context",
+    "cases": [
+      {
+        "when": "gui",
+        "model": {
+          "type": "minecraft:special",
+          "base": "iceandfire:item/deathworm_gauntlet_white_special",
+          "model": {
+            "type": "iceandfire:deathworm_gauntlet",
+            "display_context": "gui"
+          }
+        }
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:special",
+      "base": "iceandfire:item/deathworm_gauntlet_white_special",
+      "model": {
+        "type": "iceandfire:deathworm_gauntlet",
+        "display_context": "none"
+      }
     }
   }
 }

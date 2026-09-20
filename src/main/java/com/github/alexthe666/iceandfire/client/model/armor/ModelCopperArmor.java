@@ -2,7 +2,6 @@ package com.github.alexthe666.iceandfire.client.model.armor;
 
 import com.github.alexthe666.citadel.client.model.AdvancedModelBox;
 import net.minecraft.client.model.HumanoidModel;
-import net.minecraft.client.model.geom.LayerDefinitions;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.CubeDeformation;
@@ -16,9 +15,6 @@ public class ModelCopperArmor extends ArmorModelBase {
     public AdvancedModelBox facePlate;
     public AdvancedModelBox crest;
     public AdvancedModelBox robeLowerRight;
-    // TODO: Make the inner model and outer model separate/ make them use normal minecraft armor dimensions while still looking good
-    private static final ModelPart INNER_MODEL = createMesh(CubeDeformation.NONE, 0.0F).getRoot().bake(64, 64);
-    private static final ModelPart OUTER_MODEL = createMesh(CubeDeformation.NONE, 0.0F).getRoot().bake(64, 64);
 
     public ModelCopperArmor(ModelPart modelPart) {
         super(modelPart);
@@ -43,7 +39,7 @@ public class ModelCopperArmor extends ArmorModelBase {
     }
 
     public static ModelPart getBakedModel(boolean inner) {
-        return inner ? INNER_MODEL : OUTER_MODEL;
+        return bakeArmor(inner, ModelCopperArmor::createMesh);
     }
 
 }

@@ -1,7 +1,6 @@
 package com.github.alexthe666.iceandfire.client.model.armor;
 
 import net.minecraft.client.model.HumanoidModel;
-import net.minecraft.client.model.geom.LayerDefinitions;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.CubeDeformation;
@@ -21,9 +20,6 @@ public class ModelDeathWormArmor extends ArmorModelBase {
     public ModelPart spineR2;
     public ModelPart spineL1;
     public ModelPart spineL2;
-    // TODO: Make the inner model and outer model separate/ make them use normal minecraft armor dimensions while still looking good
-    private static final ModelPart INNER_MODEL = createMesh(CubeDeformation.NONE, 0.0F).getRoot().bake(64, 64);
-    private static final ModelPart OUTER_MODEL = createMesh(CubeDeformation.NONE, 0.0F).getRoot().bake(64, 64);
 
     public ModelDeathWormArmor(ModelPart modelPart) {
         super(modelPart);
@@ -64,7 +60,7 @@ public class ModelDeathWormArmor extends ArmorModelBase {
     }
 
     public static ModelPart getBakedModel(boolean inner) {
-        return inner ? INNER_MODEL : OUTER_MODEL;
+        return bakeArmor(inner, ModelDeathWormArmor::createMesh);
     }
 
 }

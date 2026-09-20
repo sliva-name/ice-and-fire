@@ -1,5 +1,4 @@
 {
-  "parent": "builtin/entity",
   "display": {
     "gui": {
       "rotation": [
@@ -8,7 +7,7 @@
         45
       ],
       "translation": [
-        -0,
+        0,
         -0.1,
         0
       ],
@@ -103,5 +102,8 @@
         0.7
       ]
     }
+  },
+  "textures": {
+    "particle": "minecraft:block/oak_planks"
   }
 }

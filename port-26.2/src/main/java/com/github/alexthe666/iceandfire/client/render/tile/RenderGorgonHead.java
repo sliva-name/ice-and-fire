@@ -38,7 +38,6 @@ public class RenderGorgonHead implements SpecialModelRenderer<Boolean> {
 
     private void applyModelSpace(PoseStack poses, boolean active) {
         // 26.x ItemTransform.apply already appends (-0.5, -0.5, -0.5), same as 1.18 ItemRenderer.
-        // Keep the original ISTER origin on top of that.
         poses.translate(0.5F, active ? 1.5F : 1.25F, 0.5F);
     }
 
@@ -50,7 +49,7 @@ public class RenderGorgonHead implements SpecialModelRenderer<Boolean> {
         applyModelSpace(poses, active);
         collector.submitModelPart((active ? activeModel : inactiveModel).root(), poses,
             RenderTypes.entityCutout(active ? ACTIVE_TEXTURE : INACTIVE_TEXTURE, false),
-            light, overlay, null, false, hasFoil, -1, null, outlineColor);
+            light, overlay, null, -1, null, outlineColor);
         poses.popPose();
     }
 

@@ -1,9 +1,27 @@
 {
   "model": {
-    "type": "minecraft:special",
-    "base": "iceandfire:item/gorgon_head_special",
-    "model": {
-      "type": "iceandfire:gorgon_head"
+    "type": "minecraft:select",
+    "property": "minecraft:display_context",
+    "cases": [
+      {
+        "when": "gui",
+        "model": {
+          "type": "minecraft:special",
+          "base": "iceandfire:item/gorgon_head_special",
+          "model": {
+            "type": "iceandfire:gorgon_head",
+            "display_context": "gui"
+          }
+        }
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:special",
+      "base": "iceandfire:item/gorgon_head_special",
+      "model": {
+        "type": "iceandfire:gorgon_head",
+        "display_context": "none"
+      }
     }
   }
 }

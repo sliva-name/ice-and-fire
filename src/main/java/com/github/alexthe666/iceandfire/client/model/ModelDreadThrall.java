@@ -7,10 +7,8 @@ import com.github.alexthe666.iceandfire.client.render.entity.DreadHumanoidRender
 import net.minecraft.client.model.HumanoidModel;
 
 public class ModelDreadThrall extends ModelDreadBase {
-    private final boolean bodyArmorModel;
 
     public ModelDreadThrall(float modelScale, boolean bodyArmorModel) {
-        this.bodyArmorModel = bodyArmorModel;
         this.texHeight = 32;
         this.texWidth = 64;
         this.leftArmPose = HumanoidModel.ArmPose.EMPTY;
@@ -75,9 +73,8 @@ public class ModelDreadThrall extends ModelDreadBase {
 
     @Override
     public void setupAnim(DreadHumanoidRenderState state) {
-        if (bodyArmorModel) {
-            return;
-        }
+        // Armor must pose from this submission's state at draw time. Copying the
+        // shared body at submit time leaves leftover walk from another thrall.
         super.setupAnim(state);
         this.flap(body, 0.5F, 0.15F, false, 1, 0F, state.walkAnimationPos, state.walkAnimationSpeed);
     }

@@ -15,6 +15,7 @@ import net.minecraft.client.renderer.special.SpecialModelRenderer;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
 import org.joml.Vector3fc;
@@ -26,6 +27,11 @@ public class RenderDeathWormGauntlet implements SpecialModelRenderer<RenderDeath
     private static final Identifier YELLOW = texture("yellow");
     private final ModelDeathWormGauntlet geometry = new ModelDeathWormGauntlet();
     private final EntityModel<EntityRenderState> model = geometry.asEntityModel();
+    private final ItemDisplayContext displayContext;
+
+    public RenderDeathWormGauntlet(ItemDisplayContext displayContext) {
+        this.displayContext = displayContext;
+    }
 
     public record State(Identifier texture, float lungeTicks) { }
 
@@ -62,29 +68,33 @@ public class RenderDeathWormGauntlet implements SpecialModelRenderer<RenderDeath
         if (state == null) {
             return;
         }
+        poses.pushPose();
+        // 1.18 ISTER origin; ItemTransform.apply already supplied the (-0.5, -0.5, -0.5) offset.
+        poses.translate(0.5F, 0.5F, 0.5F);
         // Each queued item owns its posed native tree; another stack cannot overwrite its jaw pose.
         ModelDeathWormGauntlet posedGeometry = new ModelDeathWormGauntlet();
         applyPose(posedGeometry, state.lungeTicks());
         collector.submitModelPart(posedGeometry.asEntityModel().root(), poses, RenderTypes.entityCutoutCull(state.texture()),
-            light, overlay, null, false, false, -1, null, outlineColor);
+            light, overlay, null, false, hasFoil, -1, null, outlineColor);
+        poses.popPose();
     }
 
     @Override
     public void getExtents(Consumer<Vector3fc> output) {
-        model.root().getExtentsForGui(new PoseStack(), output);
-        // Include the fully extended jaw in GUI bounds without retaining a live holder.
-        applyPose(geometry, 20);
-        geometry.asEntityModel().root().getExtentsForGui(new PoseStack(), output);
-        geometry.resetToDefaultPose();
+        PoseStack poses = new PoseStack();
+        poses.translate(0.5F, 0.5F, 0.5F);
+        // Rest pose only: an open jaw inflates the AABB and shrinks the idle icon in the slot.
+        model.root().getExtentsForGui(poses, output);
     }
 
-    public record Unbaked() implements SpecialModelRenderer.Unbaked<State> {
-        public static final MapCodec<Unbaked> MAP_CODEC = MapCodec.unit(new Unbaked());
+    public record Unbaked(ItemDisplayContext displayContext) implements SpecialModelRenderer.Unbaked<State> {
+        public static final MapCodec<Unbaked> MAP_CODEC = ItemDisplayContext.CODEC.optionalFieldOf("display_context", ItemDisplayContext.NONE)
+            .xmap(Unbaked::new, Unbaked::displayContext);
 
         @Override
         public MapCodec<Unbaked> type() { return MAP_CODEC; }
 
         @Override
-        public RenderDeathWormGauntlet bake(BakingContext context) { return new RenderDeathWormGauntlet(); }
+        public RenderDeathWormGauntlet bake(BakingContext context) { return new RenderDeathWormGauntlet(displayContext); }
     }
 }
