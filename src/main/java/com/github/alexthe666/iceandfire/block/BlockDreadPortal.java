@@ -2,39 +2,47 @@ package com.github.alexthe666.iceandfire.block;
 
 import com.github.alexthe666.iceandfire.IceAndFire;
 import com.github.alexthe666.iceandfire.entity.tile.TileEntityDreadPortal;
-import com.github.alexthe666.iceandfire.entity.util.DragonUtils;
 import com.github.alexthe666.iceandfire.enums.EnumParticles;
+import com.github.alexthe666.iceandfire.world.DreadPortalShape;
+import com.github.alexthe666.iceandfire.world.DreadPortalTeleporter;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.InsideBlockEffectApplier;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Portal;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.MapColor;
+import net.minecraft.world.level.portal.TeleportTransition;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.NotNull;
-
-import javax.annotation.Nullable;
-import java.util.Random;
+import org.jetbrains.annotations.Nullable;
 
 import static com.github.alexthe666.iceandfire.entity.tile.IafTileEntityRegistry.DREAD_PORTAL;
 
-public class BlockDreadPortal extends BaseEntityBlock implements IDreadBlock {
+public class BlockDreadPortal extends BaseEntityBlock implements IDreadBlock, Portal {
 
     public BlockDreadPortal() {
         super(
             IafBlockRegistry.id(Properties
                 .of().mapColor(MapColor.COLOR_BLACK)
+                .noCollision()
+                .noOcclusion()
                 .dynamicShape()
                 .strength(-1, 100000)
-                .lightLevel((state) -> {
-                    return 1;
-                })
+                .lightLevel(state -> 11)
                 .randomTicks())
-		);
+        );
     }
 
     @Override
@@ -43,89 +51,70 @@ public class BlockDreadPortal extends BaseEntityBlock implements IDreadBlock {
     }
 
     @Override
-    protected void entityInside(@NotNull BlockState state, @NotNull Level worldIn, @NotNull BlockPos pos, @NotNull Entity entity, @NotNull net.minecraft.world.entity.InsideBlockEffectApplier applier, boolean unknown) {
-     /* if(entity.dimension != IafConfig.dreadlandsDimensionId){
-            MiscEntityProperties properties = EntityPropertiesHandler.INSTANCE.getProperties(entity, MiscEntityProperties.class);
-            if (properties != null) {
-                properties.lastEnteredDreadPortalX = pos.getX();
-                properties.lastEnteredDreadPortalY = pos.getY();
-                properties.lastEnteredDreadPortalZ = pos.getZ();
-            }
-        }
-        if ((!entity.isBeingRidden()) && (entity.getPassengers().isEmpty()) && (entity instanceof PlayerEntityMP)) {
-            CriteriaTriggers.ENTER_BLOCK.trigger((PlayerEntityMP) entity, world.getBlockState(pos));
-            PlayerEntityMP thePlayer = (PlayerEntityMP) entity;
-            if (thePlayer.timeUntilPortal > 0) {
-                thePlayer.timeUntilPortal = 10;
-            } else if (thePlayer.dimension != IafConfig.dreadlandsDimensionId) {
-                thePlayer.timeUntilPortal = 10;
-                thePlayer.changeDimension(IafConfig.dreadlandsDimensionId, new TeleporterDreadLands(thePlayer.server.getWorld(IafConfig.dreadlandsDimensionId), false));
-            } else {
-                MiscEntityProperties properties = EntityPropertiesHandler.INSTANCE.getProperties(thePlayer, MiscEntityProperties.class);
-                BlockPos setPos = BlockPos.ORIGIN;
-                if (properties != null) {
-                    setPos = new BlockPos(properties.lastEnteredDreadPortalX, properties.lastEnteredDreadPortalY, properties.lastEnteredDreadPortalZ);
-                }
-                thePlayer.timeUntilPortal = 10;
-                thePlayer.changeDimension( 0, new TeleporterDreadLands(thePlayer.server.getWorld(0), true));
-                thePlayer.setPositionAndRotation(setPos.getX(), setPos.getY() + 0.5D, setPos.getZ(), 0, 0);
-
-            }
-        }*/
+    protected @NotNull VoxelShape getShape(@NotNull BlockState state, @NotNull BlockGetter level, @NotNull BlockPos pos, @NotNull CollisionContext context) {
+        return Shapes.block();
     }
 
+    @Override
+    protected @NotNull VoxelShape getEntityInsideCollisionShape(@NotNull BlockState state, @NotNull BlockGetter level, @NotNull BlockPos pos, @NotNull Entity entity) {
+        return state.getShape(level, pos);
+    }
 
-    public void updateTick(Level worldIn, BlockPos pos, BlockState state, Random rand) {
+    @Override
+    protected void entityInside(@NotNull BlockState state, @NotNull Level worldIn, @NotNull BlockPos pos, @NotNull Entity entity, @NotNull InsideBlockEffectApplier applier, boolean unknown) {
+        if (!entity.canUsePortal(false)) {
+            return;
+        }
+        entity.setAsInsidePortal(this, pos);
+    }
+
+    @Override
+    public int getPortalTransitionTime(@NotNull ServerLevel level, @NotNull Entity entity) {
+        return entity instanceof ServerPlayer ? 40 : 0;
+    }
+
+    @Override
+    public @Nullable TeleportTransition getPortalDestination(@NotNull ServerLevel currentLevel, @NotNull Entity entity, @NotNull BlockPos portalEntryPos) {
+        return DreadPortalTeleporter.destination(currentLevel, entity, portalEntryPos);
+    }
+
+    @Override
+    protected void randomTick(@NotNull BlockState state, @NotNull ServerLevel worldIn, @NotNull BlockPos pos, @NotNull net.minecraft.util.RandomSource rand) {
         if (!this.canSurviveAt(worldIn, pos)) {
-            worldIn.destroyBlock(pos, true);
+            worldIn.destroyBlock(pos, false);
         }
     }
 
-    public void neighborChanged(BlockState state, Level worldIn, BlockPos pos, Block blockIn, BlockPos fromPos) {
+    @Override
+    protected void neighborChanged(@NotNull BlockState state, @NotNull Level worldIn, @NotNull BlockPos pos, @NotNull Block blockIn, @Nullable net.minecraft.world.level.redstone.Orientation orientation, boolean isMoving) {
         if (!this.canSurviveAt(worldIn, pos)) {
-            worldIn.destroyBlock(pos, true);
+            worldIn.destroyBlock(pos, false);
         }
     }
 
     public boolean canSurviveAt(Level world, BlockPos pos) {
-        return DragonUtils.isDreadBlock(world.getBlockState(pos.above())) && DragonUtils.isDreadBlock(world.getBlockState(pos.below()));
-    }
-
-    public int quantityDropped(Random random) {
-        return 0;
+        return DreadPortalShape.findFromInterior(world, pos) != null;
     }
 
     @Override
     public void animateTick(@NotNull BlockState stateIn, @NotNull Level worldIn, @NotNull BlockPos pos, @NotNull net.minecraft.util.RandomSource rand) {
         BlockEntity tileentity = worldIn.getBlockEntity(pos);
-
         if (tileentity instanceof TileEntityDreadPortal) {
-            int i = 3;
-            for (int j = 0; j < i; ++j) {
+            for (int j = 0; j < 3; ++j) {
                 double d0 = (float) pos.getX() + rand.nextFloat();
                 double d1 = (float) pos.getY() + rand.nextFloat();
                 double d2 = (float) pos.getZ() + rand.nextFloat();
                 double d3 = ((double) rand.nextFloat() - 0.5D) * 0.25D;
                 double d4 = ((double) rand.nextFloat()) * -0.25D;
                 double d5 = ((double) rand.nextFloat() - 0.5D) * 0.25D;
-                int k = rand.nextInt(2) * 2 - 1;
                 IceAndFire.PROXY.spawnParticle(EnumParticles.Dread_Portal, d0, d1, d2, d3, d4, d5);
-                //worldIn.spawnParticle(ParticleTypes.END_ROD, d0, d1, d2, d3, d4, d5);
             }
         }
     }
 
-    public boolean isOpaqueCube(BlockState state) {
-        return false;
-    }
-
-    public boolean isFullCube(BlockState state) {
-        return false;
-    }
-
     @Override
     public @NotNull RenderShape getRenderShape(@NotNull BlockState state) {
-        return RenderShape.INVISIBLE;
+        return RenderShape.MODEL;
     }
 
     @Nullable
@@ -133,7 +122,6 @@ public class BlockDreadPortal extends BaseEntityBlock implements IDreadBlock {
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, @NotNull BlockState state, @NotNull BlockEntityType<T> entityType) {
         return createTickerHelper(entityType, DREAD_PORTAL.get(), TileEntityDreadPortal::tick);
     }
-
 
     @Nullable
     @Override

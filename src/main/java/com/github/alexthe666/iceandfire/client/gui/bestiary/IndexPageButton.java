@@ -9,7 +9,6 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
-import net.minecraft.util.Mth;
 import org.jetbrains.annotations.NotNull;
 
 public class IndexPageButton extends Button {
@@ -26,10 +25,12 @@ public class IndexPageButton extends Button {
         if (!this.active) {
             return;
         }
-        Font font = IafConfig.useVanillaFont ? Minecraft.getInstance().font : (Font) IceAndFire.PROXY.getFontRenderer();
+        Font font = IafConfig.useVanillaFont || !Minecraft.getInstance().options.languageCode.equalsIgnoreCase("en_us")
+            ? Minecraft.getInstance().font
+            : (Font) IceAndFire.PROXY.getFontRenderer();
         boolean flag = isHoveredOrFocused();
         graphics.blit(RenderPipelines.GUI_TEXTURED, WIDGETS, this.getX(), this.getY(), 0, flag ? 32 : 0, this.width, this.height, 256, 256);
-        int j = flag ? 0XFAE67D : 0X303030;
-        graphics.text(font, this.getMessage().getVisualOrderText(), (this.getX() + this.width / 2 - font.width(this.getMessage().getString()) / 2), this.getY() + (this.height - 8) / 2, j | Mth.ceil(this.alpha * 255.0F) << 24);
+        int color = flag ? 0xFFB8860B : 0xFF6B4E3A;
+        graphics.text(font, this.getMessage().getVisualOrderText(), (this.getX() + this.width / 2 - font.width(this.getMessage().getString()) / 2), this.getY() + (this.height - 8) / 2, color, false);
     }
 }

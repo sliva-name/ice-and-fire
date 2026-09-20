@@ -4,8 +4,10 @@ import net.minecraft.tags.EntityTypeTags;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.level.storage.ValueInput;
+import com.github.alexthe666.iceandfire.entity.util.DragonUtils;
 import com.github.alexthe666.iceandfire.entity.util.IDreadMob;
 import com.github.alexthe666.iceandfire.entity.util.IHumanoid;
+import com.github.alexthe666.iceandfire.world.IafDimensions;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -18,18 +20,39 @@ import net.minecraft.world.entity.monster.skeleton.AbstractSkeleton;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.monster.zombie.Zombie;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 import java.util.UUID;
 
 public class EntityDreadMob extends Monster implements IDreadMob {
+    public static final int DUNGEON_MOB_CAP = 25;
+    private static final double DUNGEON_CAP_RADIUS = 48.0D;
     protected static final EntityDataAccessor<String> COMMANDER_UNIQUE_ID = SynchedEntityData.defineId(EntityDreadMob.class, EntityDataSerializers.STRING);
 
     public EntityDreadMob(EntityType<? extends Monster> t, Level worldIn) {
         super(t, worldIn);
+    }
+
+    public static int countNearbyDreadMobs(Level level, BlockPos pos) {
+        return level.getEntitiesOfClass(EntityDreadMob.class, new AABB(pos).inflate(DUNGEON_CAP_RADIUS), Entity::isAlive).size();
+    }
+
+    public static boolean canSpawnInDungeon(Level level, BlockPos pos) {
+        return countNearbyDreadMobs(level, pos) < DUNGEON_MOB_CAP;
+    }
+
+    public static boolean canDreadLandSpawn(EntityType<? extends Mob> type, ServerLevelAccessor world, EntitySpawnReason reason, BlockPos pos, net.minecraft.util.RandomSource random) {
+        if (IafDimensions.isDreadLands(world.getLevel())) {
+            BlockPos groundPos = pos.below();
+            return world.getBlockState(groundPos).isFaceSturdy(world, groundPos, net.minecraft.core.Direction.UP)
+                && world.getFluidState(pos).isEmpty();
+        }
+        return Monster.checkMonsterSpawnRules(type, world, reason, pos, random);
     }
 
     public static Entity necromancyEntity(LivingEntity entity) {
@@ -121,7 +144,14 @@ public class EntityDreadMob extends Monster implements IDreadMob {
 
 
     public boolean iafIsAlliedTo(@NotNull Entity entityIn) {
-        return entityIn instanceof IDreadMob || super.isAlliedTo(entityIn);
+        if (entityIn instanceof IDreadMob) {
+            return true;
+        }
+        Entity commander = this.getCommander();
+        if (commander != null && (entityIn == commander || commander.isAlliedTo(entityIn))) {
+            return true;
+        }
+        return super.isAlliedTo(entityIn);
     }
 
     @Nullable
@@ -141,15 +171,54 @@ public class EntityDreadMob extends Monster implements IDreadMob {
         this.entityData.set(COMMANDER_UNIQUE_ID, uuid == null ? "" : uuid.toString());
     }
 
+    public boolean canDreadPursue(@Nullable LivingEntity target) {
+        if (!(target instanceof Player) || target == this || !target.isAlive()) {
+            return false;
+        }
+        Entity commander = this.getCommander();
+        if (target == commander) {
+            return false;
+        }
+        return DragonUtils.canHostilesTarget(target);
+    }
+
+    @Override
+    public void setTarget(@Nullable LivingEntity target) {
+        if (target != null && !this.canDreadPursue(target)) {
+            return;
+        }
+        super.setTarget(target);
+    }
+
     @Override
     public void aiStep() {
         super.aiStep();
-        if (!this.level().isClientSide() && this.getCommander() instanceof EntityDreadLich) {
-            EntityDreadLich lich = (EntityDreadLich) this.getCommander();
-            if (lich.getTarget() != null && lich.getTarget().isAlive()) {
-                this.setTarget(lich.getTarget());
+        if (!this.level().isClientSide()) {
+            LivingEntity current = this.getTarget();
+            if (current != null && !this.canDreadPursue(current)) {
+                super.setTarget(null);
+            }
+            LivingEntity commanderTarget = commanderTarget(this.getCommander());
+            if (commanderTarget != null && this.canDreadPursue(commanderTarget)) {
+                super.setTarget(commanderTarget);
             }
         }
+    }
+
+    @Nullable
+    private static LivingEntity commanderTarget(Entity commander) {
+        if (commander instanceof Mob mob) {
+            return mob.getTarget();
+        }
+        if (commander instanceof Player player) {
+            LivingEntity lastHurt = player.getLastHurtMob();
+            if (lastHurt instanceof Player && lastHurt.isAlive()) {
+                return lastHurt;
+            }
+            LivingEntity revenge = player.getLastHurtByMob();
+            return revenge instanceof Player ? revenge : null;
+        }
+        return null;
     }
 
     @Override
@@ -176,6 +245,9 @@ public class EntityDreadMob extends Monster implements IDreadMob {
     public void onKillEntity(LivingEntity LivingEntityIn) {
         Entity commander = this instanceof EntityDreadLich ? this : this.getCommander();
         if (commander != null && !(LivingEntityIn instanceof EntityDragonBase)) {// zombie dragons!!!!
+            if (!canSpawnInDungeon(this.level(), LivingEntityIn.blockPosition())) {
+                return;
+            }
             Entity summoned = necromancyEntity(LivingEntityIn);
             if (summoned != null) {
                 summoned.copyPosition(LivingEntityIn);

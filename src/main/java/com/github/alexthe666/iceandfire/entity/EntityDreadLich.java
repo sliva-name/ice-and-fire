@@ -16,6 +16,7 @@ import com.github.alexthe666.iceandfire.entity.util.IVillagerFear;
 import com.github.alexthe666.iceandfire.enums.EnumParticles;
 import com.github.alexthe666.iceandfire.item.IafItemRegistry;
 import com.github.alexthe666.iceandfire.misc.IafSoundRegistry;
+import com.github.alexthe666.iceandfire.world.IafDimensions;
 import com.github.alexthe666.iceandfire.world.IafWorldRegistry;
 import com.google.common.base.Predicate;
 import net.minecraft.core.BlockPos;
@@ -69,6 +70,9 @@ public class EntityDreadLich extends EntityDreadMob implements IAnimatedEntity, 
     }
 
     public static boolean canLichSpawnOn(EntityType<? extends Mob> typeIn, LevelAccessor worldIn, EntitySpawnReason reason, BlockPos pos, net.minecraft.util.RandomSource randomIn) {
+        if (worldIn instanceof ServerLevelAccessor server && IafDimensions.isDreadLands(server.getLevel())) {
+            return EntityDreadMob.canDreadLandSpawn(typeIn, server, reason, pos, randomIn);
+        }
         BlockPos blockpos = pos.below();
         return reason == EntitySpawnReason.SPAWNER || worldIn.getBlockState(blockpos).isValidSpawn(worldIn, blockpos, typeIn) && randomIn.nextInt(IafConfig.lichSpawnChance) == 0;
     }

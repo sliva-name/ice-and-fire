@@ -5,6 +5,7 @@ import com.github.alexthe666.citadel.client.model.ModelAnimator;
 import com.github.alexthe666.iceandfire.client.model.util.HideableModelRenderer;
 import com.github.alexthe666.iceandfire.client.render.entity.DreadHumanoidRenderState;
 import net.minecraft.client.model.HumanoidModel;
+import net.minecraft.util.Mth;
 
 public class ModelDreadQueen extends ModelDreadBase {
     public HideableModelRenderer chestplate;
@@ -90,6 +91,23 @@ public class ModelDreadQueen extends ModelDreadBase {
     @Override
     public Animation getSpawnAnimation() {
         return DreadHumanoidRenderState.SPAWN;
+    }
+
+    @Override
+    public void setupAnim(DreadHumanoidRenderState state) {
+        super.setupAnim(state);
+        if (state.animation == DreadHumanoidRenderState.SUMMON) {
+            this.armRight.rotationPointZ = 0.0F;
+            this.armRight.rotationPointX = -5.0F;
+            this.armLeft.rotationPointZ = 0.0F;
+            this.armLeft.rotationPointX = 5.0F;
+            this.armRight.rotateAngleX = Mth.cos(state.ageInTicks * 0.6662F) * 0.25F;
+            this.armLeft.rotateAngleX = Mth.cos(state.ageInTicks * 0.6662F) * 0.25F;
+            this.armRight.rotateAngleZ = 2.3561945F;
+            this.armLeft.rotateAngleZ = -2.3561945F;
+            this.armRight.rotateAngleY = 0.0F;
+            this.armLeft.rotateAngleY = 0.0F;
+        }
     }
 
 }

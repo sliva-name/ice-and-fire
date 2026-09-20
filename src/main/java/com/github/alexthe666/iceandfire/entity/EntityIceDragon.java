@@ -15,14 +15,21 @@ import com.github.alexthe666.iceandfire.item.IafItemRegistry;
 import com.github.alexthe666.iceandfire.message.MessageDragonSyncFire;
 import com.github.alexthe666.iceandfire.misc.IafSoundRegistry;
 import com.github.alexthe666.iceandfire.misc.IafTagRegistry;
+import com.github.alexthe666.iceandfire.entity.util.IDreadMob;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -47,6 +54,7 @@ import javax.annotation.Nullable;
 import java.util.Random;
 
 public class EntityIceDragon extends EntityDragonBase {
+    private static final EntityDataAccessor<Boolean> BLACK_FROST = SynchedEntityData.defineId(EntityIceDragon.class, EntityDataSerializers.BOOLEAN);
 
     public static final float[] growth_stage_1 = new float[]{1F, 3F};
     public static final float[] growth_stage_2 = new float[]{3F, 7F};
@@ -75,11 +83,103 @@ public class EntityIceDragon extends EntityDragonBase {
     }
 
     @Override
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(BLACK_FROST, false);
+    }
+
+    public boolean isBlackFrost() {
+        return this.entityData.get(BLACK_FROST);
+    }
+
+    public void setBlackFrost(boolean blackFrost) {
+        this.entityData.set(BLACK_FROST, blackFrost);
+    }
+
+    public void applyBlackFrost() {
+        this.setBlackFrost(true);
+        this.setGender(false);
+        this.setVariant(0);
+        this.setAgeInDays(100);
+        this.setHunger(50);
+        this.setAgingDisabled(true);
+        this.updateAttributes();
+        this.setHealth(this.getMaxHealth());
+        this.setPersistenceRequired();
+        this.setCustomName(Component.translatable("entity.iceandfire.black_frost_dragon"));
+        this.setCustomNameVisible(true);
+        this.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, new ItemStack(IafItemRegistry.DRAGONARMOR_DRAGONSTEEL_FIRE_0.get()));
+        this.setItemSlot(net.minecraft.world.entity.EquipmentSlot.CHEST, new ItemStack(IafItemRegistry.DRAGONARMOR_DRAGONSTEEL_FIRE_1.get()));
+        this.setItemSlot(net.minecraft.world.entity.EquipmentSlot.LEGS, new ItemStack(IafItemRegistry.DRAGONARMOR_DRAGONSTEEL_FIRE_2.get()));
+        this.setItemSlot(net.minecraft.world.entity.EquipmentSlot.FEET, new ItemStack(IafItemRegistry.DRAGONARMOR_DRAGONSTEEL_FIRE_3.get()));
+        this.setDropChance(net.minecraft.world.entity.EquipmentSlot.HEAD, 0.0F);
+        this.setDropChance(net.minecraft.world.entity.EquipmentSlot.CHEST, 0.0F);
+        this.setDropChance(net.minecraft.world.entity.EquipmentSlot.LEGS, 0.0F);
+        this.setDropChance(net.minecraft.world.entity.EquipmentSlot.FEET, 0.0F);
+    }
+
+    private void tickBlackFrostCombat() {
+        this.setInSittingPose(false);
+        this.setOrderedToSit(false);
+        if (this.groundAttack == IafDragonAttacks.Ground.SHAKE_PREY) {
+            this.groundAttack = IafDragonAttacks.Ground.BITE;
+        }
+        if (this.getAnimation() == ANIMATION_SHAKEPREY) {
+            this.setAnimation(IAnimatedEntity.NO_ANIMATION);
+        }
+        if (this.getFirstPassenger() instanceof EntityDreadQueen queen) {
+            LivingEntity queenTarget = queen.getTarget();
+            if (queenTarget != null && queenTarget.isAlive()) {
+                this.setTarget(queenTarget);
+            } else if (this.getTarget() != null && this.getTarget().isAlive()) {
+                queen.setTarget(this.getTarget());
+            }
+        }
+        if (this.hasHomePosition && this.homePos != null) {
+            BlockPos home = this.homePos.getPosition();
+            double max = Math.max(48.0D, this.getHomeRadius());
+            if (this.distanceToSqr(Vec3.atCenterOf(home)) > max * max) {
+                this.getMoveControl().setWantedPosition(home.getX() + 0.5D, home.getY() + 8.0D, home.getZ() + 0.5D, 1.0D);
+                if (!this.isFlying() && !this.isHovering()) {
+                    this.setHovering(true);
+                }
+            }
+        }
+    }
+
+    @Override
     protected boolean shouldTarget(Entity entity) {
+        if (this.isBlackFrost() && entity instanceof IDreadMob) {
+            return false;
+        }
         if (entity instanceof EntityDragonBase && !this.isTame()) {
             return entity.getType() != this.getType() && this.getBbWidth() >= entity.getBbWidth() && !((EntityDragonBase) entity).isMobDead();
         }
         return entity instanceof Player || DragonUtils.isDragonTargetable(entity, IafTagRegistry.ICE_DRAGON_TARGETS) || entity instanceof WaterAnimal || !this.isTame() && DragonUtils.isVillager(entity);
+    }
+
+    @Override
+    protected boolean canAddPassenger(@NotNull Entity passenger) {
+        if (this.isBlackFrost()) {
+            return passenger instanceof EntityDreadQueen && super.canAddPassenger(passenger);
+        }
+        return super.canAddPassenger(passenger);
+    }
+
+    @Override
+    public boolean shouldRenderEyes() {
+        if (this.isBlackFrost()) {
+            return !this.isModelDead() && !EntityGorgon.isStoneMob(this);
+        }
+        return super.shouldRenderEyes();
+    }
+
+    @Override
+    public @NotNull InteractionResult mobInteract(@NotNull Player player, @NotNull InteractionHand hand) {
+        if (this.isBlackFrost()) {
+            return InteractionResult.PASS;
+        }
+        return super.mobInteract(player, hand);
     }
 
     @Override
@@ -140,6 +240,7 @@ public class EntityIceDragon extends EntityDragonBase {
         super.addAdditionalSaveData(compound);
         compound.putBoolean("Swimming", this.isDragonSwimming());
         compound.putInt("SwimmingTicks", this.ticksSwiming);
+        compound.putBoolean("BlackFrost", this.isBlackFrost());
     }
 
     @Override
@@ -147,11 +248,12 @@ public class EntityIceDragon extends EntityDragonBase {
         super.readAdditionalSaveData(compound);
         this.setDragonSwimming(compound.getBooleanOr("Swimming", false));
         this.ticksSwiming = compound.getIntOr("SwimmingTicks", 0);
+        this.setBlackFrost(compound.getBooleanOr("BlackFrost", false));
     }
 
     @Override
     public boolean canBeControlledByRider() {
-        return true;
+        return !this.isBlackFrost();
     }
 
     @Override
@@ -168,7 +270,7 @@ public class EntityIceDragon extends EntityDragonBase {
                 case SHAKE_PREY:
                     boolean flag = false;
                     if (new Random().nextInt(2) == 0 && isDirectPathBetweenPoints(this, this.position().add(0, this.getBbHeight() / 2, 0), entityIn.position().add(0, entityIn.getBbHeight() / 2, 0)) &&
-                        entityIn.getBbWidth() < this.getBbWidth() * 0.5F && this.getControllingPassenger() == null && this.getDragonStage() > 1 && !(entityIn instanceof EntityDragonBase) && !DragonUtils.isAnimaniaMob(entityIn)) {
+                        entityIn.getBbWidth() < this.getBbWidth() * 0.5F && this.getControllingPassenger() == null && this.getDragonStage() > 1 && !(entityIn instanceof EntityDragonBase) && !DragonUtils.isAnimaniaMob(entityIn) && !this.isBlackFrost()) {
                         this.setAnimation(ANIMATION_SHAKEPREY);
                         flag = true;
                         entityIn.startRiding(this);
@@ -189,6 +291,9 @@ public class EntityIceDragon extends EntityDragonBase {
     @Override
     public void aiStep() {
         super.aiStep();
+        if (!this.level().isClientSide() && this.isBlackFrost()) {
+            this.tickBlackFrostCombat();
+        }
         LivingEntity attackTarget = this.getTarget();
         if (!this.level().isClientSide() && this.isInLava() && this.isAllowedToTriggerFlight() && !this.isModelDead()) {
             this.setHovering(true);
@@ -631,7 +736,7 @@ public class EntityIceDragon extends EntityDragonBase {
 
     @Override
     public boolean isFood(@Nullable ItemStack stack) {
-        return !stack.isEmpty() && stack.getItem() != null && stack.getItem() == IafItemRegistry.FROST_STEW.get();
+        return !this.isBlackFrost() && !stack.isEmpty() && stack.getItem() != null && stack.getItem() == IafItemRegistry.FROST_STEW.get();
     }
 
     @Override

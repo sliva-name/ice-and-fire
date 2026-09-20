@@ -1,0 +1,96 @@
+{
+  "attributes": {
+    "minecraft:visual/sky_color": "#121826"
+  },
+  "carvers": [],
+  "creature_spawn_probability": 0.02,
+  "downfall": 0.9,
+  "effects": {
+    "fog_color": "#0b1220",
+    "mood_sound": {
+      "block_search_extent": 8,
+      "offset": 2.0,
+      "sound": "minecraft:ambient.cave",
+      "tick_delay": 6000
+    },
+    "particle": {
+      "options": {
+        "type": "minecraft:white_ash"
+      },
+      "probability": 0.06
+    },
+    "sky_color": "#121826",
+    "water_color": "#1b2838",
+    "water_fog_color": "#05080d"
+  },
+  "features": [
+    [],
+    [],
+    [],
+    [],
+    [
+      "iceandfire:dread_ice_spike",
+      "iceandfire:dread_ice_patch",
+      "minecraft:ice_spike",
+      "minecraft:ice_patch"
+    ],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      "minecraft:freeze_top_layer"
+    ]
+  ],
+  "has_precipitation": true,
+  "spawn_costs": {},
+  "spawners": {
+    "ambient": [],
+    "axolotls": [],
+    "creature": [],
+    "misc": [],
+    "monster": [
+      {
+        "type": "iceandfire:dread_thrall",
+        "maxCount": 4,
+        "minCount": 2,
+        "weight": 100
+      },
+      {
+        "type": "iceandfire:dread_ghoul",
+        "maxCount": 3,
+        "minCount": 1,
+        "weight": 80
+      },
+      {
+        "type": "iceandfire:dread_beast",
+        "maxCount": 2,
+        "minCount": 1,
+        "weight": 40
+      },
+      {
+        "type": "iceandfire:dread_scuttler",
+        "maxCount": 2,
+        "minCount": 1,
+        "weight": 30
+      },
+      {
+        "type": "iceandfire:dread_knight",
+        "maxCount": 2,
+        "minCount": 1,
+        "weight": 20
+      },
+      {
+        "type": "iceandfire:dread_lich",
+        "maxCount": 1,
+        "minCount": 1,
+        "weight": 8
+      }
+    ],
+    "underground_water_creature": [],
+    "water_ambient": [],
+    "water_creature": []
+  },
+  "temperature": 0.0
+}

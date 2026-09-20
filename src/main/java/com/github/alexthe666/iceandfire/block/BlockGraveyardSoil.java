@@ -30,7 +30,7 @@ public class BlockGraveyardSoil extends Block {
 
 
     @Override
-    public void tick(@NotNull BlockState state, ServerLevel worldIn, @NotNull BlockPos pos, @NotNull net.minecraft.util.RandomSource rand) {
+    public void randomTick(@NotNull BlockState state, ServerLevel worldIn, @NotNull BlockPos pos, @NotNull net.minecraft.util.RandomSource rand) {
         if (!worldIn.isClientSide()) {
             if (!worldIn.isAreaLoaded(pos, 3))
                 return;

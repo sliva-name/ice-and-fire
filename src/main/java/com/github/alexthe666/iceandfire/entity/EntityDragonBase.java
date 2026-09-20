@@ -1570,6 +1570,15 @@ public abstract class EntityDragonBase extends TamableAnimal implements IPassabi
     @Override
     protected void positionRider(@NotNull Entity passenger, Entity.@NotNull MoveFunction callback) {
         if (this.hasPassenger(passenger)) {
+            if (passenger instanceof EntityDreadQueen) {
+                if (this.isModelDead()) {
+                    passenger.stopRiding();
+                    return;
+                }
+                Vec3 riderPos = this.getRiderPosition();
+                callback.accept(passenger, riderPos.x, riderPos.y + passenger.getBbHeight(), riderPos.z);
+                return;
+            }
             if (this.getControllingPassenger() == null || !this.getControllingPassenger().getUUID().equals(passenger.getUUID())) {
                 updatePreyInMouth(passenger);
             } else {

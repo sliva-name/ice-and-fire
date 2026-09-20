@@ -97,7 +97,11 @@ public class DataGenerators {
     }
 
     static void addBiomeTag(String location, TagBuilder builder) {
-        JsonObject json = TagFile.CODEC.encodeStart(JsonOps.INSTANCE, new TagFile(builder.build(), builder.shouldReplace()))
+        var entries = builder.build();
+        if (entries.isEmpty()) {
+            return;
+        }
+        JsonObject json = TagFile.CODEC.encodeStart(JsonOps.INSTANCE, new TagFile(entries, builder.shouldReplace()))
             .getOrThrow().getAsJsonObject();
         resources.add(Identifier.fromNamespaceAndPath(IceAndFire.MODID, "tags/worldgen/biome/" + location), json);
     }

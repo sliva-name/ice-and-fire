@@ -4,6 +4,7 @@ package com.github.alexthe666.iceandfire.config.biome;
 import com.github.alexthe666.iceandfire.IceAndFire;
 import com.google.gson.*;
 import net.minecraft.core.Holder;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.tags.BiomeTags;
 import net.minecraft.tags.TagKey;
@@ -121,8 +122,11 @@ public class IafSpawnBiomeData extends com.github.alexthe666.citadel.config.biom
                 return false;
             }else{
                 if(type == BiomeEntryType.BIOME_TAG){
-                    if(biomeHolder.tags().anyMatch((biomeTagKey -> biomeTagKey.location() != null && biomeTagKey.location().toString().equals(value)))){
-                        return !negate;
+                    if (biomeHolder != null) {
+                        TagKey<Biome> tag = TagKey.create(Registries.BIOME, Identifier.parse(value));
+                        boolean hasTag = biomeHolder.is(tag) || biomeHolder.tags().anyMatch(
+                            biomeTagKey -> biomeTagKey.location() != null && biomeTagKey.location().toString().equals(value));
+                        return hasTag ? !negate : negate;
                     }
                     return negate;
                 }

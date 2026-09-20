@@ -93,19 +93,12 @@ public class DefaultBiomes {
     //.addBiomeEntry(BiomeEntryType.BIOME_CATEGORY, false, "icy", 1); // Doesn't exist anymore, might need a replacement
 
     public static final IafSpawnBiomeData MAUSOLEUM = new IafSpawnBiomeData()
-            /*.addBiomeEntry(BiomeEntryType.BIOME_TAG, false, BiomeTags.IS_OVERWORLD.location().toString(), 0)
+            .addBiomeEntry(BiomeEntryType.BIOME_TAG, false, BiomeTags.IS_OVERWORLD.location().toString(), 0)
             .addBiomeEntry(BiomeEntryType.BIOME_TAG, false, IS_SNOWY.location().toString(), 0)
-            .addBiomeEntry(BiomeEntryType.BIOME_TAG, true, IS_WET.location().toString(), 0)
-            .addBiomeEntry(BiomeEntryType.BIOME_TAG, true, IS_OCEAN.location().toString(), 0)
-            .addBiomeEntry(BiomeEntryType.BIOME_TAG, true, IS_RIVER.location().toString(), 0)*/
-            .addBiomeEntry(BiomeEntryType.BIOME_DICT, false, "overworld", 0)
-            .addBiomeEntry(BiomeEntryType.BIOME_DICT, false, "snowy", 0)
-            .addBiomeEntry(BiomeEntryType.BIOME_DICT, true, "ocean", 0)
-            .addBiomeEntry(BiomeEntryType.BIOME_DICT, false, "overworld", 1)
-            .addBiomeEntry(BiomeEntryType.BIOME_CATEGORY, false, "icy", 1)
-            .addBiomeEntry(BiomeEntryType.BIOME_DICT, true, "ocean", 1)
-            .addBiomeEntry(BiomeEntryType.REGISTRY_NAME, false, "terralith:wintry_forest", 2)
-            .addBiomeEntry(BiomeEntryType.REGISTRY_NAME, false, "terralith:wintry_lowlands", 3);
+            .addBiomeEntry(BiomeEntryType.BIOME_TAG, true, BiomeTags.IS_OCEAN.location().toString(), 0)
+            .addBiomeEntry(BiomeEntryType.BIOME_TAG, true, BiomeTags.IS_RIVER.location().toString(), 0)
+            .addBiomeEntry(BiomeEntryType.REGISTRY_NAME, false, "terralith:wintry_forest", 1)
+            .addBiomeEntry(BiomeEntryType.REGISTRY_NAME, false, "terralith:wintry_lowlands", 2);
 
     public static final IafSpawnBiomeData SNOWY = new IafSpawnBiomeData()
             .addBiomeEntry(BiomeEntryType.BIOME_TAG, false, BiomeTags.IS_OVERWORLD.location().toString(), 0)
@@ -131,14 +124,10 @@ public class DefaultBiomes {
             .addBiomeEntry(BiomeEntryType.REGISTRY_NAME, false, "byg:araucaria_savanna", 5);
 
     public static final IafSpawnBiomeData BEACHES = new IafSpawnBiomeData()
-            /*.addBiomeEntry(BiomeEntryType.BIOME_TAG, false, BiomeTags.IS_OVERWORLD.location().toString(), 0)
-            .addBiomeEntry(BiomeEntryType.BIOME_TAG, false, Tags.Biomes.IS_BEACH.location().toString(), 0)*/
-            .addBiomeEntry(BiomeEntryType.BIOME_DICT, false, "overworld", 0)
-            .addBiomeEntry(BiomeEntryType.BIOME_DICT, false, "beach", 0)
-            .addBiomeEntry(BiomeEntryType.BIOME_DICT, false, "overworld", 1)
-            .addBiomeEntry(BiomeEntryType.BIOME_CATEGORY, false, "beach", 1)
-            .addBiomeEntry(BiomeEntryType.REGISTRY_NAME, false, "byg:dacite_shore", 2)
-            .addBiomeEntry(BiomeEntryType.REGISTRY_NAME, false, "byg:basalt_barrera", 3);
+            .addBiomeEntry(BiomeEntryType.BIOME_TAG, false, BiomeTags.IS_OVERWORLD.location().toString(), 0)
+            .addBiomeEntry(BiomeEntryType.BIOME_TAG, false, BiomeTags.IS_BEACH.location().toString(), 0)
+            .addBiomeEntry(BiomeEntryType.REGISTRY_NAME, false, "byg:dacite_shore", 1)
+            .addBiomeEntry(BiomeEntryType.REGISTRY_NAME, false, "byg:basalt_barrera", 2);
 
     public static final IafSpawnBiomeData SWAMPS = new IafSpawnBiomeData()
             .addBiomeEntry(BiomeEntryType.BIOME_TAG, false, BiomeTags.IS_OVERWORLD.location().toString(), 0)
@@ -214,18 +203,10 @@ public class DefaultBiomes {
             .addBiomeEntry(BiomeEntryType.REGISTRY_NAME, false, "byg:autumnal_valley", 3);
 
     public static final IafSpawnBiomeData GRAVEYARD = new IafSpawnBiomeData()
-            /*.addBiomeEntry(BiomeEntryType.BIOME_TAG, false, BiomeTags.IS_OVERWORLD.location().toString(), 0)
-            .addBiomeEntry(BiomeEntryType.BIOME_TAG, true, IS_OCEAN.location().toString(), 0)
-            .addBiomeEntry(BiomeEntryType.BIOME_TAG, true, IS_WATER.location().toString(), 0)
-            .addBiomeEntry(BiomeEntryType.BIOME_TAG, true, Tags.Biomes.IS_BEACH.location().toString(), 0)
-            .addBiomeEntry(BiomeEntryType.BIOME_CATEGORY, true, "ocean", 0)
-            .addBiomeEntry(BiomeEntryType.BIOME_TAG, true, IS_UNDERGROUND.location().toString(), 0)*/
-            .addBiomeEntry(BiomeEntryType.BIOME_DICT, false, "overworld", 0)
-            .addBiomeEntry(BiomeEntryType.BIOME_DICT, true, "ocean", 0)
-            .addBiomeEntry(BiomeEntryType.BIOME_CATEGORY, true, "ocean", 0)
-            .addBiomeEntry(BiomeEntryType.BIOME_CATEGORY, true, "river", 0)
-            .addBiomeEntry(BiomeEntryType.BIOME_DICT, true, "beach", 0)
-            .addBiomeEntry(BiomeEntryType.BIOME_CATEGORY, true, "beach", 0);
+            .addBiomeEntry(BiomeEntryType.BIOME_TAG, false, BiomeTags.IS_OVERWORLD.location().toString(), 0)
+            .addBiomeEntry(BiomeEntryType.BIOME_TAG, true, BiomeTags.IS_OCEAN.location().toString(), 0)
+            .addBiomeEntry(BiomeEntryType.BIOME_TAG, true, BiomeTags.IS_RIVER.location().toString(), 0)
+            .addBiomeEntry(BiomeEntryType.BIOME_TAG, true, BiomeTags.IS_BEACH.location().toString(), 0);
 
     public static final IafSpawnBiomeData HIPPOGRYPH_BLACK = new IafSpawnBiomeData()
             .addBiomeEntry(BiomeEntryType.BIOME_TAG, false, BiomeTags.IS_OVERWORLD.location().toString(), 0)

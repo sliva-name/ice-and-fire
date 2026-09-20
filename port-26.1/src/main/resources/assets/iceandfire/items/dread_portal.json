@@ -1,9 +1,6 @@
 {
   "model": {
-    "type": "minecraft:special",
-    "base": "iceandfire:item/dread_portal_special",
-    "model": {
-      "type": "iceandfire:block_item"
-    }
+    "type": "minecraft:model",
+    "model": "iceandfire:item/dread_portal"
   }
 }

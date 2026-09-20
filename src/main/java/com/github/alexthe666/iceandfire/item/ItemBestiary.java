@@ -47,6 +47,12 @@ public class ItemBestiary extends Item {
     @Override
     public @NotNull InteractionResult use(Level worldIn, Player playerIn, @NotNull InteractionHand handIn) {
         ItemStack itemStackIn = playerIn.getItemInHand(handIn);
+        int[] pages = IafItemData.has(itemStackIn)
+            ? IafItemData.copy(itemStackIn).getIntArray("Pages").orElse(new int[0])
+            : new int[0];
+        if (pages.length == 0) {
+            IafItemData.update(itemStackIn, tag -> tag.putIntArray("Pages", new int[]{EnumBestiaryPages.INTRODUCTION.ordinal()}));
+        }
         if (worldIn.isClientSide()) {
             IceAndFire.PROXY.openBestiaryGui(itemStackIn);
         }

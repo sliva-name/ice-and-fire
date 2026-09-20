@@ -24,7 +24,7 @@ public class DragonRenderState extends LivingEntityRenderState {
     public float sleepProgress, sitProgress, ridingProgress, tackleProgress, diveProgress, prevDiveProgress;
     public float fireBreathProgress, prevFireBreathProgress;
     public final float[] prevAnimationProgresses = new float[10];
-    public boolean hovering, flying, sleeping, noAi, actuallyBreathingFire, modelDead;
+    public boolean hovering, flying, sleeping, noAi, actuallyBreathingFire, modelDead, blackFrost;
     public boolean vehicle, passenger, breathingFire, male;
     public String customPose = "";
     // Buffer contributions are sampled during extraction, in radians, not retained as live buffers.

@@ -1,0 +1,11 @@
+{
+  "type": "iceandfire:dread_lands",
+  "generator": {
+    "type": "minecraft:noise",
+    "settings": "iceandfire:dread_lands",
+    "biome_source": {
+      "type": "minecraft:fixed",
+      "biome": "iceandfire:dread_lands"
+    }
+  }
+}

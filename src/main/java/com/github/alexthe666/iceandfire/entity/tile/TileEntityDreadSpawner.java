@@ -1,56 +1,57 @@
 package com.github.alexthe666.iceandfire.entity.tile;
 
-import net.minecraft.world.level.storage.ValueOutput;
-import net.minecraft.world.level.storage.ValueInput;
+import com.github.alexthe666.iceandfire.block.IafBlockRegistry;
+import com.github.alexthe666.iceandfire.entity.EntityDreadMob;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.BaseSpawner;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.SpawnData;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraft.world.level.block.entity.SpawnerBlockEntity;
+import net.minecraft.world.level.Spawner;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 
-public class TileEntityDreadSpawner extends SpawnerBlockEntity {
-    private final BlockEntityType<?> type;
+public class TileEntityDreadSpawner extends BlockEntity implements Spawner {
     private final DreadSpawnerBaseLogic spawner = new DreadSpawnerBaseLogic() {
         @Override
-        public void broadcastEvent(Level p_155767_, @NotNull BlockPos p_155768_, int p_155769_) {
-            p_155767_.blockEvent(p_155768_, Blocks.SPAWNER, p_155769_, 0);
+        public void broadcastEvent(Level level, @NotNull BlockPos pos, int id) {
+            level.blockEvent(pos, IafBlockRegistry.DREAD_SPAWNER.get(), id, 0);
         }
 
         @Override
-        public void setNextSpawnData(@Nullable Level p_155771_, @NotNull BlockPos p_155772_, @NotNull SpawnData p_155773_) {
-            super.setNextSpawnData(p_155771_, p_155772_, p_155773_);
-            if (p_155771_ != null) {
-                BlockState blockstate = p_155771_.getBlockState(p_155772_);
-                p_155771_.sendBlockUpdated(p_155772_, blockstate, blockstate, 4);
+        public void setNextSpawnData(@Nullable Level level, @NotNull BlockPos pos, @NotNull SpawnData nextSpawnData) {
+            super.setNextSpawnData(level, pos, nextSpawnData);
+            if (level != null) {
+                BlockState state = level.getBlockState(pos);
+                level.sendBlockUpdated(pos, state, state, 4);
             }
-
         }
 
         @Override
-        @javax.annotation.Nullable
-        public net.minecraft.world.level.block.entity.BlockEntity getSpawnerBlockEntity() {
+        @Nullable
+        public BlockEntity getSpawnerBlockEntity() {
             return TileEntityDreadSpawner.this;
         }
     };
 
     public TileEntityDreadSpawner(BlockPos pos, BlockState state) {
-        super(pos, state);
-        this.type = IafTileEntityRegistry.DREAD_SPAWNER.get();
+        super(IafTileEntityRegistry.DREAD_SPAWNER.get(), pos, state);
     }
 
     @Override
-    public void loadAdditional(@NotNull ValueInput p_155760_) {
-        super.loadAdditional(p_155760_);
-        this.spawner.load(this.level, this.worldPosition, p_155760_);
+    public void loadAdditional(@NotNull ValueInput input) {
+        super.loadAdditional(input);
+        this.spawner.load(this.level, this.worldPosition, input);
     }
 
     @Override
@@ -59,12 +60,15 @@ public class TileEntityDreadSpawner extends SpawnerBlockEntity {
         this.spawner.save(output);
     }
 
-    public static void clientTick(Level p_155755_, BlockPos p_155756_, BlockState p_155757_, TileEntityDreadSpawner p_155758_) {
-        p_155758_.spawner.clientTick(p_155755_, p_155756_);
+    public static void clientTick(Level level, BlockPos pos, BlockState state, TileEntityDreadSpawner entity) {
+        entity.spawner.clientTick(level, pos);
     }
 
-    public static void serverTick(Level p_155762_, BlockPos p_155763_, BlockState p_155764_, TileEntityDreadSpawner p_155765_) {
-        p_155765_.spawner.serverTick((ServerLevel) p_155762_, p_155763_);
+    public static void serverTick(Level level, BlockPos pos, BlockState state, TileEntityDreadSpawner entity) {
+        if (!EntityDreadMob.canSpawnInDungeon(level, pos)) {
+            return;
+        }
+        entity.spawner.serverTick((ServerLevel) level, pos);
     }
 
     @Override
@@ -74,15 +78,15 @@ public class TileEntityDreadSpawner extends SpawnerBlockEntity {
     }
 
     @Override
-    public @NotNull CompoundTag getUpdateTag(net.minecraft.core.HolderLookup.Provider registries) {
-        CompoundTag compoundtag = this.saveWithFullMetadata(registries);
-        compoundtag.remove("SpawnPotentials");
-        return compoundtag;
+    public @NotNull CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+        CompoundTag tag = this.saveCustomOnly(registries);
+        tag.remove("SpawnPotentials");
+        return tag;
     }
 
     @Override
-    public boolean triggerEvent(int p_59797_, int p_59798_) {
-        return this.spawner.onEventTriggered(this.level, p_59797_) || super.triggerEvent(p_59797_, p_59798_);
+    public boolean triggerEvent(int id, int param) {
+        return this.spawner.onEventTriggered(this.level, id) || super.triggerEvent(id, param);
     }
 
     public boolean onlyOpCanSetNbt() {
@@ -90,13 +94,12 @@ public class TileEntityDreadSpawner extends SpawnerBlockEntity {
     }
 
     @Override
+    public void setEntityId(EntityType<?> type, RandomSource random) {
+        this.spawner.setEntityId(type, this.level, random, this.worldPosition);
+        this.setChanged();
+    }
+
     public @NotNull BaseSpawner getSpawner() {
         return this.spawner;
     }
-
-    @Override
-    public @NotNull BlockEntityType<?> getType() {
-        return this.type != null ? this.type : super.getType();
-    }
-
 }

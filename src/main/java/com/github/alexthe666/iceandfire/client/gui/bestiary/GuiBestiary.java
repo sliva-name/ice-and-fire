@@ -9,6 +9,7 @@ import com.github.alexthe666.iceandfire.enums.EnumBestiaryPages;
 import com.github.alexthe666.iceandfire.enums.EnumDragonArmor;
 import com.github.alexthe666.iceandfire.enums.EnumSeaSerpent;
 import com.github.alexthe666.iceandfire.enums.EnumTroll;
+import com.github.alexthe666.iceandfire.item.IafItemData;
 import com.github.alexthe666.iceandfire.item.IafItemRegistry;
 import com.github.alexthe666.iceandfire.misc.IafSoundRegistry;
 import com.google.common.collect.Maps;
@@ -16,11 +17,7 @@ import com.google.common.primitives.Ints;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.core.component.DataComponents;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.item.component.CustomData;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.resources.Identifier;
@@ -32,6 +29,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -40,6 +38,8 @@ import java.util.*;
 public class GuiBestiary extends Screen {
     protected static final int X = 390;
     protected static final int Y = 245;
+    private static final int INK = 0xFF6B4E3A;
+    private static final int INK_TITLE = 0xFF8B7355;
     private static final Identifier TEXTURE = Identifier.parse("iceandfire:textures/gui/bestiary/bestiary.png");
     private static final Identifier DRAWINGS_0 = Identifier.parse("iceandfire:textures/gui/bestiary/drawings_0.png");
     private static final Identifier DRAWINGS_1 = Identifier.parse("iceandfire:textures/gui/bestiary/drawings_1.png");
@@ -61,16 +61,15 @@ public class GuiBestiary extends Screen {
     public GuiBestiary(ItemStack book) {
         super(Component.translatable("bestiary_gui"));
         this.book = book;
-        if (!book.isEmpty() && book.getItem() != null && book.getItem() == IafItemRegistry.BESTIARY.get()) {
-            CompoundTag tag = book.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
-            if (!tag.isEmpty()) {
-                Set<EnumBestiaryPages> pages = EnumBestiaryPages
-                    .containedPages(Ints.asList(tag.getIntArray("Pages").orElse(new int[0])));
-                allPageTypes.addAll(pages);
-                // Make sure the pages are sorted according to the enum
-                allPageTypes.sort(Comparator.comparingInt(Enum::ordinal));
-                indexPagesTotal = (int) Math.ceil(pages.size() / 10D);
+        if (!book.isEmpty() && book.getItem() == IafItemRegistry.BESTIARY.get()) {
+            int[] pageIds = IafItemData.copy(book).getIntArray("Pages").orElse(new int[0]);
+            if (pageIds.length == 0) {
+                pageIds = new int[]{EnumBestiaryPages.INTRODUCTION.ordinal()};
             }
+            Set<EnumBestiaryPages> pages = EnumBestiaryPages.containedPages(Ints.asList(pageIds));
+            allPageTypes.addAll(pages);
+            allPageTypes.sort(Comparator.comparingInt(Enum::ordinal));
+            indexPagesTotal = Math.max(1, (int) Math.ceil(pages.size() / 10D));
         }
         index = true;
     }
@@ -124,19 +123,19 @@ public class GuiBestiary extends Screen {
         this.addRenderableWidget(this.nextPage);
         if (!allPageTypes.isEmpty()) {
             for (int i = 0; i < allPageTypes.size(); i++) {
-                int xIndex = i % -2;
-                int yIndex = i % 10;
-                int id = 2 + i;
-                IndexPageButton button = new IndexPageButton(centerX + 15 + (xIndex * 200),
-                    centerY + 10 + (yIndex * 20) - (xIndex == 1 ? 20 : 0),
+                int column = i % 2;
+                int row = (i % 10) / 2;
+                final int pageIndex = i;
+                IndexPageButton button = new IndexPageButton(centerX + 15 + (column * 200),
+                    centerY + 10 + (row * 40),
                     Component.translatable("bestiary."
                         + EnumBestiaryPages.values()[allPageTypes.get(i).ordinal()].toString().toLowerCase()),
                     (p_214132_1_) -> {
-                        if (this.indexButtons.get(id - 2) != null && allPageTypes.get(id - 2) != null) {
+                        if (pageIndex < allPageTypes.size()) {
                             Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(IafSoundRegistry.BESTIARY_PAGE, 1.0F));
                             this.index = false;
                             this.bookPages = 0;
-                            this.pageType = allPageTypes.get(id - 2);
+                            this.pageType = allPageTypes.get(pageIndex);
                         }
                     });
                 this.indexButtons.add(button);
@@ -146,37 +145,53 @@ public class GuiBestiary extends Screen {
     }
 
     @Override
-    public void extractRenderState(@NotNull GuiGraphicsExtractor ms, int mouseX, int mouseY, float partialTicks) {
-        this.extractBackground(ms, mouseX, mouseY, partialTicks);
-        for (Renderable widget : this.renderables) {
-            if (widget instanceof IndexPageButton) {
-                IndexPageButton button = (IndexPageButton) widget;
-                button.active = index;
-                button.visible = index;
-            }
-
-        }
-        for (int i = 0; i < this.indexButtons.size(); i++) {
-            this.indexButtons.get(i).active = i < 10 * (this.indexPages + 1) && i >= 10 * (this.indexPages) && this.index;
-        }
+    public void extractBackground(@NotNull GuiGraphicsExtractor ms, int mouseX, int mouseY, float partialTicks) {
+        super.extractBackground(ms, mouseX, mouseY, partialTicks);
         int cornerX = (width - X) / 2;
         int cornerY = (height - Y) / 2;
         ms.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, cornerX, cornerY, 0, 0, X, Y, 390, 390);
-        super.extractRenderState(ms, mouseX, mouseY, partialTicks);
-        ms.pose().pushMatrix();
-        ms.pose().translate(cornerX, cornerY);
-        int centerX = (width - X) / 2;
-        int centerY = (height - Y) / 2;
-        if (!index) {
+        if (!index && pageType != null) {
+            ms.pose().pushMatrix();
+            ms.pose().translate(cornerX, cornerY);
             drawPerPage(ms, bookPages);
+            ms.pose().popMatrix();
+        }
+    }
+
+    @Override
+    public void extractRenderState(@NotNull GuiGraphicsExtractor ms, int mouseX, int mouseY, float partialTicks) {
+        updateButtons();
+        super.extractRenderState(ms, mouseX, mouseY, partialTicks);
+        if (!index && pageType != null) {
+            int cornerX = (width - X) / 2;
+            int cornerY = (height - Y) / 2;
+            ms.pose().pushMatrix();
+            ms.pose().translate(cornerX, cornerY);
+            writeFromTxt(ms);
             int pageLeft = bookPages * 2 + 1;
             int pageRight = pageLeft + 1;
-            ms.text(font, "" + pageLeft, centerX, centerY - (int) (Y * 0.13), 0X303030);
-            ms.text(font, "" + pageRight, centerX, centerY - (int) (Y * 0.13), 0X303030);
+            ms.text(font, String.valueOf(pageLeft), 15, Y - 28, INK, false);
+            ms.text(font, String.valueOf(pageRight), 220, Y - 28, INK, false);
+            ms.pose().popMatrix();
         }
-        ms.pose().popMatrix();
-        // widgets extracted by super.extractRenderState
+    }
+
+    private void updateButtons() {
+        for (int i = 0; i < this.indexButtons.size(); i++) {
+            boolean onPage = this.index && i >= this.indexPages * 10 && i < (this.indexPages + 1) * 10;
+            IndexPageButton button = this.indexButtons.get(i);
+            button.visible = onPage;
+            button.active = onPage;
         }
+        if (this.previousPage != null) {
+            this.previousPage.active = this.index ? this.indexPages > 0 : this.pageType != null;
+        }
+        if (this.nextPage != null) {
+            this.nextPage.active = this.index
+                ? this.indexPages < this.indexPagesTotal - 1
+                : this.pageType != null && this.bookPages < this.pageType.pages;
+        }
+    }
 
     public void drawPerPage(GuiGraphicsExtractor ms, int bookPages) {
         imageFromTxt(ms);
@@ -779,24 +794,22 @@ public class GuiBestiary extends Screen {
             default:
                 break;
         }
-        writeFromTxt(ms);
+    }
+
+    @Nullable
+    private Resource bestiaryTxt(String fileName) {
+        String languageName = Minecraft.getInstance().options.languageCode.toLowerCase(Locale.ROOT);
+        Identifier localized = Identifier.parse("iceandfire:lang/bestiary/" + languageName + "_0/" + fileName);
+        Identifier fallback = Identifier.parse("iceandfire:lang/bestiary/en_us_0/" + fileName);
+        var resources = Minecraft.getInstance().getResourceManager();
+        return resources.getResource(localized).or(() -> resources.getResource(fallback)).orElse(null);
     }
 
     public void imageFromTxt(GuiGraphicsExtractor ms) {
         String fileName = this.pageType.toString().toLowerCase(Locale.ROOT) + "_" + this.bookPages + ".txt";
-        String languageName = Minecraft.getInstance().options.languageCode.toLowerCase(Locale.ROOT);
-        Identifier fileLoc = Identifier.parse("iceandfire:lang/bestiary/" + languageName + "_0/" + fileName);
-        Identifier backupLoc = Identifier.parse("iceandfire:lang/bestiary/en_us_0/" + fileName);
-        Resource resource = null;
-
-        try {
-            resource = Minecraft.getInstance().getResourceManager().getResource(fileLoc).orElse(null);
-        } catch (Exception e) {
-            try {
-                resource = Minecraft.getInstance().getResourceManager().getResource(backupLoc).orElse(null);
-            } catch (Exception e1) {
-                e1.printStackTrace();
-            }
+        Resource resource = bestiaryTxt(fileName);
+        if (resource == null) {
+            return;
         }
         try {
             final List<String> lines = IOUtils.readLines(resource.open(), StandardCharsets.UTF_8);
@@ -853,25 +866,19 @@ public class GuiBestiary extends Screen {
     }
 
     private void drawRecipe(GuiGraphicsExtractor ms, ItemStack result, ItemStack[] ingredients, int x, int y, float scale) {
-        // Code snippet based on Citadels GuiBasicBook
-        int k = (this.width - X + 84) / 2;
-        int l = (this.height - Y + 40) / 2;
-        ms.pose().pushMatrix();
-        ms.pose().translate(k + x, l + y);
-        ms.pose().scale(scale, scale);
-        ms.pose().popMatrix();
+        // Original used screen-space (corner + 42, corner + 20). We are already in book space.
+        int gridX = 42 + x;
+        int gridY = 20 + y;
         for (int i = 0; i < 9; i++) {
             ms.pose().pushMatrix();
-            ms.pose().translate(k, l);
-            ms.pose().translate(((x + (i % 3 * 22) * scale)), ((y + (i / 3 * 22) * scale)));
+            ms.pose().translate(gridX + (i % 3 * 22) * scale, gridY + (i / 3 * 22) * scale);
             ms.pose().scale(scale, scale);
             ms.item(ingredients[i], 0, 0);
             ms.pose().popMatrix();
         }
         ms.pose().pushMatrix();
-        ms.pose().translate(k, l);
         float finScale = scale * 1.5F;
-        ms.pose().translate((x + 70.0F * finScale), (y + 10.0F * finScale));
+        ms.pose().translate(gridX + 70.0F * finScale, gridY + 10.0F * finScale);
         ms.pose().scale(finScale, finScale);
         ms.item(result, 0, 0);
         ms.pose().popMatrix();
@@ -886,49 +893,38 @@ public class GuiBestiary extends Screen {
 
     public void writeFromTxt(GuiGraphicsExtractor ms) {
         String fileName = this.pageType.toString().toLowerCase(Locale.ROOT) + "_" + this.bookPages + ".txt";
-        String languageName = Minecraft.getInstance().options.languageCode.toLowerCase(Locale.ROOT);
-        Identifier fileLoc = Identifier.parse("iceandfire:lang/bestiary/" + languageName + "_0/" + fileName);
-        Identifier backupLoc = Identifier.parse("iceandfire:lang/bestiary/en_us_0/" + fileName);
-        Resource resource = null;
-
-        try {
-            resource = Minecraft.getInstance().getResourceManager().getResource(fileLoc).orElse(null);
-        } catch (Exception e) {
+        Resource resource = bestiaryTxt(fileName);
+        if (resource != null) {
             try {
-                resource = Minecraft.getInstance().getResourceManager().getResource(backupLoc).orElse(null);
-            } catch (Exception e1) {
-                e1.printStackTrace();
+                final List<String> lines = IOUtils.readLines(resource.open(), "UTF-8");
+                int linenumber = 0;
+                for (String line : lines) {
+                    line = line.trim();
+                    if (line.contains("<") || line.contains(">")) {
+                        continue;
+                    }
+                    ms.pose().pushMatrix();
+                    if (usingVanillaFont()) {
+                        ms.pose().scale(0.945F, 0.945F);
+                        ms.pose().translate(0, 5.5F);
+                    }
+                    if (linenumber <= 19) {
+                        ms.text(font, line, 15, 20 + linenumber * 10, INK, false);
+                    } else {
+                        ms.text(font, line, 220, (linenumber - 19) * 10, INK, false);
+                    }
+                    linenumber++;
+                    ms.pose().popMatrix();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        }
-        try {
-            final List<String> lines = IOUtils.readLines(resource.open(), "UTF-8");
-            int linenumber = 0;
-            for (String line : lines) {
-                line = line.trim();
-                if (line.contains("<") || line.contains(">")) {
-                    continue;
-                }
-                ms.pose().pushMatrix();
-                if (usingVanillaFont()) {
-                    ms.pose().scale(0.945F, 0.945F);
-                    ms.pose().translate(0, 5.5F);
-                }
-                if (linenumber <= 19) {
-                    ms.text(font, line, 15, 20 + linenumber * 10, 0X303030);
-                } else {
-                    ms.text(font, line, 220, (linenumber - 19) * 10, 0X303030);
-                }
-                linenumber++;
-                ms.pose().popMatrix();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
         ms.pose().pushMatrix();
         String s = StatCollector.translateToLocal("bestiary." + this.pageType.toString().toLowerCase(Locale.ROOT));
         float scale = font.width(s) <= 100 ? 2 : font.width(s) * 0.0125F;
         ms.pose().scale(scale, scale);
-        ms.text(font, s, 10, 2, 0X7A756A);
+        ms.text(font, s, 10, 2, INK_TITLE, false);
         ms.pose().popMatrix();
     }
 
@@ -944,12 +940,13 @@ public class GuiBestiary extends Screen {
     }
 
     private void drawItemStack(GuiGraphicsExtractor ms, ItemStack stack, int x, int y, float scale) {
-        int cornerX = (width - X) / 2;
-        int cornerY = (height - Y) / 2;
+        if (stack.isEmpty()) {
+            return;
+        }
         ms.pose().pushMatrix();
-        ms.pose().translate(cornerX, cornerY);
+        ms.pose().translate(x * scale, y * scale);
         ms.pose().scale(scale, scale);
-        ms.item(stack, x, y);
+        ms.item(stack, 0, 0);
         ms.pose().popMatrix();
     }
 
@@ -987,12 +984,6 @@ public class GuiBestiary extends Screen {
     }*/
 
     private void drawBlockStack(GuiGraphicsExtractor ms, ItemStack stack, int x, int y, float scale, int zScale) {
-        int cornerX = (width - X) / 2;
-        int cornerY = (height - Y) / 2;
-        ms.pose().pushMatrix();
-        ms.pose().translate(cornerX, cornerY);
-        ms.pose().scale(scale, scale);
-        ms.item(stack, x, y);
-        ms.pose().popMatrix();
+        drawItemStack(ms, stack, x, y, scale);
     }
 }

@@ -4,6 +4,7 @@ import com.github.alexthe666.iceandfire.client.render.entity.DragonRenderState;
 import com.github.alexthe666.iceandfire.client.render.entity.RenderDragonBase;
 import com.github.alexthe666.iceandfire.client.texture.ArrayLayeredTexture;
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
+import com.github.alexthe666.iceandfire.entity.EntityIceDragon;
 import com.github.alexthe666.iceandfire.enums.EnumDragonTextures;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
@@ -34,7 +35,8 @@ public class LayerDragonArmor extends RenderLayer<DragonRenderState, EntityModel
             key += "_" + ordinal;
             equipped |= ordinal != 0;
             var armor = EnumDragonTextures.Armor.getArmorForDragon(dragon, slot);
-            textures.add((type == 0 ? armor.FIRETEXTURE : type == 1 ? armor.ICETEXTURE : armor.LIGHTNINGTEXTURE).toString());
+            boolean blackFrost = dragon instanceof EntityIceDragon ice && ice.isBlackFrost();
+            textures.add((type == 0 || blackFrost ? armor.FIRETEXTURE : type == 1 ? armor.ICETEXTURE : armor.LIGHTNINGTEXTURE).toString());
         }
         if (!equipped) return null;
         return CACHE.computeIfAbsent(key, name -> {

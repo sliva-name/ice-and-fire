@@ -16,6 +16,8 @@ import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
+import net.minecraft.client.renderer.entity.state.HumanoidRenderState;
+import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.world.entity.Entity;
 
 public class LayerDragonRider extends RenderLayer<DragonRenderState, EntityModel<DragonRenderState>> {
@@ -47,9 +49,21 @@ public class LayerDragonRider extends RenderLayer<DragonRenderState, EntityModel
         boolean upright = (passenger.getBbHeight() > passenger.getBbWidth() || model instanceof HumanoidModel)
             && !(model instanceof QuadrupedModel) && !horse;
         boolean prey = dragon.getControllingPassenger() != passenger;
-        if (excludeDreadQueenMob && passenger instanceof EntityDreadQueen) prey = false;
-        state.riders.add(new DragonRenderState.Rider(nested, riderRenderer,
-            passenger.yRotO + (passenger.getYRot() - passenger.yRotO) * partialTick, prey, upright, horse));
+        float yaw = passenger.yRotO + (passenger.getYRot() - passenger.yRotO) * partialTick;
+        if (passenger instanceof EntityDreadQueen) {
+            prey = false;
+            yaw = 0.0F;
+            if (nested instanceof LivingEntityRenderState living) {
+                living.bodyRot = 0.0F;
+                living.yRot = 0.0F;
+                living.xRot = 0.0F;
+                living.walkAnimationSpeed = 0.0F;
+            }
+            if (nested instanceof HumanoidRenderState humanoid) {
+                humanoid.isPassenger = true;
+            }
+        }
+        state.riders.add(new DragonRenderState.Rider(nested, riderRenderer, yaw, prey, upright, horse));
     }
 
     @Override

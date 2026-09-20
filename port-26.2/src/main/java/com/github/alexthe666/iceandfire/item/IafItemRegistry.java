@@ -425,6 +425,7 @@ public class IafItemRegistry {
     public static final RegistryObject<Item> SPAWN_EGG_DREAD_SCUTTLER = spawnEgg("spawn_egg_dread_scuttler", IafEntityRegistry.DREAD_SCUTTLER);
     public static final RegistryObject<Item> SPAWN_EGG_LICH = spawnEgg("spawn_egg_lich", IafEntityRegistry.DREAD_LICH);
     public static final RegistryObject<Item> SPAWN_EGG_DREAD_KNIGHT = spawnEgg("spawn_egg_dread_knight", IafEntityRegistry.DREAD_KNIGHT);
+    public static final RegistryObject<Item> SPAWN_EGG_DREAD_QUEEN = spawnEgg("spawn_egg_dread_queen", IafEntityRegistry.DREAD_QUEEN);
     public static final RegistryObject<Item> SPAWN_EGG_DREAD_HORSE = spawnEgg("spawn_egg_dread_horse", IafEntityRegistry.DREAD_HORSE);
     public static final RegistryObject<Item> SPAWN_EGG_HYDRA = spawnEgg("spawn_egg_hydra", IafEntityRegistry.HYDRA);
     public static final RegistryObject<Item> SPAWN_EGG_GHOST = spawnEgg("spawn_egg_ghost", IafEntityRegistry.GHOST);

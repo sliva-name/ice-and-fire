@@ -1564,12 +1564,30 @@ public abstract class EntityDragonBase extends TamableAnimal implements IPassabi
 
     @Override
     public boolean shouldRiderSit() {
-        return this.getControllingPassenger() != null;
+        return this.getControllingPassenger() != null || this.getFirstPassenger() instanceof EntityDreadQueen;
     }
 
     @Override
     protected void positionRider(@NotNull Entity passenger, Entity.@NotNull MoveFunction callback) {
         if (this.hasPassenger(passenger)) {
+            if (passenger instanceof EntityDreadQueen queen) {
+                if (this.isModelDead()) {
+                    passenger.stopRiding();
+                    return;
+                }
+                float yaw = this.getYRot();
+                queen.setYRot(yaw);
+                queen.yRotO = this.yRotO;
+                queen.setYHeadRot(yaw);
+                queen.yHeadRotO = this.yRotO;
+                queen.setYBodyRot(this.yBodyRot);
+                queen.yBodyRotO = this.yBodyRotO;
+                queen.setXRot(0.0F);
+                queen.xRotO = 0.0F;
+                Vec3 riderPos = this.getRiderPosition();
+                callback.accept(passenger, riderPos.x, riderPos.y + passenger.getBbHeight(), riderPos.z);
+                return;
+            }
             if (this.getControllingPassenger() == null || !this.getControllingPassenger().getUUID().equals(passenger.getUUID())) {
                 updatePreyInMouth(passenger);
             } else {
@@ -1597,6 +1615,9 @@ public abstract class EntityDragonBase extends TamableAnimal implements IPassabi
     }
 
     protected void updatePreyInMouth(Entity prey) {
+        if (prey instanceof EntityDreadQueen) {
+            return;
+        }
         if (this.getAnimation() != ANIMATION_SHAKEPREY) {
             this.setAnimation(ANIMATION_SHAKEPREY);
         }

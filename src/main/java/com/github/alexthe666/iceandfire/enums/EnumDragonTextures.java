@@ -345,6 +345,16 @@ public enum EnumDragonTextures {
         }
     }
 
+    private static Identifier iceSkeletonTexture(EnumDragonTextures textures, int stage) {
+        return switch (stage) {
+            case 1 -> textures.ICESTAGE1SKELETONTEXTURE;
+            case 2 -> textures.ICESTAGE2SKELETONTEXTURE;
+            case 3 -> textures.ICESTAGE3SKELETONTEXTURE;
+            case 5 -> textures.ICESTAGE5SKELETONTEXTURE;
+            default -> textures.ICESTAGE4SKELETONTEXTURE;
+        };
+    }
+
     private static Identifier getLightningDragonTextures(EntityDragonBase dragon) {
         EnumDragonTextures textures = getDragonEnum(dragon);
         if (dragon.isModelDead()) {

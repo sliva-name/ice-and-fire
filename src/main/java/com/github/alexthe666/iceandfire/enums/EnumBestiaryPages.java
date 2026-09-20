@@ -53,7 +53,10 @@ public enum EnumBestiaryPages {
     }
 
     public static Set<EnumBestiaryPages> containedPages(Collection<Integer> pages) {
-        return pages.stream().map(ALL_PAGES::get).collect(Collectors.toSet());
+        return pages.stream()
+            .filter(index -> index != null && index >= 0 && index < ALL_PAGES.size())
+            .map(ALL_PAGES::get)
+            .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     public static boolean hasAllPages(ItemStack book) {

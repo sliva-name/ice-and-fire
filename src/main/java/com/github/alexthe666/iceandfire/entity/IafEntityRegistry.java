@@ -76,6 +76,7 @@ public class IafEntityRegistry {
     public static final RegistryObject<EntityType<EntityDreadLich>> DREAD_LICH = registerEntity(EntityType.Builder.of(EntityDreadLich::new, MobCategory.MONSTER).sized(0.6F, 1.8F), "dread_lich");
     public static final RegistryObject<EntityType<EntityDreadLichSkull>> DREAD_LICH_SKULL = registerEntity(EntityType.Builder.<EntityDreadLichSkull>of(EntityDreadLichSkull::new, MobCategory.MISC).sized(0.5F, 0.5F).setCustomClientFactory(EntityDreadLichSkull::new), "dread_lich_skull");
     public static final RegistryObject<EntityType<EntityDreadKnight>> DREAD_KNIGHT = registerEntity(EntityType.Builder.of(EntityDreadKnight::new, MobCategory.MONSTER).sized(0.6F, 1.8F), "dread_knight");
+    public static final RegistryObject<EntityType<EntityDreadQueen>> DREAD_QUEEN = registerEntity(EntityType.Builder.of(EntityDreadQueen::new, MobCategory.MONSTER).sized(0.6F, 1.8F), "dread_queen");
     public static final RegistryObject<EntityType<EntityDreadHorse>> DREAD_HORSE = registerEntity(EntityType.Builder.of(EntityDreadHorse::new, MobCategory.MONSTER).sized(1.3964844F, 1.6F), "dread_horse");
     public static final RegistryObject<EntityType<EntityHydra>> HYDRA = registerEntity(EntityType.Builder.of(EntityHydra::new, MobCategory.CREATURE).sized(2.8F, 1.39F), "hydra");
     public static final RegistryObject<EntityType<EntityHydraBreath>> HYDRA_BREATH = registerEntity(EntityType.Builder.<EntityHydraBreath>of(EntityHydraBreath::new, MobCategory.MISC).sized(0.9F, 0.9F).setCustomClientFactory(EntityHydraBreath::new), "hydra_breath");
@@ -120,6 +121,7 @@ public class IafEntityRegistry {
         creationEvent.put(DREAD_HORSE.get(), EntityDreadHorse.bakeAttributes().build());
         creationEvent.put(DREAD_GHOUL.get(), EntityDreadGhoul.bakeAttributes().build());
         creationEvent.put(DREAD_KNIGHT.get(), EntityDreadKnight.bakeAttributes().build());
+        creationEvent.put(DREAD_QUEEN.get(), EntityDreadQueen.bakeAttributes().build());
         creationEvent.put(DREAD_SCUTTLER.get(), EntityDreadScuttler.bakeAttributes().build());
         creationEvent.put(HYDRA.get(), EntityHydra.bakeAttributes().build());
         creationEvent.put(GHOST.get(), EntityGhost.bakeAttributes().build());
@@ -134,6 +136,11 @@ public class IafEntityRegistry {
         event.register(HIPPOGRYPH.get(), SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, EntityHippogryph::checkMobSpawnRules, SpawnPlacementRegisterEvent.Operation.REPLACE);
         event.register(TROLL.get(), SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, EntityTroll::canTrollSpawnOn, SpawnPlacementRegisterEvent.Operation.REPLACE);
         event.register(DREAD_LICH.get(), SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, EntityDreadLich::canLichSpawnOn, SpawnPlacementRegisterEvent.Operation.REPLACE);
+        event.register(DREAD_THRALL.get(), SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, EntityDreadMob::canDreadLandSpawn, SpawnPlacementRegisterEvent.Operation.REPLACE);
+        event.register(DREAD_GHOUL.get(), SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, EntityDreadMob::canDreadLandSpawn, SpawnPlacementRegisterEvent.Operation.REPLACE);
+        event.register(DREAD_BEAST.get(), SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, EntityDreadMob::canDreadLandSpawn, SpawnPlacementRegisterEvent.Operation.REPLACE);
+        event.register(DREAD_SCUTTLER.get(), SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, EntityDreadMob::canDreadLandSpawn, SpawnPlacementRegisterEvent.Operation.REPLACE);
+        event.register(DREAD_KNIGHT.get(), SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, EntityDreadMob::canDreadLandSpawn, SpawnPlacementRegisterEvent.Operation.REPLACE);
         event.register(COCKATRICE.get(), SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, EntityCockatrice::checkMobSpawnRules, SpawnPlacementRegisterEvent.Operation.REPLACE);
         event.register(AMPHITHERE.get(), SpawnPlacementTypes.NO_RESTRICTIONS, Heightmap.Types.MOTION_BLOCKING, EntityAmphithere::canAmphithereSpawnOn, SpawnPlacementRegisterEvent.Operation.REPLACE);
     }

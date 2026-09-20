@@ -1,6 +1,7 @@
 {
-  "parent": "block/cube_all",
+  "parent": "minecraft:block/cube_all",
+  "render_type": "minecraft:translucent",
   "textures": {
-    "all": "block/ice"
+    "all": "iceandfire:block/dread_portal"
   }
 }

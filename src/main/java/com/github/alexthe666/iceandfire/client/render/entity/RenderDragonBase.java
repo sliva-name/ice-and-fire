@@ -6,6 +6,7 @@ import com.github.alexthe666.iceandfire.client.render.entity.DragonRenderState.A
 import com.github.alexthe666.iceandfire.client.render.entity.layer.*;
 import com.github.alexthe666.iceandfire.client.texture.ArrayLayeredTexture;
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
+import com.github.alexthe666.iceandfire.entity.EntityIceDragon;
 import com.github.alexthe666.iceandfire.enums.EnumDragonTextures;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
@@ -35,10 +36,13 @@ public class RenderDragonBase extends MobRenderer<EntityDragonBase, DragonRender
         this.dragonModel = model;
         this.dragonType = dragonType;
         addLayer(new LayerDragonEyes(this, dragonType));
-        riders = new LayerDragonRider(this, false);
+        riders = new LayerDragonRider(this, true);
         addLayer(riders);
         addLayer(new LayerDragonBanner(this));
         addLayer(new LayerDragonArmor(this, dragonType));
+        if (dragonType == 1) {
+            addLayer(new LayerBlackFrostDecay(this));
+        }
     }
 
     public TabulaModel<DragonRenderState> dragonModel() { return dragonModel; }
@@ -128,6 +132,7 @@ public class RenderDragonBase extends MobRenderer<EntityDragonBase, DragonRender
         state.frontLeftHeight = legs.frontLeft.getHeight(partialTick);
         state.frontRightHeight = legs.frontRight.getHeight(partialTick);
         state.legBodyLength = Math.abs((legs.backLeft.forward + legs.backRight.forward - legs.frontLeft.forward - legs.frontRight.forward) / 2);
+        state.blackFrost = entity instanceof EntityIceDragon ice && ice.isBlackFrost();
         state.texture = extractTexture(entity);
         state.eyeTexture = entity.shouldRenderEyes() ? EnumDragonTextures.getEyeTextureFromDragon(entity) : null;
         state.armorTexture = LayerDragonArmor.extractTexture(entity, dragonType);

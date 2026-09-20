@@ -14,6 +14,7 @@ import net.minecraft.world.entity.projectile.arrow.AbstractArrow;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraftforge.network.packets.SpawnEntity;
@@ -23,6 +24,7 @@ import java.util.List;
 
 public class EntityDreadLichSkull extends AbstractArrow {
 
+    private static final int LIFETIME_TICKS = 100;
     private double iafBaseDamage = 6.0D;
 
     public EntityDreadLichSkull(EntityType<? extends AbstractArrow> type, Level worldIn) {
@@ -39,14 +41,14 @@ public class EntityDreadLichSkull extends AbstractArrow {
 
     public EntityDreadLichSkull(EntityType<? extends AbstractArrow> type, Level worldIn, LivingEntity shooter,
                                 double x, double y, double z) {
-        super(type, shooter, worldIn, ItemStack.EMPTY, null);
+        super(type, shooter, worldIn, ItemStack.EMPTY, IafArrows.firedFrom(null));
         this.setBaseDamage(6);
         this.iafBaseDamage = 6;
     }
 
     public EntityDreadLichSkull(EntityType<? extends AbstractArrow> type, Level worldIn, LivingEntity shooter,
                                 double dmg) {
-        super(type, shooter, worldIn, ItemStack.EMPTY, null);
+        super(type, shooter, worldIn, ItemStack.EMPTY, IafArrows.firedFrom(null));
         this.setBaseDamage(dmg);
         this.iafBaseDamage = dmg;
     }
@@ -65,10 +67,19 @@ public class EntityDreadLichSkull extends AbstractArrow {
         super.defineSynchedData(builder);
     }
 
+    private void vanish() {
+        if (!this.isRemoved()) {
+            this.remove(RemovalReason.DISCARDED);
+        }
+    }
+
     @Override
     public void tick() {
+        if (this.tickCount > LIFETIME_TICKS) {
+            this.vanish();
+            return;
+        }
         float sqrt = Mth.sqrt((float) (this.getDeltaMovement().x * this.getDeltaMovement().x + this.getDeltaMovement().z * this.getDeltaMovement().z));
-        boolean flag = true;
         Entity shootingEntity = this.getOwner();
         if (shootingEntity != null && shootingEntity instanceof Mob && ((Mob) shootingEntity).getTarget() != null) {
             LivingEntity target = ((Mob) shootingEntity).getTarget();
@@ -103,11 +114,7 @@ public class EntityDreadLichSkull extends AbstractArrow {
                 this.setDeltaMovement(this.getDeltaMovement().add((Math.signum(minusX) * 0.5D - this.getDeltaMovement().x) * 0.10000000149011612D, (Math.signum(minusY) * 0.5D - this.getDeltaMovement().y) * 0.10000000149011612D, (Math.signum(minusZ) * 0.5D - this.getDeltaMovement().z) * 0.10000000149011612D));
                 this.setYRot((float) (Mth.atan2(this.getDeltaMovement().x, this.getDeltaMovement().z) * (180D / Math.PI)));
                 this.setXRot((float) (Mth.atan2(this.getDeltaMovement().y, sqrt) * (180D / Math.PI)));
-                flag = false;
             }
-        }
-        if ((sqrt < 0.1F || this.horizontalCollision || this.verticalCollision || this.isInGround()) && this.tickCount > 5 && flag) {
-            this.remove(RemovalReason.DISCARDED);
         }
         double d0 = 0;
         double d1 = 0.01D;
@@ -120,6 +127,9 @@ public class EntityDreadLichSkull extends AbstractArrow {
             IceAndFire.PROXY.spawnParticle(EnumParticles.Dread_Torch, x, y + 0.5D, z, d0, d1, d2);
         }
         super.tick();
+        if (!this.isRemoved() && this.tickCount > 2 && (this.horizontalCollision || this.verticalCollision || this.isInGround())) {
+            this.vanish();
+        }
     }
 
     public double particleDistSq(double toX, double toY, double toZ) {
@@ -137,17 +147,21 @@ public class EntityDreadLichSkull extends AbstractArrow {
     }
 
     @Override
+    protected void onHitBlock(@NotNull BlockHitResult result) {
+        this.vanish();
+    }
+
+    @Override
     protected void onHitEntity(EntityHitResult raytraceResultIn) {
         if (raytraceResultIn.getType() == HitResult.Type.ENTITY) {
             Entity entity = raytraceResultIn.getEntity();
             Entity shootingEntity = this.getOwner();
-            if (entity != null) {
-                if (shootingEntity != null && entity.isAlliedTo(shootingEntity)) {
-                    return;
-                }
+            if (entity != null && shootingEntity != null && entity.isAlliedTo(shootingEntity)) {
+                return;
             }
         }
         super.onHitEntity(raytraceResultIn);
+        this.vanish();
     }
 
     @Override
