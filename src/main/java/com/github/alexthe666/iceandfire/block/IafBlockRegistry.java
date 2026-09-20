@@ -3,6 +3,7 @@ package com.github.alexthe666.iceandfire.block;
 import com.github.alexthe666.iceandfire.IceAndFire;
 import com.github.alexthe666.iceandfire.enums.EnumDragonEgg;
 import com.github.alexthe666.iceandfire.item.BlockItemWithRender;
+import com.github.alexthe666.iceandfire.item.IafBlockItem;
 import com.github.alexthe666.iceandfire.item.IafItemRegistry;
 import com.github.alexthe666.iceandfire.misc.IafSoundRegistry;
 import net.minecraft.core.Direction;
@@ -188,7 +189,7 @@ public class IafBlockRegistry {
             } else if (block instanceof BlockGhostChest || block instanceof BlockDreadPortal || block instanceof BlockPixieHouse) {
                 itemBlock = new BlockItemWithRender(block, props);
             } else {
-                itemBlock = new BlockItem(block, props);
+                itemBlock = new IafBlockItem(block, props);
             }
             return Optional.of(itemBlock);
         }

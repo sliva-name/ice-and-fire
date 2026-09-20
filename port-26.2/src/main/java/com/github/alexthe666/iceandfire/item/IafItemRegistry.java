@@ -354,25 +354,25 @@ public class IafItemRegistry {
     public static final RegistryObject<Item> GHOST_INGOT = register("ghost_ingot", () -> new ItemGeneric(1));
     public static final RegistryObject<Item> GHOST_SWORD = register("ghost_sword", () -> new ItemGhostSword());
 
-    public static final RegistryObject<Item> PATTERN_FIRE = register("banner_pattern_fire", () -> new Item(unstackable()));
-    public static final RegistryObject<Item> PATTERN_ICE = register("banner_pattern_ice", () -> new Item(unstackable()));
-    public static final RegistryObject<Item> PATTERN_LIGHTNING = register("banner_pattern_lightning", () -> new Item(unstackable()));
-    public static final RegistryObject<Item> PATTERN_FIRE_HEAD = register("banner_pattern_fire_head", () -> new Item(unstackable()));
-    public static final RegistryObject<Item> PATTERN_ICE_HEAD = register("banner_pattern_ice_head", () -> new Item(unstackable()));
-    public static final RegistryObject<Item> PATTERN_LIGHTNING_HEAD = register("banner_pattern_lightning_head", () -> new Item(unstackable()));
-    public static final RegistryObject<Item> PATTERN_AMPHITHERE = register("banner_pattern_amphithere", () -> new Item(unstackable()));
-    public static final RegistryObject<Item> PATTERN_BIRD = register("banner_pattern_bird", () -> new Item(unstackable()));
-    public static final RegistryObject<Item> PATTERN_EYE = register("banner_pattern_eye", () -> new Item(unstackable()));
-    public static final RegistryObject<Item> PATTERN_FAE = register("banner_pattern_fae", () -> new Item(unstackable()));
-    public static final RegistryObject<Item> PATTERN_FEATHER = register("banner_pattern_feather", () -> new Item(unstackable()));
-    public static final RegistryObject<Item> PATTERN_GORGON = register("banner_pattern_gorgon", () -> new Item(unstackable()));
-    public static final RegistryObject<Item> PATTERN_HIPPOCAMPUS = register("banner_pattern_hippocampus", () -> new Item(unstackable()));
-    public static final RegistryObject<Item> PATTERN_HIPPOGRYPH_HEAD = register("banner_pattern_hippogryph_head", () -> new Item(unstackable()));
-    public static final RegistryObject<Item> PATTERN_MERMAID = register("banner_pattern_mermaid", () -> new Item(unstackable()));
-    public static final RegistryObject<Item> PATTERN_SEA_SERPENT = register("banner_pattern_sea_serpent", () -> new Item(unstackable()));
-    public static final RegistryObject<Item> PATTERN_TROLL = register("banner_pattern_troll", () -> new Item(unstackable()));
-    public static final RegistryObject<Item> PATTERN_WEEZER = register("banner_pattern_weezer", () -> new Item(unstackable()));
-    public static final RegistryObject<Item> PATTERN_DREAD = register("banner_pattern_dread", () -> new Item(unstackable()));
+    public static final RegistryObject<Item> PATTERN_FIRE = bannerPattern("banner_pattern_fire", "fire");
+    public static final RegistryObject<Item> PATTERN_ICE = bannerPattern("banner_pattern_ice", "ice");
+    public static final RegistryObject<Item> PATTERN_LIGHTNING = bannerPattern("banner_pattern_lightning", "lightning");
+    public static final RegistryObject<Item> PATTERN_FIRE_HEAD = bannerPattern("banner_pattern_fire_head", "fire_head");
+    public static final RegistryObject<Item> PATTERN_ICE_HEAD = bannerPattern("banner_pattern_ice_head", "ice_head");
+    public static final RegistryObject<Item> PATTERN_LIGHTNING_HEAD = bannerPattern("banner_pattern_lightning_head", "lightning_head");
+    public static final RegistryObject<Item> PATTERN_AMPHITHERE = bannerPattern("banner_pattern_amphithere", "amphithere");
+    public static final RegistryObject<Item> PATTERN_BIRD = bannerPattern("banner_pattern_bird", "bird");
+    public static final RegistryObject<Item> PATTERN_EYE = bannerPattern("banner_pattern_eye", "eye");
+    public static final RegistryObject<Item> PATTERN_FAE = bannerPattern("banner_pattern_fae", "fae");
+    public static final RegistryObject<Item> PATTERN_FEATHER = bannerPattern("banner_pattern_feather", "feather");
+    public static final RegistryObject<Item> PATTERN_GORGON = bannerPattern("banner_pattern_gorgon", "gorgon");
+    public static final RegistryObject<Item> PATTERN_HIPPOCAMPUS = bannerPattern("banner_pattern_hippocampus", "hippocampus");
+    public static final RegistryObject<Item> PATTERN_HIPPOGRYPH_HEAD = bannerPattern("banner_pattern_hippogryph_head", "hippogryph_head");
+    public static final RegistryObject<Item> PATTERN_MERMAID = bannerPattern("banner_pattern_mermaid", "mermaid");
+    public static final RegistryObject<Item> PATTERN_SEA_SERPENT = bannerPattern("banner_pattern_sea_serpent", "sea_serpent");
+    public static final RegistryObject<Item> PATTERN_TROLL = bannerPattern("banner_pattern_troll", "troll");
+    public static final RegistryObject<Item> PATTERN_WEEZER = bannerPattern("banner_pattern_weezer", "weezer");
+    public static final RegistryObject<Item> PATTERN_DREAD = bannerPattern("banner_pattern_dread", "dread");
 
     static {
         EnumDragonArmor.initArmors();
@@ -433,6 +433,10 @@ public class IafItemRegistry {
     /** 26.1 vanilla {@code SpawnEggItem.getType} reads {@code DataComponents.ENTITY_DATA}. */
     private static RegistryObject<Item> spawnEgg(String name, RegistryObject<? extends EntityType<?>> type) {
         return register(name, () -> new IafSpawnEggItem(type, defaultBuilder().stacksTo(64).spawnEgg(type.get())));
+    }
+
+    private static RegistryObject<Item> bannerPattern(String itemName, String patternName) {
+        return register(itemName, () -> new ItemBannerPattern(patternName));
     }
 
     /**

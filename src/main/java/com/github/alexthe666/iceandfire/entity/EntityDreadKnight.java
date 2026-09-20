@@ -69,8 +69,8 @@ public class EntityDreadKnight extends EntityDreadMob implements IAnimatedEntity
         ItemStack shield = new ItemStack(Items.SHIELD, 1);
         shield.set(net.minecraft.core.component.DataComponents.BASE_COLOR, DyeColor.CYAN);
         net.minecraft.world.level.block.entity.BannerPattern dread = new net.minecraft.world.level.block.entity.BannerPattern(
-            net.minecraft.resources.Identifier.fromNamespaceAndPath("iceandfire", "iceandfire_dread"),
-            "iceandfire.iceandfire_dread");
+            net.minecraft.resources.Identifier.fromNamespaceAndPath("iceandfire", "dread"),
+            "block.minecraft.banner.dread");
         shield.set(net.minecraft.core.component.DataComponents.BANNER_PATTERNS,
             new net.minecraft.world.level.block.entity.BannerPatternLayers.Builder()
                 .add(net.minecraft.core.Holder.direct(dread), DyeColor.WHITE)

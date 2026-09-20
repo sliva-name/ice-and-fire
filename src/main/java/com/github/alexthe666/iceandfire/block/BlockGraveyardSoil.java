@@ -2,10 +2,16 @@ package com.github.alexthe666.iceandfire.block;
 
 import com.github.alexthe666.iceandfire.entity.EntityGhost;
 import com.github.alexthe666.iceandfire.entity.IafEntityRegistry;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -15,8 +21,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Consumer;
 
-public class BlockGraveyardSoil extends Block {
+public class BlockGraveyardSoil extends Block implements IBlockItemHoverText {
 
     public BlockGraveyardSoil() {
         super(
@@ -26,6 +33,12 @@ public class BlockGraveyardSoil extends Block {
                 .strength(5, 1F)
                 .randomTicks())
 		);
+    }
+
+    @Override
+    public void appendItemHoverText(@NotNull ItemStack stack, Item.TooltipContext context, TooltipDisplay display,
+                                    Consumer<Component> tooltip, TooltipFlag flag) {
+        tooltip.accept(Component.translatable("block.iceandfire.graveyard_soil.desc").withStyle(ChatFormatting.GRAY));
     }
 
 

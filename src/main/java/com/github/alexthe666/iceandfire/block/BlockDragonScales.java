@@ -2,18 +2,18 @@ package com.github.alexthe666.iceandfire.block;
 
 import com.github.alexthe666.iceandfire.enums.EnumDragonEgg;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.material.MapColor;
 import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nullable;
-import java.util.List;
+import java.util.function.Consumer;
 
-public class BlockDragonScales extends Block implements IDragonProof {
+public class BlockDragonScales extends Block implements IDragonProof, IBlockItemHoverText {
     EnumDragonEgg type;
 
     public BlockDragonScales(EnumDragonEgg type) {
@@ -30,7 +30,9 @@ public class BlockDragonScales extends Block implements IDragonProof {
     }
 
 
-    public void appendHoverText(@NotNull ItemStack stack, @Nullable BlockGetter worldIn, List<Component> tooltip, @NotNull TooltipFlag flagIn) {
-        tooltip.add(Component.translatable("dragon." + type.toString().toLowerCase()).withStyle(type.color));
+    @Override
+    public void appendItemHoverText(@NotNull ItemStack stack, Item.TooltipContext context, TooltipDisplay display,
+                                    Consumer<Component> tooltip, TooltipFlag flag) {
+        tooltip.accept(Component.translatable("dragon." + type.toString().toLowerCase()).withStyle(type.color));
     }
 }

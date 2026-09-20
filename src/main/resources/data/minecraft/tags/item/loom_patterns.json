@@ -1,0 +1,24 @@
+{
+  "replace": false,
+  "values": [
+    "iceandfire:banner_pattern_fire",
+    "iceandfire:banner_pattern_ice",
+    "iceandfire:banner_pattern_lightning",
+    "iceandfire:banner_pattern_fire_head",
+    "iceandfire:banner_pattern_ice_head",
+    "iceandfire:banner_pattern_lightning_head",
+    "iceandfire:banner_pattern_amphithere",
+    "iceandfire:banner_pattern_bird",
+    "iceandfire:banner_pattern_eye",
+    "iceandfire:banner_pattern_fae",
+    "iceandfire:banner_pattern_feather",
+    "iceandfire:banner_pattern_gorgon",
+    "iceandfire:banner_pattern_hippocampus",
+    "iceandfire:banner_pattern_hippogryph_head",
+    "iceandfire:banner_pattern_mermaid",
+    "iceandfire:banner_pattern_sea_serpent",
+    "iceandfire:banner_pattern_troll",
+    "iceandfire:banner_pattern_weezer",
+    "iceandfire:banner_pattern_dread"
+  ]
+}
