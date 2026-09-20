@@ -6,45 +6,36 @@
       {
         "when": "gui",
         "model": {
-          "type": "minecraft:special",
-          "base": "iceandfire:item/tide_trident_special",
-          "model": {
-            "type": "iceandfire:tide_trident",
-            "display_context": "gui"
-          }
+          "type": "minecraft:model",
+          "model": "iceandfire:item/tide_trident_inventory"
         }
       },
       {
         "when": "fixed",
         "model": {
-          "type": "minecraft:special",
-          "base": "iceandfire:item/tide_trident_special",
-          "model": {
-            "type": "iceandfire:tide_trident",
-            "display_context": "fixed"
-          }
+          "type": "minecraft:model",
+          "model": "iceandfire:item/tide_trident_inventory"
         }
       },
       {
         "when": "ground",
         "model": {
-          "type": "minecraft:special",
-          "base": "iceandfire:item/tide_trident_special",
-          "model": {
-            "type": "iceandfire:tide_trident",
-            "display_context": "ground"
-          }
+          "type": "minecraft:model",
+          "model": "iceandfire:item/tide_trident_inventory"
         }
       },
       {
         "when": "none",
         "model": {
-          "type": "minecraft:special",
-          "base": "iceandfire:item/tide_trident_special",
-          "model": {
-            "type": "iceandfire:tide_trident",
-            "display_context": "none"
-          }
+          "type": "minecraft:model",
+          "model": "iceandfire:item/tide_trident_inventory"
+        }
+      },
+      {
+        "when": "on_shelf",
+        "model": {
+          "type": "minecraft:model",
+          "model": "iceandfire:item/tide_trident_inventory"
         }
       },
       {
@@ -55,17 +46,6 @@
           "model": {
             "type": "iceandfire:tide_trident",
             "display_context": "head"
-          }
-        }
-      },
-      {
-        "when": "on_shelf",
-        "model": {
-          "type": "minecraft:special",
-          "base": "iceandfire:item/tide_trident_special",
-          "model": {
-            "type": "iceandfire:tide_trident",
-            "display_context": "on_shelf"
           }
         }
       },
@@ -115,12 +95,8 @@
       }
     ],
     "fallback": {
-      "type": "minecraft:special",
-      "base": "iceandfire:item/tide_trident_special",
-      "model": {
-        "type": "iceandfire:tide_trident",
-        "display_context": "none"
-      }
+      "type": "minecraft:model",
+      "model": "iceandfire:item/tide_trident_inventory"
     }
   }
 }
