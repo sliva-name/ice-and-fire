@@ -22,7 +22,7 @@ public class ReversedBuffer {
     }
 
     public float sampleYaw(float partialTick) {
-        return Mth.lerp(partialTick, this.prevYawVariation, this.yawVariation);
+        return Mth.rotLerp(partialTick, this.prevYawVariation, this.yawVariation);
     }
 
     public void resetRotations() {
@@ -44,7 +44,7 @@ public class ReversedBuffer {
     public void calculateChainSwingBuffer(float maxAngle, int bufferTime, float angleDecrement, float divisor, LivingEntity entity) {
         this.prevYawVariation = this.yawVariation;
         if (entity.yBodyRot != entity.yBodyRotO && Mth.abs(this.yawVariation) < maxAngle) {
-            this.yawVariation += (entity.yBodyRotO - entity.yBodyRot) / divisor;
+            this.yawVariation += Mth.wrapDegrees(entity.yBodyRotO - entity.yBodyRot) / divisor;
         }
         if (this.yawVariation > 0.7F * angleDecrement) {
             if (this.yawTimer > bufferTime) {
@@ -81,7 +81,7 @@ public class ReversedBuffer {
     public void calculateChainWaveBuffer(float maxAngle, int bufferTime, float angleDecrement, float divisor, LivingEntity entity) {
         this.prevPitchVariation = this.pitchVariation;
         if (entity.getXRot() != entity.xRotO && Mth.abs(this.pitchVariation) < maxAngle) {
-            this.pitchVariation += (entity.xRotO - entity.getXRot()) / divisor;
+            this.pitchVariation += Mth.wrapDegrees(entity.xRotO - entity.getXRot()) / divisor;
         }
         if (this.pitchVariation > 0.7F * angleDecrement) {
             if (this.pitchTimer > bufferTime) {

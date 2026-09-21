@@ -609,9 +609,10 @@ public class EntityHippocampus extends TamableAnimal implements ISyncMount, IAni
                 float speed = (float) this.getAttributeValue(Attributes.MOVEMENT_SPEED) * speedFactor;
                 if (this.isInWater()) {
                     if (allowMousePitchControl) {
-                        // TODO: travel vector does not match the actual movement direction, might be friction issue again
-                        forward = forward * Mth.abs(Mth.cos(this.getXRot() * ((float) Math.PI / 180F)));
-                        vertical = forward * Mth.abs(Mth.sin(this.getXRot() * ((float) Math.PI / 180F)));
+                        float pitchRad = this.getXRot() * ((float) Math.PI / 180F);
+                        float along = rider.zza;
+                        forward = along * Mth.cos(pitchRad);
+                        vertical = along * -Mth.sin(pitchRad);
 
                         if (isGoingUp() && !isGoingDown()) {
                             vertical = (float) Math.max(vertical, 0.5);
@@ -619,14 +620,6 @@ public class EntityHippocampus extends TamableAnimal implements ISyncMount, IAni
                             vertical = (float) Math.min(vertical, -0.5);
                         } else if (isGoingUp() && isGoingDown()) {
                             vertical = 0;
-                        }
-                        // X rotation takes minus on looking upward
-                        else if (this.getXRot() < 0) {
-                            vertical *= 1;
-                        } else if (this.getXRot() > 0) {
-                            vertical *= -1;
-                        } else if (isLocalClientAuthoritative()) {
-//                        this.setDeltaMovement(this.getDeltaMovement().multiply(1.0f, 0.8f, 1.0f));
                         }
                     }
                 } else {

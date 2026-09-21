@@ -26,6 +26,14 @@ public class IFChainBuffer {
         return yawVariation;
     }
 
+    public float getPreviousPitchVariation() {
+        return prevPitchVariation;
+    }
+
+    public float getPitchVariation() {
+        return pitchVariation;
+    }
+
     public float sampleYaw(float partialTick) {
         return Mth.lerp(partialTick, this.prevYawVariation, this.yawVariation);
     }

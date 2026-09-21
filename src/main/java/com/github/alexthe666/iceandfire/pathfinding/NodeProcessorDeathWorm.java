@@ -35,12 +35,7 @@ public class NodeProcessorDeathWorm extends NodeEvaluator {
 
     @Override
     public @NotNull PathType getPathType(@NotNull PathfindingContext context, int x, int y, int z) {
-        BlockPos blockpos = new BlockPos(x, y, z);
-        BlockState blockstate = context.getBlockState(blockpos);
-        if (!isPassable(context.getBlockState(blockpos.below())) && (blockstate.isAir() || isPassable(blockstate))) {
-            return PathType.BREACH;
-        }
-        return isPassable(blockstate) ? PathType.WATER : PathType.BLOCKED;
+        return classify(context.getBlockState(new BlockPos(x, y, z)), context.getBlockState(new BlockPos(x, y - 1, z)));
     }
 
     @Override
@@ -62,22 +57,42 @@ public class NodeProcessorDeathWorm extends NodeEvaluator {
     }
 
     private PathType isFree(int x, int y, int z) {
-        BlockPos.MutableBlockPos blockpos$mutable = new BlockPos.MutableBlockPos();
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+        boolean sand = false;
+        boolean breach = false;
         for (int i = x; i < x + this.entityWidth; ++i) {
             for (int j = y; j < y + this.entityHeight; ++j) {
                 for (int k = z; k < z + this.entityDepth; ++k) {
-                    BlockState blockstate = this.currentContext.getBlockState(blockpos$mutable.set(i, j, k));
-                    if (!isPassable(this.currentContext.getBlockState(blockpos$mutable.below())) && (blockstate.isAir() || isPassable(blockstate))) {
-                        return PathType.BREACH;
+                    BlockState state = this.currentContext.getBlockState(cursor.set(i, j, k));
+                    PathType type = classify(state, this.currentContext.getBlockState(new BlockPos(i, j - 1, k)));
+                    if (type == PathType.BLOCKED) {
+                        return PathType.BLOCKED;
+                    }
+                    if (type == PathType.WATER) {
+                        sand = true;
+                    } else if (type == PathType.BREACH) {
+                        breach = true;
                     }
                 }
             }
         }
-        BlockState blockstate1 = this.currentContext.getBlockState(blockpos$mutable);
-        return isPassable(blockstate1) ? PathType.WATER : PathType.BLOCKED;
+        if (breach) {
+            return PathType.BREACH;
+        }
+        return sand ? PathType.WATER : PathType.BLOCKED;
     }
 
-    private boolean isPassable(BlockState state) {
-        return state.isAir() || state.is(BlockTags.SAND) || state.is(Blocks.SOUL_SAND) || state.is(Blocks.SOUL_SOIL);
+    private static PathType classify(BlockState state, BlockState below) {
+        if (isSand(state)) {
+            return PathType.WATER;
+        }
+        if (state.isAir() && isSand(below)) {
+            return PathType.BREACH;
+        }
+        return PathType.BLOCKED;
+    }
+
+    private static boolean isSand(BlockState state) {
+        return state.is(BlockTags.SAND) || state.is(Blocks.SOUL_SAND) || state.is(Blocks.SOUL_SOIL);
     }
 }

@@ -81,7 +81,7 @@ public abstract class DragonTabulaModelAnimator extends IceAndFireTabulaModelAni
         float degree_idle = entity.sleeping ? 0.25F : 0.5F;
         float degree_fly = 0.5F;
         if (!entity.noAi) {
-            if (entity.animation != AnimationKind.SHAKEPREY || entity.animation != AnimationKind.ROAR) {
+            if (entity.animation != AnimationKind.SHAKEPREY && entity.animation != AnimationKind.ROAR) {
                 model.faceTarget(rotationYaw, rotationPitch, 2, neckParts);
             }
             if (!walking) {

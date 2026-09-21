@@ -1384,8 +1384,7 @@ public abstract class EntityDragonBase extends TamableAnimal implements IPassabi
             return;
         }
         this.setAgeInDays(this.getAgeInDays() + ageInDays);
-        //TODO: Probably brakes bounding boxes
-        this.setBoundingBox(this.getBoundingBox());
+        this.refreshDimensions();
         if (this.level().isClientSide()) {
             if (this.getAgeInDays() % 25 == 0) {
                 for (int i = 0; i < this.getRenderSize() * 4; i++) {
@@ -1821,7 +1820,8 @@ public abstract class EntityDragonBase extends TamableAnimal implements IPassabi
 
     @Override
     protected EntityDimensions getDefaultDimensions(@NotNull Pose poseIn) {
-        return this.getType().getDimensions().scale(this.getAgeScale());
+        // The mesh sits a little outside the registered box. 8% keeps the torso covered without a new shape.
+        return this.getType().getDimensions().scale(this.getAgeScale() * 1.08F);
     }
 
     @Override

@@ -29,7 +29,6 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -116,35 +115,20 @@ public class IafVillagerRegistry {
         }
         StructurePoolElement element = StructurePoolElement.legacy(toAdd.toString(), HOUSE_PROCESSOR)
             .apply(StructureTemplatePool.Projection.RIGID);
-        try {
-            injectPoolElement(pool, element, weight);
-        } catch (ReflectiveOperationException e) {
-            IceAndFire.LOGGER.error("Failed to inject scribe house {} into {}", toAdd, poolId, e);
-        }
+        injectPoolElement(pool, element, weight);
     }
 
-    @SuppressWarnings("unchecked")
-    private static void injectPoolElement(StructureTemplatePool pool, StructurePoolElement element, int weight)
-            throws ReflectiveOperationException {
-        Field rawField = StructureTemplatePool.class.getDeclaredField("rawTemplates");
-        rawField.setAccessible(true);
-        List<Pair<StructurePoolElement, Integer>> raw = (List<Pair<StructurePoolElement, Integer>>) rawField.get(pool);
+    private static void injectPoolElement(StructureTemplatePool pool, StructurePoolElement element, int weight) {
+        List<Pair<StructurePoolElement, Integer>> raw = pool.rawTemplates;
         if (!(raw instanceof ArrayList)) {
             raw = new ArrayList<>(raw);
-            rawField.set(pool, raw);
+            pool.rawTemplates = raw;
         }
         raw.add(Pair.of(element, weight));
-
-        Field templatesField = StructureTemplatePool.class.getDeclaredField("templates");
-        templatesField.setAccessible(true);
-        List<StructurePoolElement> templates = (List<StructurePoolElement>) templatesField.get(pool);
         for (int i = 0; i < weight; i++) {
-            templates.add(element);
+            pool.templates.add(element);
         }
-
-        Field maxSize = StructureTemplatePool.class.getDeclaredField("maxSize");
-        maxSize.setAccessible(true);
-        maxSize.setInt(pool, Integer.MIN_VALUE);
+        pool.maxSize = Integer.MIN_VALUE;
     }
 
 }

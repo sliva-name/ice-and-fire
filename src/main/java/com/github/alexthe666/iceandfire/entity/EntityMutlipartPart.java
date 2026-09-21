@@ -106,19 +106,19 @@ public abstract class EntityMutlipartPart extends Entity {
         this.entityData.set(PARENT_UUID, uniqueId == null ? "" : uniqueId.toString());
     }
 
-    private float getScaleX() {
+    protected float getScaleX() {
         return this.entityData.get(SCALE_WIDTH).floatValue();
     }
 
-    private void setScaleX(float scale) {
+    protected void setScaleX(float scale) {
         this.entityData.set(SCALE_WIDTH, scale);
     }
 
-    private float getScaleY() {
+    protected float getScaleY() {
         return this.entityData.get(SCALE_HEIGHT).floatValue();
     }
 
-    private void setScaleY(float scale) {
+    protected void setScaleY(float scale) {
         this.entityData.set(SCALE_HEIGHT, scale);
     }
 
@@ -155,7 +155,7 @@ public abstract class EntityMutlipartPart extends Entity {
                         this.collideWithNearbyEntities();
                     }
                 } else {
-                    this.setPos(parent.getX() + this.radius * Mth.cos((float) (renderYawOffset * (Math.PI / 180.0F) + this.angleYaw)), parent.getY() + this.offsetY, parent.getZ() + this.radius * Mth.sin((float) (renderYawOffset * (Math.PI / 180.0F) + this.angleYaw)));
+                    this.placePart(parent, renderYawOffset);
                     this.markHurt();
                 }
                 if (!this.level().isClientSide()) {
@@ -169,6 +169,11 @@ public abstract class EntityMutlipartPart extends Entity {
             }
         }
         super.tick();
+    }
+
+    protected void placePart(Entity parent, float bodyYaw) {
+        float yaw = bodyYaw * ((float) Math.PI / 180F);
+        this.setPos(parent.getX() + this.radius * Mth.cos(yaw + this.angleYaw), parent.getY() + this.offsetY, parent.getZ() + this.radius * Mth.sin(yaw + this.angleYaw));
     }
 
     protected boolean isSlowFollow(){

@@ -50,10 +50,9 @@ public class RenderAmphithere extends MobRenderer<EntityAmphithere, AmphithereRe
         state.onGround = entity.onGround();
         state.captureBufferRotations(0, 0, 0, 0, 0, 0, partialTick);
         if (state.groundProgress <= 0 && state.animation != AmphithereRenderState.AnimationKind.WING_BLAST && !state.onGround) {
-            // Legacy applyChainWaveBuffer reads yaw history even for pitch_buffer.
             state.captureBufferRotations(
                 entity.roll_buffer.getPreviousYawVariation(), entity.roll_buffer.getYawVariation(),
-                entity.pitch_buffer.getPreviousYawVariation(), entity.pitch_buffer.getYawVariation(),
+                entity.pitch_buffer.getPreviousPitchVariation(), entity.pitch_buffer.getPitchVariation(),
                 entity.tail_buffer.getPreviousYawVariation(), entity.tail_buffer.getYawVariation(), partialTick);
         }
         // These enums map integer save-data IDs, not ordinal() or a registry enum.

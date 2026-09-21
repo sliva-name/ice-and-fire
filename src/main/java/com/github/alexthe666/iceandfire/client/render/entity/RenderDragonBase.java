@@ -117,10 +117,12 @@ public class RenderDragonBase extends MobRenderer<EntityDragonBase, DragonRender
         state.breathingFire = entity.isBreathingFire();
         state.male = entity.isMale();
         state.customPose = entity.getCustomPose();
-        // Animator applies +=; legacy ReversedBuffer applied -=, so negate to preserve visual direction.
+        // Buffers store degrees. Animator adds them to rotateAngleY, which is radians.
+        // Legacy ReversedBuffer subtracted; the animator adds, so the neck sample is negated.
         state.turn = entity.turn_buffer != null && !state.vehicle && !state.passenger && state.breathingFire
-            ? -entity.turn_buffer.sampleYaw(partialTick) : 0;
-        state.tail = entity.tail_buffer != null && !state.passenger ? entity.tail_buffer.sampleYaw(partialTick) : 0;
+            ? -Mth.DEG_TO_RAD * entity.turn_buffer.sampleYaw(partialTick) : 0;
+        state.tail = entity.tail_buffer != null && !state.passenger
+            ? Mth.DEG_TO_RAD * entity.tail_buffer.sampleYaw(partialTick) : 0;
         boolean airborne = state.flyProgress > 0 || state.hoverProgress > 0;
         boolean buffers = entity.roll_buffer != null && entity.pitch_buffer_body != null && entity.pitch_buffer != null;
         state.roll = airborne && buffers ? sample(entity.roll_buffer, partialTick) : 0;

@@ -716,8 +716,9 @@ public class EntityAmphithere extends TamableAnimal implements ISyncMount, IAnim
         }
         if (this.isGoingUp() && !this.level().isClientSide()) {
             if (!this.isFlying()) {
-                // TODO: separate take off with rider logic
-                this.setDeltaMovement(this.getDeltaMovement().add(0, 1, 0));
+                if (this.getControllingPassenger() == null) {
+                    this.setDeltaMovement(this.getDeltaMovement().add(0, 1, 0));
+                }
                 this.setFlying(true);
             }
         }
@@ -979,10 +980,6 @@ public class EntityAmphithere extends TamableAnimal implements ISyncMount, IAnim
             return;
         }
 
-        // TODO: add pitch animation
-        // TODO: how to use fliesLikeElytra flag
-        // TODO: match original speed
-
         // Player riding controls
         // Note: when motion is handled by the client no server side setDeltaMovement() should be called
         // otherwise the movement will halt
@@ -1016,8 +1013,7 @@ public class EntityAmphithere extends TamableAnimal implements ISyncMount, IAnim
 
             // Flying control, include flying through waterfalls
             if (isHovering() || isFlying()) {
-//                double forward = rider.zza;
-                double forward = 1f;
+                double forward = rider.zza;
                 double strafing = rider.xxa;
                 double vertical = 0;
                 float speed = (float) this.getAttributeValue(Attributes.MOVEMENT_SPEED) * .5f;
@@ -1026,13 +1022,13 @@ public class EntityAmphithere extends TamableAnimal implements ISyncMount, IAnim
                 float airSpeedModifier = (float) (5.2f + 1.0f * Mth.map(speed, this.minimumSpeed, this.maximumSpeed, 0f, 1.5f));
                 // Apply speed mod
                 speed *= airSpeedModifier;
+                speed *= (float) (IafConfig.amphithereFlightSpeed / 1.75D);
                 // Set flag for logic and animation
 //                if (forward > 0) {
 //                    this.setFlying(true);
 //                }
 
-                gliding = allowMousePitchControl && rider.isSprinting();
-                gliding = true;
+                gliding = this.fliesLikeElytra();
                 if (!gliding) {
                     // Mouse controlled yaw
                     speed += glidingSpeedBonus * (rider.isSprinting() ? 1.5f : 1.0f);
@@ -1057,24 +1053,16 @@ public class EntityAmphithere extends TamableAnimal implements ISyncMount, IAnim
                     // Todo: a new and better algorithm much like elytra flying
                     glidingSpeedBonus = (float) Mth.clamp(glidingSpeedBonus + this.getDeltaMovement().y * -0.05d, -0.8d, 1.5d);
                     speed += glidingSpeedBonus;
-                    // Try to match the moving vector to the rider's look vector
-                    forward = Mth.abs(Mth.cos(this.getXRot() * ((float) Math.PI / 180F)));
-                    vertical = Mth.abs(Mth.sin(this.getXRot() * ((float) Math.PI / 180F)));
-                    // Pitch is still responsive to spacebar and x key
+                    float pitchRad = this.getXRot() * ((float) Math.PI / 180F);
+                    float along = rider.zza;
+                    forward = along * Mth.cos(pitchRad);
+                    vertical = along * -Mth.sin(pitchRad);
                     if (isGoingUp() && !isGoingDown()) {
                         vertical = Math.max(vertical, 0.5);
                     } else if (isGoingDown() && !isGoingUp()) {
                         vertical = Math.min(vertical, -0.5);
                     } else if (isGoingUp() && isGoingDown()) {
                         vertical = 0;
-                    }
-                    // X rotation takes minus on looking upward
-                    else if (this.getXRot() < 0) {
-                        vertical *= 1;
-                    } else if (this.getXRot() > 0) {
-                        vertical *= -1;
-                    } else if (isLocalInstanceAuthoritative()) {
-//                        this.setDeltaMovement(this.getDeltaMovement().multiply(1.0f, 0.8f, 1.0f));
                     }
                 }
                 // Speed bonus damping
@@ -1211,7 +1199,7 @@ public class EntityAmphithere extends TamableAnimal implements ISyncMount, IAnim
 
     @Override
     public double getFlightSpeedModifier() {
-        return 0.555D;
+        return 0.555D * (IafConfig.amphithereFlightSpeed / 1.75D);
     }
 
     @Override

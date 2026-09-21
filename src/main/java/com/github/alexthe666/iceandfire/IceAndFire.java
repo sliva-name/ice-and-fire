@@ -40,7 +40,7 @@ public class IceAndFire {
     public static final Logger LOGGER = LogManager.getLogger();
     public static final String MODID = "iceandfire";
     public static final SimpleChannel NETWORK_WRAPPER = IafNetwork.create();
-    public static boolean DEBUG = true;
+    public static boolean DEBUG = false;
     public static String VERSION = "UNKNOWN";
     public static CommonProxy PROXY = createProxy();
 
