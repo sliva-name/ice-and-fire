@@ -56,6 +56,12 @@ public abstract class EntityDragonCharge extends Fireball implements IDragonProj
             super.baseTick();
 
             HitResult raytraceresult = ProjectileUtil.getHitResultOnMoveVector(this, this::canHitMob);
+            if (!this.level().isClientSide() && raytraceresult.getType() == HitResult.Type.MISS) {
+                Entity touched = this.touchedMob();
+                if (touched != null) {
+                    raytraceresult = new EntityHitResult(touched);
+                }
+            }
 
             if (raytraceresult.getType() != HitResult.Type.MISS && !net.minecraftforge.event.ForgeEventFactory.onProjectileImpact(this, raytraceresult)) {
                 this.onHit(raytraceresult);
@@ -74,7 +80,11 @@ public abstract class EntityDragonCharge extends Fireball implements IDragonProj
                 }
                 f = 0.8F;
             }
-            this.setDeltaMovement(vector3d.add(this.xPower, this.yPower, this.zPower).scale(f));
+            // xPower lives only on the spawning side. Accelerate along the synced velocity so the client charge keeps up.
+            Vec3 accel = vector3d.lengthSqr() > 1.0E-6D
+                ? vector3d.normalize().scale(0.07D)
+                : new Vec3(this.xPower, this.yPower, this.zPower);
+            this.setDeltaMovement(vector3d.add(accel).scale(f));
             this.level().addParticle(this.getTrailParticle(), this.getX(), this.getY() + 0.5D, this.getZ(), 0.0D, 0.0D, 0.0D);
             this.setPos(d0, d1, d2);
         } else {
@@ -88,6 +98,12 @@ public abstract class EntityDragonCharge extends Fireball implements IDragonProj
         if (!this.level().isClientSide()) {
             if (movingObject.getType() == HitResult.Type.ENTITY) {
                 Entity entity = ((EntityHitResult) movingObject).getEntity();
+                if (entity instanceof EntityDragonPart part) {
+                    Entity parent = part.getParent();
+                    if (parent != null) {
+                        entity = parent;
+                    }
+                }
 
                 if (entity instanceof IDragonProjectile) {
                     return;
@@ -152,8 +168,35 @@ public abstract class EntityDragonCharge extends Fireball implements IDragonProj
     }
 
     protected boolean canHitMob(Entity hitMob) {
-        Entity shooter = getOwner();
-        return hitMob != this && super.canHitEntity(hitMob) && !(shooter == null || hitMob.isAlliedTo(shooter)) && !(hitMob instanceof EntityDragonPart);
+        Entity shooter = this.getOwner();
+        if (hitMob == this || shooter == null || !super.canHitEntity(hitMob)) {
+            return false;
+        }
+        Entity victim = hitMob;
+        if (hitMob instanceof EntityDragonPart part) {
+            victim = part.getParent();
+            if (victim == null) {
+                return false;
+            }
+        }
+        if (victim == shooter || victim.isAlliedTo(shooter)) {
+            return false;
+        }
+        return !(shooter instanceof EntityDragonBase dragon) || !dragon.isPart(hitMob);
+    }
+
+    @Nullable
+    private Entity touchedMob() {
+        Entity closest = null;
+        double best = Double.MAX_VALUE;
+        for (Entity entity : this.level().getEntities(this, this.getBoundingBox().inflate(0.35D), this::canHitMob)) {
+            double dist = entity.distanceToSqr(this);
+            if (dist < best) {
+                best = dist;
+                closest = entity;
+            }
+        }
+        return closest;
     }
 
     @Override

@@ -39,12 +39,14 @@ public class RenderDragonFireCharge extends EntityRenderer<Fireball, DragonFireC
 
     @Override
     public void submit(DragonFireChargeRenderState state, PoseStack poses, SubmitNodeCollector collector, CameraRenderState camera) {
+        float spin = state.ageInTicks;
+        int light = isFire ? 15728880 : state.lightCoords;
         poses.pushPose();
         poses.translate(0.0D, 0.5D, 0.0D);
-        poses.mulPose(Axis.YP.rotationDegrees(-90.0F));
-        poses.translate(-0.5D, -0.5D, 0.5D);
-        poses.mulPose(Axis.YP.rotationDegrees(90.0F));
-        state.block.submit(poses, collector, state.lightCoords, OverlayTexture.NO_OVERLAY, state.outlineColor);
+        poses.mulPose(Axis.YP.rotationDegrees(spin * 12.0F));
+        poses.mulPose(Axis.XP.rotationDegrees(spin * 7.0F));
+        poses.translate(-0.5D, -0.5D, -0.5D);
+        state.block.submit(poses, collector, light, OverlayTexture.NO_OVERLAY, state.outlineColor);
         poses.popPose();
     }
 }

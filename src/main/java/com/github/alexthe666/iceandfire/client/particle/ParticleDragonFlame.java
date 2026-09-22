@@ -34,6 +34,8 @@ public class ParticleDragonFlame extends SingleQuadParticle {
         this.setPos(x, y, z);
         this.dragonSize = dragonSize;
         this.speedBonus = random.nextFloat() * 0.015F;
+        this.quadSize = 0.45F * dragonSize;
+        this.lifetime = 10;
     }
 
     public ParticleDragonFlame(ClientLevel world, double x, double y, double z, double motX, double motY, double motZ, EntityDragonBase entityDragonBase, int startingAge) {
@@ -46,11 +48,13 @@ public class ParticleDragonFlame extends SingleQuadParticle {
         this.y = y;
         this.z = z;
         this.age = startingAge;
+        this.lifetime = 30;
     }
 
     @Override
-    public int getLifetime() {
-        return dragon == null ? 10 : 30;
+    public float getQuadSize(float partialTick) {
+        float life = (this.age + partialTick) / Math.max(1.0F, this.lifetime);
+        return this.quadSize * (1.0F - life * life * 0.65F);
     }
 
     @Override

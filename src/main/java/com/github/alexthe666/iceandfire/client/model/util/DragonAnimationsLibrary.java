@@ -94,15 +94,15 @@ public class DragonAnimationsLibrary {
     }
 
     /**
-     * Fire dragons never shipped {@code Swimming}/{@code Swim5} tabula files
-     * (ice and lightning did). 26.1 also lowercases pack paths, so the missing
-     * files log as {@code firedragon_swimming.tbl}. Reuse Swim4 rather than
-     * leaving a null slot that NPEs the swim animator.
+     * Fire dragons never shipped a {@code Swimming} tabula file. 26.1 also
+     * lowercases pack paths, so the missing file logs as
+     * {@code firedragon_swimming.tbl}. Reuse Swim4 rather than leaving a null
+     * slot. Swim5 is a real pose; a missing file still falls back to Swim4.
      */
     private static boolean isExpectedMissingFireSwim(IEnumDragonPoses pose, IEnumDragonModelTypes modelType) {
         return "fire".equals(modelType.getModelType())
             && pose instanceof EnumDragonPoses dragonPose
-            && (dragonPose == EnumDragonPoses.SWIM_POSE || dragonPose == EnumDragonPoses.SWIM5);
+            && dragonPose == EnumDragonPoses.SWIM_POSE;
     }
 
     private static void aliasMissingPose(IEnumDragonPoses pose, IEnumDragonModelTypes modelType) {

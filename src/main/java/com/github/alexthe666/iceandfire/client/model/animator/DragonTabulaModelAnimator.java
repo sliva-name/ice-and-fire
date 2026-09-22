@@ -49,6 +49,7 @@ public abstract class DragonTabulaModelAnimator extends IceAndFireTabulaModelAni
 
         boolean walking = !entity.hovering && !entity.flying && entity.hoverProgress <= 0 && entity.flyProgress <= 0;
         boolean swimming = entity.isInWater && entity.swimProgress > 0;
+        float poseWeight = swimming ? Mth.clamp(entity.swimProgress / 20.0F, 0.0F, 1.0F) : limbSwingAmount;
 
         int currentIndex = walking ? (entity.walkCycle / 10) : (entity.flightCycle / 10);
         if (swimming) {
@@ -71,7 +72,7 @@ public abstract class DragonTabulaModelAnimator extends IceAndFireTabulaModelAni
         }
 
         for (AdvancedModelBox cube : model.getCubes().values()) {
-            setRotationsLoop(model, entity, limbSwingAmount, walking, currentPosition, prevPosition, partialTick, deltaTicks, cube);
+            setRotationsLoop(model, entity, limbSwingAmount, poseWeight, walking, currentPosition, prevPosition, partialTick, deltaTicks, cube);
         }
 
         float speed_walk = 0.2F;
@@ -93,7 +94,7 @@ public abstract class DragonTabulaModelAnimator extends IceAndFireTabulaModelAni
                 model.chainWave(toesPartsR, speed_fly, degree_fly * 0.2F, -2, ageInTicks, 1);
                 model.walk(model.getCube("ThighR"), -speed_fly, degree_fly * 0.1F, false, 0, 0, ageInTicks, 1);
                 model.walk(model.getCube("ThighL"), -speed_fly, degree_fly * 0.1F, true, 0, 0, ageInTicks, 1);
-            } else {
+            } else if (!swimming) {
                 model.bob(model.getCube("BodyUpper"), speed_walk * 2, degree_walk * 1.7F, false, limbSwing, limbSwingAmount);
                 model.bob(model.getCube("ThighR"), speed_walk, degree_walk * 1.7F, false, limbSwing, limbSwingAmount);
                 model.bob(model.getCube("ThighL"), speed_walk, degree_walk * 1.7F, false, limbSwing, limbSwingAmount);
@@ -128,7 +129,7 @@ public abstract class DragonTabulaModelAnimator extends IceAndFireTabulaModelAni
             model.getCube("BodyUpper").rotateAngleZ += entity.roll;
             model.getCube("BodyUpper").rotateAngleX += entity.bodyPitch;
         }
-        if (entity.boundingBoxWidth >= 2 && entity.flyProgress == 0 && entity.hoverProgress == 0) {
+        if (!swimming && entity.boundingBoxWidth >= 2 && entity.flyProgress == 0 && entity.hoverProgress == 0) {
             LegArticulator.articulateQuadruped(entity, model.getCube("BodyUpper"), model.getCube("BodyLower"), model.getCube("Neck1"),
                 model.getCube("ThighL"), model.getCube("LegL"), toesPartsL,
                 model.getCube("ThighR"), model.getCube("LegR"), toesPartsR,
@@ -140,7 +141,7 @@ public abstract class DragonTabulaModelAnimator extends IceAndFireTabulaModelAni
         }
     }
 
-    private void setRotationsLoop(TabulaModel<?> model, DragonRenderState entity, float limbSwingAmount, boolean walking, TabulaModel<?> currentPosition, TabulaModel<?> prevPosition, float partialTick, float deltaTicks, AdvancedModelBox cube) {
+    private void setRotationsLoop(TabulaModel<?> model, DragonRenderState entity, float limbSwingAmount, float poseWeight, boolean walking, TabulaModel<?> currentPosition, TabulaModel<?> prevPosition, float partialTick, float deltaTicks, AdvancedModelBox cube) {
         this.genderMob(entity, cube);
         if (walking && entity.flyProgress <= 0.0F && entity.hoverProgress <= 0.0F && entity.modelDeadProgress <= 0.0F) {
             AdvancedModelBox walkPart = getModel(EnumDragonPoses.GROUND_POSE).getCube(cube.boxName);
@@ -159,7 +160,7 @@ public abstract class DragonTabulaModelAnimator extends IceAndFireTabulaModelAni
             if (isHorn(cube) || isWing(model, cube) && (entity.animation == AnimationKind.WINGBLAST || entity.animation == AnimationKind.EPIC_ROAR)) {
                 this.addToRotateAngle(cube, limbSwingAmount, walkPart.rotateAngleX, walkPart.rotateAngleY, walkPart.rotateAngleZ);
             } else {
-                this.addToRotateAngle(cube, limbSwingAmount, prevX + deltaTicks * distance(prevX, x), prevY + deltaTicks * distance(prevY, y), prevZ + deltaTicks * distance(prevZ, z));
+                this.addToRotateAngle(cube, poseWeight, prevX + deltaTicks * distance(prevX, x), prevY + deltaTicks * distance(prevY, y), prevZ + deltaTicks * distance(prevZ, z));
             }
         }
         if (entity.modelDeadProgress > 0.0F) {

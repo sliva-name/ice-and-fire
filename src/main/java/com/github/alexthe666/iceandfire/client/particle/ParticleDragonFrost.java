@@ -27,7 +27,6 @@ public class ParticleDragonFrost extends SingleQuadParticle {
 
     public ParticleDragonFrost(ClientLevel worldIn, double xCoordIn, double yCoordIn, double zCoordIn, double xSpeedIn, double ySpeedIn, double zSpeedIn, float dragonSize) {
         super(worldIn, xCoordIn, yCoordIn, zCoordIn, xSpeedIn, ySpeedIn, zSpeedIn, IafParticleSprites.get(IafParticleSprites.SNOWFLAKE));
-        this.lifetime = 30;
         this.initialX = xCoordIn;
         this.initialY = yCoordIn;
         this.initialZ = zCoordIn;
@@ -37,6 +36,8 @@ public class ParticleDragonFrost extends SingleQuadParticle {
         this.setPos(x, y, z);
         this.dragonSize = dragonSize;
         this.speedBonus = random.nextFloat() * 0.015F;
+        this.quadSize = 0.4F * dragonSize;
+        this.lifetime = 10;
         big = random.nextBoolean();
         // 1.18 picked the big snowflake texture per particle.
         if (big) {
@@ -54,11 +55,13 @@ public class ParticleDragonFrost extends SingleQuadParticle {
         this.y = y;
         this.z = z;
         this.age = startingAge;
+        this.lifetime = 30;
     }
 
     @Override
-    public int getLifetime() {
-        return dragon == null ? 10 : 30;
+    public float getQuadSize(float partialTick) {
+        float life = (this.age + partialTick) / Math.max(1.0F, this.lifetime);
+        return this.quadSize * (1.0F - life * life * 0.65F);
     }
 
     @Override

@@ -324,13 +324,6 @@ public class EntityIceDragon extends EntityDragonBase {
                 }
             }
         }
-        boolean swimming = isInMaterialWater();
-        this.prevSwimProgress = swimProgress;
-        if (swimming && swimProgress < 20.0F) {
-            swimProgress += 0.5F;
-        } else if (!swimming && swimProgress > 0.0F) {
-            swimProgress -= 0.5F;
-        }
         if (this.isInMaterialWater() && !this.isDragonSwimming() && (!this.isFlying() && !this.isHovering() || this.flyTicks > 100)) {
             this.setDragonSwimming(true);
             this.setHovering(false);
@@ -353,14 +346,6 @@ public class EntityIceDragon extends EntityDragonBase {
         }
         if (!this.level().isClientSide() && this.getControllingPassenger() == null && (this.isHovering() && !this.isFlying() && (this.isInMaterialWater() || this.isOverWater()))) {
             this.setDeltaMovement(this.getDeltaMovement().add(0.0D, 0.2D, 0.0D));
-        }
-        if (swimCycle < 48) {
-            swimCycle += 2;
-        } else {
-            swimCycle = 0;
-        }
-        if (this.isModelDead() && swimCycle != 0) {
-            swimCycle = 0;
         }
     }
 
@@ -567,7 +552,7 @@ public class EntityIceDragon extends EntityDragonBase {
                     setYRot(yBodyRot);
                     Vec3 headVec = this.getHeadPosition();
                     double d2 = entity.getX() - headVec.x;
-                    double d3 = entity.getY() - headVec.y;
+                    double d3 = entity.getY(0.5D) - headVec.y;
                     double d4 = entity.getZ() - headVec.z;
                     float inaccuracy = 1.0F;
                     d2 = d2 + this.random.nextGaussian() * 0.007499999832361937D * inaccuracy;

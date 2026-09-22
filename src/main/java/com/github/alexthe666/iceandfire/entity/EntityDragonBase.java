@@ -229,6 +229,8 @@ public abstract class EntityDragonBase extends TamableAnimal implements IPassabi
     private EntityDragonPart tail2Part;
     private EntityDragonPart tail3Part;
     private EntityDragonPart tail4Part;
+    private EntityDragonPart bodyUpperPart;
+    private EntityDragonPart bodyLowerPart;
     private boolean isOverAir;
 
     private LazyOptional<?> itemHandler = null;
@@ -368,9 +370,25 @@ public abstract class EntityDragonBase extends TamableAnimal implements IPassabi
         tail4Part = new EntityDragonPart(this, -1.95F * scale, 0, 0.25F * scale, 0.45F * scale, 0.3F * scale, 1.5F);
         tail4Part.copyPosition(this);
         tail4Part.setParent(this);
+        bodyUpperPart = new EntityDragonPart(this, 0.35F * scale, 0, 0.85F * scale, 0.9F * scale, 0.55F * scale, 1F);
+        bodyUpperPart.copyPosition(this);
+        bodyUpperPart.setParent(this);
+        bodyUpperPart.setRole(EntityDragonPart.Role.BODY);
+        bodyLowerPart = new EntityDragonPart(this, -0.45F * scale, 0, 0.55F * scale, 0.8F * scale, 0.5F * scale, 1F);
+        bodyLowerPart.copyPosition(this);
+        bodyLowerPart.setParent(this);
+        bodyLowerPart.setRole(EntityDragonPart.Role.BODY);
     }
 
     public void removeParts() {
+        if (bodyUpperPart != null) {
+            bodyUpperPart.remove(RemovalReason.DISCARDED);
+            bodyUpperPart = null;
+        }
+        if (bodyLowerPart != null) {
+            bodyLowerPart.remove(RemovalReason.DISCARDED);
+            bodyLowerPart = null;
+        }
         if (headPart != null) {
             headPart.remove(RemovalReason.DISCARDED);
             headPart = null;
@@ -473,6 +491,18 @@ public abstract class EntityDragonBase extends TamableAnimal implements IPassabi
                 this.level().addFreshEntity(tail4Part);
             }
             tail4Part.setParent(this);
+        }
+        if (bodyUpperPart != null) {
+            if (!bodyUpperPart.shouldContinuePersisting()) {
+                this.level().addFreshEntity(bodyUpperPart);
+            }
+            bodyUpperPart.setParent(this);
+        }
+        if (bodyLowerPart != null) {
+            if (!bodyLowerPart.shouldContinuePersisting()) {
+                this.level().addFreshEntity(bodyLowerPart);
+            }
+            bodyLowerPart.setParent(this);
         }
     }
 
@@ -1789,6 +1819,19 @@ public abstract class EntityDragonBase extends TamableAnimal implements IPassabi
         prevAnimationProgresses[4] = this.fireBreathProgress;
         prevAnimationProgresses[5] = this.ridingProgress;
         prevAnimationProgresses[6] = this.tackleProgress;
+        this.prevSwimProgress = this.swimProgress;
+        if (this.isInWater() && this.swimProgress < 20.0F) {
+            this.swimProgress += 0.5F;
+        } else if (!this.isInWater() && this.swimProgress > 0.0F) {
+            this.swimProgress -= 0.5F;
+        }
+        if (this.isModelDead()) {
+            this.swimCycle = 0;
+        } else if (this.swimCycle < 48) {
+            this.swimCycle += 2;
+        } else {
+            this.swimCycle = 0;
+        }
         if (this.level().getDifficulty() == Difficulty.PEACEFUL && this.getTarget() instanceof Player) {
             this.setTarget(null);
         }
@@ -1808,8 +1851,10 @@ public abstract class EntityDragonBase extends TamableAnimal implements IPassabi
 
     @Override
     protected EntityDimensions getDefaultDimensions(@NotNull Pose poseIn) {
-        // The mesh sits a little outside the registered box. 8% keeps the torso covered without a new shape.
-        return this.getType().getDimensions().scale(this.getAgeScale() * 1.08F);
+        // The mesh sits a little outside the registered box. Pitch stretches that upright box so a dive still contains the chest.
+        float pitch = Math.abs(this.getDragonPitch()) * ((float) Math.PI / 180F);
+        float reach = 1F + 0.55F * Mth.sin(pitch);
+        return this.getType().getDimensions().scale(this.getAgeScale() * 1.08F * reach);
     }
 
     @Override
@@ -2797,7 +2842,8 @@ public abstract class EntityDragonBase extends TamableAnimal implements IPassabi
             leftWingLowerPart != null && leftWingLowerPart.is(entityHit) || rightWingLowerPart != null && rightWingLowerPart.is(entityHit) ||
             leftWingUpperPart != null && leftWingUpperPart.is(entityHit) || rightWingUpperPart != null && rightWingUpperPart.is(entityHit) ||
             tail1Part != null && tail1Part.is(entityHit) || tail2Part != null && tail2Part.is(entityHit) ||
-            tail3Part != null && tail3Part.is(entityHit) || tail4Part != null && tail4Part.is(entityHit);
+            tail3Part != null && tail3Part.is(entityHit) || tail4Part != null && tail4Part.is(entityHit) ||
+            bodyUpperPart != null && bodyUpperPart.is(entityHit) || bodyLowerPart != null && bodyLowerPart.is(entityHit);
     }
 
     @Override

@@ -349,7 +349,7 @@ public class EntityLightningDragon extends EntityDragonBase {
                     setYRot(yBodyRot);
                     Vec3 headVec = this.getHeadPosition();
                     double d2 = entity.getX() - headVec.x;
-                    double d3 = entity.getY() - headVec.y;
+                    double d3 = entity.getY(0.5D) - headVec.y;
                     double d4 = entity.getZ() - headVec.z;
                     float inaccuracy = 1.0F;
                     d2 = d2 + this.random.nextGaussian() * 0.007499999832361937D * inaccuracy;
