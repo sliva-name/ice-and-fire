@@ -309,7 +309,7 @@ public abstract class AbstractPathJob implements Callable<Path> {
 
         BlockState bs = world.getBlockState(pos);
         // 1 Up when we're standing within this collision shape
-        final VoxelShape collisionShape = bs.getBlockSupportShape(world, pos);
+        final VoxelShape collisionShape = bs.getCollisionShape(world, pos);
         if (IafMaterials.blocksMotion(bs) && collisionShape.max(Direction.Axis.X) > 0) {
             final double relPosX = Math.abs(entity.getX() % 1);
             final double relPosZ = Math.abs(entity.getZ() % 1);
@@ -640,10 +640,13 @@ public abstract class AbstractPathJob implements Callable<Path> {
             walk(currentNode, BLOCKPOS_DOWN);
         }
         if (pathingOptions.canClimb()) {
-            //If the entity can climb and it needs to climb a block higher than 1 block
-            //TODO: Add code for climbing downwards
-            if (getHighest(currentNode).getFirst() > 1) {
-                walk(currentNode, BLOCKPOS_IDENTITY.above(getHighest(currentNode).getFirst()));
+            final Pair<Integer, BlockPos> climbUp = getHighest(currentNode);
+            if (climbUp.getFirst() > 1) {
+                walk(currentNode, BLOCKPOS_IDENTITY.above(climbUp.getFirst()));
+            }
+            final Pair<Integer, BlockPos> climbDown = getLowest(currentNode);
+            if (climbDown.getFirst() > 1) {
+                walk(currentNode, BLOCKPOS_IDENTITY.below(climbDown.getFirst()));
             }
             //After entity has climbed something step forward
             if (currentNode.parent != null && dPos.getX() == 0 && dPos.getZ() == 0 && dPos.getY() > 1) {
@@ -783,16 +786,14 @@ public abstract class AbstractPathJob implements Callable<Path> {
                 }
             }
 
-            //  Climbing on a ladder?
+            //  Climbing on a ladder? Facing is the block's facing; the navigator
+            //  decides up versus down from the next node's Y.
             if (nextInPath != null && onALadder(node, nextInPath, pos)) {
                 p.setOnLadder(true);
-                if (nextInPath.pos.getY() > pos.getY()) {
-                    //  We only care about facing if going up
-                    //In the case of BlockVines (Which does not have Direction) we have to check the metadata of the vines... bitwise...
-                    setLadderFacing(world, pos, p);
-                }
+                setLadderFacing(world, pos, p);
             } else if (onALadder(node.parent, node.parent, pos)) {
                 p.setOnLadder(true);
+                setLadderFacing(world, pos, p);
             }
 
             if (next != null) {
@@ -920,7 +921,7 @@ public abstract class AbstractPathJob implements Callable<Path> {
 
         final boolean swimStart = isSwimming && !parent.isSwimming();
         final BlockState state = world.getBlockState(pos);
-        final boolean onRoad = false;
+        final boolean onRoad = isPathBlock(world.getBlockState(pos.below()));
         final boolean onRails = pathingOptions.canUseRails() && world.getBlockState(corner ? pos.below() : pos).getBlock() instanceof BaseRailBlock;
         final boolean railsExit = !onRails && parent != null && parent.isOnRails();
         //  Cost may have changed due to a jump up or drop
@@ -1067,12 +1068,13 @@ public abstract class AbstractPathJob implements Callable<Path> {
             }
         }
 
-        for (int i = 2; i <= 10; i++) {
-            final BlockState below = world.getBlockState(pos.below(i));
-            if (isWalkableSurface(below, pos) == SurfaceType.WALKABLE && i <= 4 || IafMaterials.isLiquid(below)) {
-                //  Level path
+        for (int i = 2; i <= 4; i++) {
+            final BlockPos ground = pos.below(i);
+            final BlockState below = world.getBlockState(ground);
+            if (IafMaterials.isLiquid(below) || isWalkableSurface(below, ground) == SurfaceType.WALKABLE) {
                 return pos.getY() - i + 1;
-            } else if (!IafMaterials.isAir(below)) {
+            }
+            if (!IafMaterials.isAir(below)) {
                 return -1;
             }
         }
@@ -1108,8 +1110,8 @@ public abstract class AbstractPathJob implements Callable<Path> {
         }*/
         //  Check for headroom in the target space
         if (!isPassable(pos.above(2), false, parent)) {
-            final VoxelShape bb1 = world.getBlockState(pos).getBlockSupportShape(world, pos);
-            final VoxelShape bb2 = world.getBlockState(pos.above(2)).getBlockSupportShape(world, pos.above(2));
+            final VoxelShape bb1 = world.getBlockState(pos).getCollisionShape(world, pos);
+            final VoxelShape bb2 = world.getBlockState(pos.above(2)).getCollisionShape(world, pos.above(2));
             if ((pos.above(2).getY() + getStartY(bb2, 1)) - (pos.getY() + getEndY(bb1, 0)) < 2) {
                 return -1;
             }
@@ -1117,19 +1119,19 @@ public abstract class AbstractPathJob implements Callable<Path> {
 
         //  Check for jump room from the origin space
         if (!isPassable(parent.pos.above(2), false, parent)) {
-            final VoxelShape bb1 = world.getBlockState(pos).getBlockSupportShape(world, pos);
-            final VoxelShape bb2 = world.getBlockState(parent.pos.above(2)).getBlockSupportShape(world, parent.pos.above(2));
+            final VoxelShape bb1 = world.getBlockState(pos).getCollisionShape(world, pos);
+            final VoxelShape bb2 = world.getBlockState(parent.pos.above(2)).getCollisionShape(world, parent.pos.above(2));
             if ((parent.pos.above(2).getY() + getStartY(bb2, 1)) - (pos.getY() + getEndY(bb1, 0)) < 2) {
                 return -1;
             }
         }
 
         final BlockState parentBelow = world.getBlockState(parent.pos.below());
-        final VoxelShape parentBB = parentBelow.getBlockSupportShape(world, parent.pos.below());
+        final VoxelShape parentBB = parentBelow.getCollisionShape(world, parent.pos.below());
 
-        double parentY = parentBB.max(Direction.Axis.Y);
+        double parentY = shapeMax(parentBB, Direction.Axis.Y, 0);
         double parentMaxY = parentY + parent.pos.below().getY();
-        final double targetMaxY = target.getBlockSupportShape(world, pos).max(Direction.Axis.Y) + pos.getY();
+        final double targetMaxY = shapeMax(target.getCollisionShape(world, pos), Direction.Axis.Y, 0) + pos.getY();
         if (targetMaxY - parentMaxY < maxJumpHeight) {
             return pos.getY() + 1;
         }
@@ -1146,52 +1148,71 @@ public abstract class AbstractPathJob implements Callable<Path> {
     Get's the maximum height of a climbable column and the direction the column can be climbed from
      */
     private Pair<Integer, BlockPos> getHighest(MNode node) {
+        return climbColumn(node, true);
+    }
+
+    private Pair<Integer, BlockPos> getLowest(MNode node) {
+        return climbColumn(node, false);
+    }
+
+    private Pair<Integer, BlockPos> climbColumn(MNode node, boolean up) {
         int max = 1;
         BlockPos pos = node.pos;
         BlockPos direction = null;
-        if (world.getBlockState(pos.north()).canOcclude()) {
-            if (climbableTop(pos.north(), Direction.SOUTH, node) > max) {
-                max = climbableTop(pos.north(), Direction.SOUTH, node);
+        if (isClimbableWall(pos.north())) {
+            int column = climbableColumn(pos.north(), Direction.SOUTH, node, up);
+            if (column > max) {
+                max = column;
                 direction = BLOCKPOS_NORTH;
             }
         }
-        if (world.getBlockState(pos.east()).canOcclude()) {
-            if (climbableTop(pos.east(), Direction.WEST, node) > max) {
-                max = climbableTop(pos.east(), Direction.WEST, node);
+        if (isClimbableWall(pos.east())) {
+            int column = climbableColumn(pos.east(), Direction.WEST, node, up);
+            if (column > max) {
+                max = column;
                 direction = BLOCKPOS_EAST;
             }
         }
-        if (world.getBlockState(pos.south()).canOcclude()) {
-            if (climbableTop(pos.south(), Direction.NORTH, node) > max) {
-                max = climbableTop(pos.south(), Direction.NORTH, node);
+        if (isClimbableWall(pos.south())) {
+            int column = climbableColumn(pos.south(), Direction.NORTH, node, up);
+            if (column > max) {
+                max = column;
                 direction = BLOCKPOS_SOUTH;
             }
         }
-        if (world.getBlockState(pos.west()).canOcclude()) {
-            if (climbableTop(pos.west(), Direction.EAST, node) > max) {
-                max = climbableTop(pos.west(), Direction.EAST, node);
+        if (isClimbableWall(pos.west())) {
+            int column = climbableColumn(pos.west(), Direction.EAST, node, up);
+            if (column > max) {
+                max = column;
                 direction = BLOCKPOS_WEST;
             }
         }
         return new Pair<>(max, direction);
     }
 
-    /*
-    Keeps going up a column centered at pos checking if in the direction there's free space
+    /**
+     * A wall face is climbable when its collision shape fills the block, not merely when it occludes light.
      */
-    private int climbableTop(BlockPos pos, Direction direction, MNode node) {
-        BlockState target = world.getBlockState(pos);
-        BlockState origin;
+    private boolean isClimbableWall(BlockPos pos) {
+        final VoxelShape shape = world.getBlockState(pos).getCollisionShape(world, pos);
+        if (shape.isEmpty()) {
+            return false;
+        }
+        return shape.max(Direction.Axis.Y) - shape.min(Direction.Axis.Y) >= 0.9
+            && shape.max(Direction.Axis.X) - shape.min(Direction.Axis.X) >= 0.9
+            && shape.max(Direction.Axis.Z) - shape.min(Direction.Axis.Z) >= 0.9;
+    }
+
+    /**
+     * Walks a solid column up or down while the open side stays passable. Capped so one node cannot scan a whole cliff.
+     */
+    private int climbableColumn(BlockPos pos, Direction openSide, MNode node, boolean up) {
         int i = 0;
-        //TODO: Use collision shapes of blocks
-        while (target.canOcclude()) {
-            pos = pos.above();
-            target = world.getBlockState(pos);
-            origin = world.getBlockState(pos.relative(direction));
-            //If the climbable side can't be passed reset height to 0
-            if (!isPassable(origin, pos.relative(direction), node)) {
-                i = 0;
-                break;
+        while (isClimbableWall(pos) && i < 8) {
+            pos = up ? pos.above() : pos.below();
+            final BlockPos beside = pos.relative(openSide);
+            if (!isPassable(world.getBlockState(beside), beside, node)) {
+                return 0;
             }
             i++;
         }
@@ -1201,18 +1222,18 @@ public abstract class AbstractPathJob implements Callable<Path> {
     private boolean checkHeadBlock(@Nullable final MNode parent, final BlockPos pos) {
         BlockPos localPos = pos;
         final VoxelShape bb = world.getBlockState(localPos).getCollisionShape(world, localPos);
-        if (bb.max(Direction.Axis.Y) < 1) {
+        if (bb.isEmpty() || bb.max(Direction.Axis.Y) < 1) {
             localPos = pos.above();
         }
 
         if (parent == null || !isPassableBB(parent.pos, pos.above(), parent)) {
-            final VoxelShape bb1 = world.getBlockState(pos.below()).getBlockSupportShape(world, pos.below());
-            final VoxelShape bb2 = world.getBlockState(pos.above()).getBlockSupportShape(world, pos.above());
+            final VoxelShape bb1 = world.getBlockState(pos.below()).getCollisionShape(world, pos.below());
+            final VoxelShape bb2 = world.getBlockState(pos.above()).getCollisionShape(world, pos.above());
             if ((pos.above().getY() + getStartY(bb2, 1)) - (pos.below().getY() + getEndY(bb1, 0)) < 2) {
                 return true;
             }
             if (parent != null) {
-                final VoxelShape bb3 = world.getBlockState(parent.pos.below()).getBlockSupportShape(world, pos.below());
+                final VoxelShape bb3 = world.getBlockState(parent.pos.below()).getCollisionShape(world, parent.pos.below());
                 if ((pos.above().getY() + getStartY(bb2, 1)) - (parent.pos.below().getY() + getEndY(bb3, 0)) < 1.75) {
                     return true;
                 }
@@ -1221,8 +1242,8 @@ public abstract class AbstractPathJob implements Callable<Path> {
 
         if (parent != null) {
             final BlockState hereState = world.getBlockState(localPos.below());
-            final VoxelShape bb1 = world.getBlockState(pos).getBlockSupportShape(world, pos);
-            final VoxelShape bb2 = world.getBlockState(localPos.above()).getBlockSupportShape(world, localPos.above());
+            final VoxelShape bb1 = world.getBlockState(pos).getCollisionShape(world, pos);
+            final VoxelShape bb2 = world.getBlockState(localPos.above()).getCollisionShape(world, localPos.above());
             if ((localPos.above().getY() + getStartY(bb2, 1)) - (pos.getY() + getEndY(bb1, 0)) >= 2) {
                 return false;
             }
@@ -1230,6 +1251,19 @@ public abstract class AbstractPathJob implements Callable<Path> {
             return isLiquid(hereState) && !isPassable(pos, false, parent);
         }
         return false;
+    }
+
+    private static double shapeMax(final VoxelShape shape, final Direction.Axis axis, final double ifEmpty) {
+        return shape.isEmpty() ? ifEmpty : shape.max(axis);
+    }
+
+    private boolean shapeReachesAboveBlock(final BlockState state, final BlockPos pos) {
+        final VoxelShape shape = state.getCollisionShape(world, pos);
+        return !shape.isEmpty() && shape.max(Direction.Axis.Y) > 1.0;
+    }
+
+    private static boolean isPathBlock(final BlockState state) {
+        return state.getBlock() instanceof DirtPathBlock;
     }
 
     /**
@@ -1277,7 +1311,7 @@ public abstract class AbstractPathJob implements Callable<Path> {
         }
 
         if (!IafMaterials.isAir(block)) {
-            final VoxelShape shape = block.getBlockSupportShape(world, pos);
+            final VoxelShape shape = block.getCollisionShape(world, pos);
             if (IafMaterials.blocksMotion(block) && !(shape.isEmpty() || shape.max(Direction.Axis.Y) <= 0.1)) {
                 if (block.getBlock() instanceof TrapDoorBlock) {
                     final BlockPos dir = pos.subtract(parentPos);
@@ -1323,7 +1357,7 @@ public abstract class AbstractPathJob implements Callable<Path> {
 
     protected boolean isPassable(final BlockPos pos, final boolean head, final MNode parent) {
         final BlockState state = world.getBlockState(pos);
-        final VoxelShape shape = state.getBlockSupportShape(world, pos);
+        final VoxelShape shape = state.getCollisionShape(world, pos);
 
         if (passabilityNavigator != null && passabilityNavigator.isBlockExplicitlyNotPassable(state, pos, pos)) {
             return false;
@@ -1415,7 +1449,7 @@ public abstract class AbstractPathJob implements Callable<Path> {
             || block instanceof FireBlock
             || block instanceof CampfireBlock
             || block instanceof net.minecraft.world.level.block.BambooStalkBlock
-            || (blockState.getShape(world, pos).max(Direction.Axis.Y) > 1.0)) {
+            || shapeReachesAboveBlock(blockState, pos)) {
             return SurfaceType.NOT_PASSABLE;
         }
         final FluidState fluid = world.getFluidState(pos);
@@ -1436,7 +1470,7 @@ public abstract class AbstractPathJob implements Callable<Path> {
             || block instanceof FireBlock
             || block instanceof CampfireBlock
             || block instanceof net.minecraft.world.level.block.BambooStalkBlock
-            || (blockState.getShape(world, pos).max(Direction.Axis.Y) > 1.0)) {
+            || shapeReachesAboveBlock(blockState, pos)) {
             return SurfaceType.NOT_PASSABLE;
         }
 

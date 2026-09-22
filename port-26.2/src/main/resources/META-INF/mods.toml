@@ -8,7 +8,7 @@ accessTransformers = [
 
 [[mods]]
 modId = "iceandfire"
-version = "2.1.13-26.2-port.4"
+version = "2.1.13-26.2-port.6"
 displayName = "Ice and Fire (26.2 port)"
 displayURL = "https://github.com/sliva-name/ice-and-fire"
 authors = "Alexthe666, TheBv; 26.2 port by sliva-name"

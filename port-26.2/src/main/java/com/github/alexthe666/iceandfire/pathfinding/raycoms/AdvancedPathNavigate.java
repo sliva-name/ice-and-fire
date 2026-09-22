@@ -23,7 +23,13 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.DirtPathBlock;
+import net.minecraft.world.level.block.FenceBlock;
+import net.minecraft.world.level.block.FenceGateBlock;
 import net.minecraft.world.level.block.LadderBlock;
+import net.minecraft.world.level.block.WallBlock;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.Node;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.level.pathfinder.PathFinder;
@@ -356,7 +362,7 @@ public class AdvancedPathNavigate extends AbstractAdvancedPathNavigate {
      */
     public static double getSmartGroundY(final BlockGetter world, final BlockPos pos) {
         final BlockPos blockpos = pos.below();
-        final VoxelShape voxelshape = world.getBlockState(blockpos).getBlockSupportShape(world, blockpos);
+        final VoxelShape voxelshape = world.getBlockState(blockpos).getCollisionShape(world, blockpos);
         if (voxelshape.isEmpty() || voxelshape.max(Direction.Axis.Y) < 1.0) {
             return pos.getY();
         }
@@ -441,8 +447,67 @@ public class AdvancedPathNavigate extends AbstractAdvancedPathNavigate {
 
     @Override
     protected boolean canMoveDirectly(final @NotNull Vec3 start, final @NotNull Vec3 end) {
-        // TODO improve road walking. This is better in some situations, but still not great.
-        return super.canMoveDirectly(start, end);
+        return canWalkDirectly(start, end);
+    }
+
+    /**
+     * Straight shortcut along flat ground. If both ends are dirt paths, every step between them has to stay on a path,
+     * so a road is not abandoned for a corner through a fence.
+     */
+    private boolean canWalkDirectly(final Vec3 start, final Vec3 end) {
+        if (ourEntity.isInWater() || Math.abs(start.y - end.y) > 1.0) {
+            return false;
+        }
+        final double dx = end.x - start.x;
+        final double dz = end.z - start.z;
+        final int steps = Mth.ceil(Math.sqrt(dx * dx + dz * dz));
+        if (steps <= 1) {
+            return true;
+        }
+        if (steps > 6) {
+            return false;
+        }
+        final boolean road = isRoadAt(start) && isRoadAt(end);
+        for (int i = 1; i < steps; i++) {
+            final double t = i / (double) steps;
+            final BlockPos feet = BlockPos.containing(start.x + dx * t, start.y, start.z + dz * t);
+            final BlockPos groundPos = feet.below();
+            final BlockState ground = level.getBlockState(groundPos);
+            if (road && !(ground.getBlock() instanceof DirtPathBlock)) {
+                return false;
+            }
+            if (!canStandOn(ground, groundPos)) {
+                return false;
+            }
+            if (blocksBody(level.getBlockState(feet), feet) || blocksBody(level.getBlockState(feet.above()), feet.above())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean isRoadAt(final Vec3 pos) {
+        return level.getBlockState(BlockPos.containing(pos.x, pos.y - 0.2, pos.z)).getBlock() instanceof DirtPathBlock;
+    }
+
+    private boolean canStandOn(final BlockState state, final BlockPos pos) {
+        final Block block = state.getBlock();
+        if (block instanceof FenceBlock || block instanceof FenceGateBlock || block instanceof WallBlock) {
+            return false;
+        }
+        final VoxelShape shape = state.getCollisionShape(level, pos);
+        if (shape.isEmpty()) {
+            return false;
+        }
+        final double top = shape.max(Direction.Axis.Y);
+        return top >= 0.5 && top <= 1.0
+            && shape.max(Direction.Axis.X) - shape.min(Direction.Axis.X) > 0.75
+            && shape.max(Direction.Axis.Z) - shape.min(Direction.Axis.Z) > 0.75;
+    }
+
+    private boolean blocksBody(final BlockState state, final BlockPos pos) {
+        final VoxelShape shape = state.getCollisionShape(level, pos);
+        return !shape.isEmpty() && shape.max(Direction.Axis.Y) > 0.5;
     }
 
     public double getSpeedFactor() {
@@ -550,7 +615,7 @@ public class AdvancedPathNavigate extends AbstractAdvancedPathNavigate {
 
             final BlockPos pos = new BlockPos(pEx.x, pEx.y, pEx.z);
             if (pEx.isOnLadder() && pExNext != null && (pEx.y != pExNext.y || mob.getY() > pEx.y) && level.getBlockState(pos).isLadder(level, pos, ourEntity)) {
-                return handlePathPointOnLadder(pEx);
+                return handlePathPointOnLadder(pEx, pExNext.y < pEx.y);
             } else if (ourEntity.isInWater()) {
                 return handleEntityInWater(oldIndex, pEx);
             } else if (level.getRandom().nextInt(10) == 0) {
@@ -617,56 +682,41 @@ public class AdvancedPathNavigate extends AbstractAdvancedPathNavigate {
         return false;
     }
 
-    private boolean handlePathPointOnLadder(final PathPointExtended pEx) {
+    private boolean handlePathPointOnLadder(final PathPointExtended pEx, final boolean descending) {
         Vec3 vec3 = this.getPath().getNextEntityPos(this.ourEntity);
         final BlockPos entityPos = new BlockPos(this.ourEntity.blockPosition());
-        if (vec3.distanceToSqr(ourEntity.getX(), vec3.y, ourEntity.getZ()) < 0.6 && Math.abs(vec3.y - entityPos.getY()) <= 2.0) {
-            //This way he is less nervous and gets up the ladder
-            double newSpeed = 0.3;
-            switch (pEx.getLadderFacing()) {
-                //  Any of these values is climbing, so adjust our direction of travel towards the ladder
-                case NORTH:
-                    vec3 = vec3.add(0, 0, 0.4);
-                    break;
-                case SOUTH:
-                    vec3 = vec3.add(0, 0, -0.4);
-                    break;
-                case WEST:
-                    vec3 = vec3.add(0.4, 0, 0);
-                    break;
-                case EAST:
-                    vec3 = vec3.add(-0.4, 0, 0);
-                    break;
-                case UP:
-                    vec3 = vec3.add(0, 1, 0);
-                    break;
-                //  Any other value is going down, so lets not move at all
-                default:
-                    newSpeed = 0;
-                    mob.setShiftKeyDown(true);
-                    isSneaking = true;
-                    this.ourEntity.getMoveControl().setWantedPosition(vec3.x, vec3.y, vec3.z, 0.2);
-                    break;
-            }
-
-            if (newSpeed > 0)
-            {
-                if (!(level.getBlockState(ourEntity.blockPosition()).getBlock() instanceof LadderBlock)) {
-                    this.ourEntity.setDeltaMovement(this.ourEntity.getDeltaMovement().add(0, 0.1D, 0));
-                }
-                this.ourEntity.getMoveControl().setWantedPosition(vec3.x, vec3.y, vec3.z, newSpeed);
-            }
-            else
-            {
-                if (level.getBlockState(entityPos.below()).isLadder(level, entityPos.below(), ourEntity)) {
-                    this.ourEntity.setYya(-0.5f);
-                } else {
-                    return false;
+        final double reach = Math.max(0.75, Math.min(this.mob.getBbWidth() * 0.5, 2.5));
+        if (vec3.distanceToSqr(ourEntity.getX(), vec3.y, ourEntity.getZ()) < reach * reach && Math.abs(vec3.y - entityPos.getY()) <= 2.0) {
+            vec3 = nudgeTowardLadder(vec3, pEx.getLadderFacing());
+            if (descending) {
+                vec3 = vec3.add(0, -0.4, 0);
+                mob.setShiftKeyDown(true);
+                isSneaking = true;
+                this.ourEntity.getMoveControl().setWantedPosition(vec3.x, vec3.y, vec3.z, 0.3);
+                if (level.getBlockState(entityPos).isLadder(level, entityPos, ourEntity)
+                    || level.getBlockState(entityPos.below()).isLadder(level, entityPos.below(), ourEntity)) {
+                    this.ourEntity.setDeltaMovement(this.ourEntity.getDeltaMovement().x, Math.min(this.ourEntity.getDeltaMovement().y, -0.15), this.ourEntity.getDeltaMovement().z);
                 }
                 return true;
             }
+            if (!(level.getBlockState(ourEntity.blockPosition()).getBlock() instanceof LadderBlock)) {
+                this.ourEntity.setDeltaMovement(this.ourEntity.getDeltaMovement().add(0, 0.1D, 0));
+            }
+            this.ourEntity.getMoveControl().setWantedPosition(vec3.x, vec3.y, vec3.z, 0.3);
+            return true;
         }
         return false;
+    }
+
+    private static Vec3 nudgeTowardLadder(Vec3 vec3, final Direction facing) {
+        return switch (facing) {
+            case NORTH -> vec3.add(0, 0, 0.4);
+            case SOUTH -> vec3.add(0, 0, -0.4);
+            case WEST -> vec3.add(0.4, 0, 0);
+            case EAST -> vec3.add(-0.4, 0, 0);
+            case UP -> vec3.add(0, 1, 0);
+            default -> vec3;
+        };
     }
 
     private boolean handleEntityInWater(int oldIndex, final PathPointExtended pEx) {
@@ -710,40 +760,45 @@ public class AdvancedPathNavigate extends AbstractAdvancedPathNavigate {
             final PathPointExtended pEx = (PathPointExtended) path.getNode(curNode);
             final PathPointExtended pExNext = (PathPointExtended) path.getNode(curNodeNext);
 
-            //  If current node is bottom of a ladder, then stay on this node until
-            //  the ourEntity reaches the bottom, otherwise they will try to head out early
-            if (pEx.isOnLadder() && pEx.getLadderFacing() == Direction.DOWN
-                && !pExNext.isOnLadder()) {
-                final Vec3 vec3 = getTempMobPos();
-                if ((vec3.y - (double) pEx.y) < MIN_Y_DISTANCE) {
-                    this.path.setNextNodeIndex(curNodeNext);
+            // Stay on the bottom rung until the body is actually down there.
+            // A wide mob used to count as "there" while still a block above the exit.
+            if (pEx.isOnLadder() && pExNext.y <= pEx.y && !pExNext.isOnLadder()) {
+                if (getTempMobPos().y - pEx.y > 0.75) {
+                    return;
                 }
-                return;
             }
         }
 
-        this.maxDistanceToWaypoint = Math.max(1.2F, this.mob.getBbWidth());
+        this.maxDistanceToWaypoint = (float) Math.min(2.0, Math.max(1.0, this.mob.getBbWidth() * 0.3));
         boolean wentAhead = false;
         boolean isTracking = AbstractPathJob.trackingMap.containsValue(ourEntity.getUUID());
 
-        // TODO: Figure out a better way to derive this value ideally from the pathfinding code
-        int maxDropHeight = 3;
-
         final HashSet<BlockPos> reached = new HashSet<>();
+        final int nextIndex = this.path.getNextNodeIndex();
         // Look at multiple points, incase we're too fast
-        for (int i = this.path.getNextNodeIndex(); i < Math.min(this.path.getNodeCount(), this.path.getNextNodeIndex() + 4); i++) {
+        for (int i = nextIndex; i < Math.min(this.path.getNodeCount(), nextIndex + 4); i++) {
             Vec3 next = this.path.getEntityPosAtNode(this.mob, i);
-            if (Math.abs(this.mob.getX() - next.x) < (double) this.maxDistanceToWaypoint - Math.abs(this.mob.getY() - (next.y)) * 0.1
-                && Math.abs(this.mob.getZ() - next.z) < (double) this.maxDistanceToWaypoint - Math.abs(this.mob.getY() - (next.y)) * 0.1 &&
-                    (Math.abs(this.mob.getY() - next.y) <= Math.min(1.0F, Math.ceil(this.mob.getBbHeight() / 2.0F)) ||
-                            Math.abs(this.mob.getY() - next.y) <= Math.ceil(this.mob.getBbWidth() /2 ) * maxDropHeight)) {
+            final double dy = Math.abs(this.mob.getY() - next.y);
+            final Node node = path.getNode(i);
+            final boolean ladder = node instanceof PathPointExtended extended && extended.isOnLadder();
+            final double horizontalReach = ladder ? 0.75 : this.maxDistanceToWaypoint;
+            final boolean close = Math.abs(this.mob.getX() - next.x) < horizontalReach
+                && Math.abs(this.mob.getZ() - next.z) < horizontalReach
+                && dy <= (ladder ? 0.6 : 1.25);
+            final boolean shortcut = i > nextIndex && !ladder && dy <= 1.0 && canWalkDirectly(this.mob.position(), next);
+            if (close) {
                 this.path.advance();
                 wentAhead = true;
-
                 if (isTracking) {
-                    final Node point = path.getNode(i);
-                    reached.add(new BlockPos(point.x, point.y, point.z));
+                    reached.add(new BlockPos(node.x, node.y, node.z));
                 }
+            } else if (shortcut) {
+                this.path.setNextNodeIndex(i);
+                wentAhead = true;
+                if (isTracking) {
+                    reached.add(new BlockPos(node.x, node.y, node.z));
+                }
+                break;
             }
         }
 

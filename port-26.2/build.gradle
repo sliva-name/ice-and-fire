@@ -5,7 +5,7 @@ plugins {
     id 'net.minecraftforge.gradle' version '7.0.17'
 }
 
-version = '2.1.13-26.2-port.5'
+version = '2.1.13-26.2-port.6'
 group = 'com.github.alexthe667'
 base.archivesName = 'iceandfire'
 java.toolchain.languageVersion = JavaLanguageVersion.of(25)
