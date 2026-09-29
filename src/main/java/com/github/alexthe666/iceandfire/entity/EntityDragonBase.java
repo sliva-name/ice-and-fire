@@ -2940,7 +2940,7 @@ public abstract class EntityDragonBase extends TamableAnimal implements IPassabi
                 dragonInventory.setItem(4, stack);
                 break;
             default:
-                super.getItemBySlot(slotIn);
+                super.setItemSlot(slotIn, stack);
         }
     }
 

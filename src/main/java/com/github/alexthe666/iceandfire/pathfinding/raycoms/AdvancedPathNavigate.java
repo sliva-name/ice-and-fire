@@ -356,7 +356,7 @@ public class AdvancedPathNavigate extends AbstractAdvancedPathNavigate {
      */
     public static double getSmartGroundY(final BlockGetter world, final BlockPos pos) {
         final BlockPos blockpos = pos.below();
-        final VoxelShape voxelshape = world.getBlockState(blockpos).getBlockSupportShape(world, blockpos);
+        final VoxelShape voxelshape = world.getBlockState(blockpos).getCollisionShape(world, blockpos);
         if (voxelshape.isEmpty() || voxelshape.max(Direction.Axis.Y) < 1.0) {
             return pos.getY();
         }

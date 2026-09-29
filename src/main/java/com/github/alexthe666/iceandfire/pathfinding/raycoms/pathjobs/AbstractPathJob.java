@@ -1373,13 +1373,22 @@ public abstract class AbstractPathJob implements Callable<Path> {
         return isPassable(state, pos, parent);
     }
 
+    /**
+     * The path node sits at the centre of the body, so the footprint reaches the same distance on both sides.
+     * Checking only one side let wide dragons clip the pillar or wall on the other.
+     */
+    private int footprintHalf() {
+        return (int) Math.floor(entitySizeXZ);
+    }
+
     protected boolean isPassableBBFull(final BlockPos pos, MNode parent) {
         if (circumventSizeCheck) {
             return isPassable(pos, false, parent) && isPassable(pos.above(), true, parent);
         } else {
-            for (int i = 0; i <= entitySizeXZ; i++) {
+            final int half = footprintHalf();
+            for (int i = -half; i <= half; i++) {
                 for (int j = 0; j <= entitySizeY; j++) {
-                    for (int k = 0; k <= entitySizeXZ; k++) {
+                    for (int k = -half; k <= half; k++) {
                         if (!isPassable(pos.offset(i, j, k), false, parent)) {
                             return false;
                         }
@@ -1399,7 +1408,8 @@ public abstract class AbstractPathJob implements Callable<Path> {
             if (facingDir == Direction.DOWN || facingDir == Direction.UP)
                 return false;
             facingDir = facingDir.getClockWise();
-            for (int i = 0; i <= entitySizeXZ; i++) {
+            final int half = footprintHalf();
+            for (int i = -half; i <= half; i++) {
                 for (int j = 0; j <= entitySizeY; j++) {
                     if (!isPassable(pos.relative(facingDir, i).above(j), false, parent)) {
                         return false;
@@ -1421,7 +1431,8 @@ public abstract class AbstractPathJob implements Callable<Path> {
             if (facingDir == Direction.DOWN || facingDir == Direction.UP)
                 return false;
             facingDir = facingDir.getClockWise();
-            for (int i = 0; i <= entitySizeXZ; i++) {
+            final int half = footprintHalf();
+            for (int i = -half; i <= half; i++) {
                 for (int j = 0; j <= entitySizeY; j++) {
                     if (!isPassable(pos.relative(facingDir, i).above(j), false, parent) || pos.getY() <= parentPos.getY()) {
                         return false;

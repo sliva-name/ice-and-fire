@@ -26,7 +26,10 @@ public final class DreadPortalTeleporter {
         if (target == null) {
             return null;
         }
-        BlockPos landing = fromDread ? findReturn(current, target, portalPos) : findOrCreateExit(current, target, portalPos);
+        if (!fromDread) {
+            rememberEntry(entity, portalPos);
+        }
+        BlockPos landing = fromDread ? findReturn(current, target, portalPos, entity) : findOrCreateExit(current, target, portalPos);
         if (landing == null) {
             return null;
         }
@@ -40,7 +43,39 @@ public final class DreadPortalTeleporter {
         );
     }
 
-    private static BlockPos findReturn(ServerLevel dread, ServerLevel overworld, BlockPos portalPos) {
+    private static final String RETURN_KEY = "IafDreadReturn";
+
+    /** All portals now lead to one citadel, so each traveller remembers the portal they came through. */
+    private static void rememberEntry(Entity entity, BlockPos portalPos) {
+        if (entity instanceof net.minecraft.world.entity.LivingEntity living) {
+            net.minecraft.nbt.CompoundTag root = com.github.alexthe666.citadel.server.entity.CitadelEntityData.getOrCreateCitadelTag(living);
+            root.putIntArray(RETURN_KEY, new int[]{portalPos.getX(), portalPos.getY(), portalPos.getZ()});
+            com.github.alexthe666.citadel.server.entity.CitadelEntityData.setCitadelTag(living, root);
+        }
+    }
+
+    @Nullable
+    private static BlockPos readEntry(ServerLevel overworld, Entity entity) {
+        if (!(entity instanceof net.minecraft.world.entity.LivingEntity living)) {
+            return null;
+        }
+        net.minecraft.nbt.CompoundTag root = com.github.alexthe666.citadel.server.entity.CitadelEntityData.getCitadelTag(living);
+        if (root == null) {
+            return null;
+        }
+        int[] xyz = root.getIntArray(RETURN_KEY).orElse(null);
+        if (xyz == null || xyz.length != 3) {
+            return null;
+        }
+        BlockPos pos = new BlockPos(xyz[0], xyz[1], xyz[2]);
+        return isPortal(overworld, pos) ? pos : null;
+    }
+
+    private static BlockPos findReturn(ServerLevel dread, ServerLevel overworld, BlockPos portalPos, Entity entity) {
+        BlockPos remembered = readEntry(overworld, entity);
+        if (remembered != null) {
+            return standingPos(overworld, remembered);
+        }
         BlockPos linked = readLinkedExit(dread, portalPos);
         if (linked != null) {
             return standingPos(overworld, linked);
