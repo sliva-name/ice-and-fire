@@ -99,6 +99,9 @@ public class WorldGenIceDragonRoosts extends Feature<NoneFeatureConfiguration> i
             float f = (j + k + l) * 0.333F + 0.5F;
 
             BlockPos.betweenClosedStream(position.offset(-j, k, -l), position.offset(j, 0, l)).map(BlockPos::immutable).forEach(blockPos -> {
+                if (!WorldGenUtils.nearGeneratingChunk(position, blockPos)) {
+                    return;
+                }
                 int yAdd = blockPos.getY() - position.getY();
                 if (blockPos.distSqr(position) <= f * f && yAdd < 2 + rand.nextInt(k) && !worldIn.isEmptyBlock(blockPos.below())) {
                     if (worldIn.isEmptyBlock(blockPos.above()))
@@ -114,6 +117,9 @@ public class WorldGenIceDragonRoosts extends Feature<NoneFeatureConfiguration> i
             int l = radius;
             float f = (j + k + l) * 0.333F + 0.5F;
             BlockPos.betweenClosedStream(position.offset(-j, -k, -l), position.offset(j, 1, l)).map(BlockPos::immutable).forEach(blockPos -> {
+                if (!WorldGenUtils.nearGeneratingChunk(position, blockPos)) {
+                    return;
+                }
                 if (blockPos.distSqr(position) < f * f) {
                     worldIn.setBlock(blockPos, rand.nextBoolean() ? IafBlockRegistry.FROZEN_GRAVEL.get().defaultBlockState() : IafBlockRegistry.FROZEN_DIRT.get().defaultBlockState(), 2);
                 } else if (blockPos.distSqr(position) == f * f) {
@@ -129,6 +135,9 @@ public class WorldGenIceDragonRoosts extends Feature<NoneFeatureConfiguration> i
             float f = (j + k + l) * 0.333F + 0.5F;
             BlockPos up = position.above(k - 1);
             BlockPos.betweenClosedStream(up.offset(-j, -k + 2, -l), up.offset(j, k, l)).map(BlockPos::immutable).forEach(blockPos -> {
+                if (!WorldGenUtils.nearGeneratingChunk(position, blockPos)) {
+                    return;
+                }
                 if (blockPos.distSqr(position) <= f * f) {
                     worldIn.setBlock(blockPos, Blocks.AIR.defaultBlockState(), 2);
                 }
@@ -141,6 +150,9 @@ public class WorldGenIceDragonRoosts extends Feature<NoneFeatureConfiguration> i
             int l = radius;
             float f = (j + k + l) * 0.333F + 0.5F;
             BlockPos.betweenClosedStream(position.offset(-j, -k, -l), position.offset(j, k, l)).map(BlockPos::immutable).forEach(blockPos -> {
+                if (!WorldGenUtils.nearGeneratingChunk(position, blockPos)) {
+                    return;
+                }
                 if (blockPos.distSqr(position) <= f * f) {
                     double dist = blockPos.distSqr(position) / (f * f);
                     if (!worldIn.isEmptyBlock(position) && rand.nextDouble() > dist * 0.5D) {

@@ -2,7 +2,6 @@ package com.github.alexthe666.iceandfire.world;
 
 import com.github.alexthe666.iceandfire.block.IafBlockRegistry;
 import com.github.alexthe666.iceandfire.entity.tile.TileEntityDreadPortal;
-import com.github.alexthe666.iceandfire.world.gen.WorldGenDreadExitPortal;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
@@ -51,35 +50,11 @@ public final class DreadPortalTeleporter {
     }
 
     private static BlockPos findOrCreateExit(ServerLevel overworld, ServerLevel dread, BlockPos portalPos) {
-        BlockPos linked = readLinkedExit(overworld, portalPos);
-        if (linked != null && isPortal(dread, linked)) {
-            DreadLandsRulers.ensurePresent(dread, linked, false);
-            return standingPos(dread, linked);
-        }
-        BlockPos dest = surfacePos(dread, portalPos);
-        BlockPos existing = WorldGenDreadExitPortal.findNearbyPortal(dread, dest, 24);
-        boolean created = existing == null;
-        if (existing == null) {
-            existing = WorldGenDreadExitPortal.place(dread, dest);
-        }
-        if (existing != null) {
-            linkPortals(overworld, portalPos, dread, existing);
-            DreadLandsRulers.ensurePresent(dread, existing, created);
-            return standingPos(dread, existing);
-        }
-        return dest.above();
-    }
-
-    private static BlockPos surfacePos(ServerLevel level, BlockPos source) {
-        int x = source.getX();
-        int z = source.getZ();
-        int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
-        int min = level.getMinY() + 8;
-        int max = level.getMaxY() - 8;
-        if (y < min) {
-            y = 64;
-        }
-        return new BlockPos(x, Math.min(max, y), z);
+        DreadArena.Site site = DreadArena.ensure(dread);
+        BlockPos exit = site.portal();
+        linkPortals(overworld, portalPos, dread, exit);
+        DreadLandsRulers.ensurePresent(dread, exit, site.built());
+        return standingPos(dread, exit);
     }
 
     @Nullable

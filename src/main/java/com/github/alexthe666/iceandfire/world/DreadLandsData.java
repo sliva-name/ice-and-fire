@@ -3,6 +3,7 @@ package com.github.alexthe666.iceandfire.world;
 import com.github.alexthe666.iceandfire.IceAndFire;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
@@ -21,7 +22,8 @@ public class DreadLandsData extends SavedData {
         Codec.BOOL.optionalFieldOf("Spawned", false).forGetter(data -> data.spawned),
         Codec.BOOL.optionalFieldOf("Defeated", false).forGetter(data -> data.defeated),
         UUIDUtil.CODEC.optionalFieldOf("QueenUUID").forGetter(data -> Optional.ofNullable(data.queenId)),
-        UUIDUtil.CODEC.optionalFieldOf("DragonUUID").forGetter(data -> Optional.ofNullable(data.dragonId))
+        UUIDUtil.CODEC.optionalFieldOf("DragonUUID").forGetter(data -> Optional.ofNullable(data.dragonId)),
+        BlockPos.CODEC.optionalFieldOf("Arena").forGetter(data -> Optional.ofNullable(data.arena))
     ).apply(instance, DreadLandsData::new));
 
     public static final SavedDataType<DreadLandsData> TYPE = new SavedDataType<>(
@@ -37,15 +39,18 @@ public class DreadLandsData extends SavedData {
     private UUID queenId;
     @Nullable
     private UUID dragonId;
+    @Nullable
+    private BlockPos arena;
 
     public DreadLandsData() {
     }
 
-    private DreadLandsData(boolean spawned, boolean defeated, Optional<UUID> queenId, Optional<UUID> dragonId) {
+    private DreadLandsData(boolean spawned, boolean defeated, Optional<UUID> queenId, Optional<UUID> dragonId, Optional<BlockPos> arena) {
         this.spawned = spawned;
         this.defeated = defeated;
         this.queenId = queenId.orElse(null);
         this.dragonId = dragonId.orElse(null);
+        this.arena = arena.orElse(null);
     }
 
     @Nullable
@@ -59,6 +64,16 @@ public class DreadLandsData extends SavedData {
             return data;
         }
         return null;
+    }
+
+    @Nullable
+    public BlockPos getArena() {
+        return this.arena;
+    }
+
+    public void setArena(BlockPos center) {
+        this.arena = center.immutable();
+        this.setDirty();
     }
 
     public boolean hasSpawned() {

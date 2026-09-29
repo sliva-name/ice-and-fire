@@ -100,11 +100,11 @@ public final class DreadLandsRulers {
             return;
         }
 
-        BlockPos spawn = surfaceNear(dread, portal.offset(16, 0, 12));
+        BlockPos spawn = DreadArena.throneOf(DreadArena.centerFromPortal(portal));
         frost.snapTo(spawn.getX() + 0.5D, spawn.getY(), spawn.getZ() + 0.5D, 0.0F, 0.0F);
         frost.finalizeSpawn(dread, dread.getCurrentDifficultyAt(spawn), EntitySpawnReason.EVENT, null);
         frost.applyBlackFrost();
-        restrictHome(frost, portal);
+        restrictHome(frost, spawn);
         dread.addFreshEntity(frost);
 
         queen.snapTo(spawn.getX() + 0.5D, spawn.getY(), spawn.getZ() + 0.5D, 0.0F, 0.0F);
@@ -178,16 +178,6 @@ public final class DreadLandsRulers {
             dragon.homePos = new HomePosition(portal, dragon.level());
             dragon.hasHomePosition = true;
         }
-    }
-
-    private static BlockPos surfaceNear(ServerLevel level, BlockPos around) {
-        int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, around.getX(), around.getZ());
-        int min = level.getMinY() + 8;
-        int max = level.getMaxY() - 8;
-        if (y < min) {
-            y = 72;
-        }
-        return new BlockPos(around.getX(), Math.min(max, y), around.getZ());
     }
 
     private static AABB searchBox(ServerLevel level, BlockPos portal) {
