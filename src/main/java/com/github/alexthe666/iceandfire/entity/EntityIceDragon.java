@@ -118,7 +118,39 @@ public class EntityIceDragon extends EntityDragonBase {
         this.setDropChance(net.minecraft.world.entity.EquipmentSlot.FEET, 0.0F);
     }
 
+    private Vec3 frostAnchor = Vec3.ZERO;
+    private int frostStuckTicks;
+
+    /** The black frost dragon carries the queen and never flies, so a jammed path must not leave it standing still. */
+    private void unstickBlackFrost() {
+        LivingEntity target = this.getTarget();
+        if (target == null || !target.isAlive() || !this.onGround() || this.distanceToSqr(target) < 100.0D || this.isModelDead()) {
+            this.frostStuckTicks = 0;
+            this.frostAnchor = this.position();
+            return;
+        }
+        if (this.position().distanceToSqr(this.frostAnchor) > 2.25D) {
+            this.frostAnchor = this.position();
+            this.frostStuckTicks = 0;
+            return;
+        }
+        if (++this.frostStuckTicks > 60) {
+            this.getNavigation().stop();
+            this.getMoveControl().setWantedPosition(target.getX(), target.getY(), target.getZ(), 1.4D);
+            if (this.horizontalCollision) {
+                this.getJumpControl().jump();
+            }
+            if (this.frostStuckTicks > 160) {
+                Vec3 step = target.position().subtract(this.position()).normalize().scale(3.0D);
+                this.setPos(this.getX() + step.x, this.getY() + 0.5D, this.getZ() + step.z);
+                this.frostStuckTicks = 40;
+                this.frostAnchor = this.position();
+            }
+        }
+    }
+
     private void tickBlackFrostCombat() {
+        this.unstickBlackFrost();
         this.setInSittingPose(false);
         this.setOrderedToSit(false);
         if (this.groundAttack == IafDragonAttacks.Ground.SHAKE_PREY) {

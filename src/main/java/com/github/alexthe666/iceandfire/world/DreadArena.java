@@ -341,19 +341,16 @@ public final class DreadArena {
         set(level, x + 1, floorY + height + 2, z + 1, IafBlockRegistry.DREAD_TORCH.get().defaultBlockState());
     }
 
+    /** Buttress pillars stand against the wall so the dragon can cross the courtyard unobstructed. */
     private static void pillars(ServerLevel level, BlockPos c) {
         for (int k = 0; k < 8; k++) {
             double angle = Math.toRadians(22.5 + 45.0 * k);
-            int x = (int) Math.round(Math.cos(angle) * 19.0);
-            int z = (int) Math.round(Math.sin(angle) * 19.0);
-            if (Math.abs(z) > 15 && Math.abs(x) < 11) {
+            int x = (int) Math.round(Math.cos(angle) * 25.5) - 1;
+            int z = (int) Math.round(Math.sin(angle) * 25.5) - 1;
+            if (Math.abs(z) > 15 && Math.abs(x) < 12) {
                 continue;
             }
             pillar(level, c.getX() + x, c.getY(), c.getZ() + z, 8);
-        }
-        for (int k = 0; k < 4; k++) {
-            double angle = Math.toRadians(45.0 + 90.0 * k);
-            pillar(level, c.getX() + (int) Math.round(Math.cos(angle) * 11.0), c.getY(), c.getZ() + (int) Math.round(Math.sin(angle) * 11.0), 5);
         }
     }
 
