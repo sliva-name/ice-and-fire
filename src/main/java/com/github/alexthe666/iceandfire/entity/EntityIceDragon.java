@@ -118,6 +118,13 @@ public class EntityIceDragon extends EntityDragonBase {
         this.setDropChance(net.minecraft.world.entity.EquipmentSlot.FEET, 0.0F);
     }
 
+    /** A tamed black frost dragon follows the ordinary dragon rules, so the queen has to get off. */
+    private void releaseQueen() {
+        if (this.getFirstPassenger() instanceof EntityDreadQueen queen) {
+            queen.stopRiding();
+        }
+    }
+
     private Vec3 frostAnchor = Vec3.ZERO;
     private int frostStuckTicks;
 
@@ -181,7 +188,7 @@ public class EntityIceDragon extends EntityDragonBase {
 
     @Override
     protected boolean shouldTarget(Entity entity) {
-        if (this.isBlackFrost() && entity instanceof IDreadMob) {
+        if (this.isBlackFrost() && !this.isTame() && entity instanceof IDreadMob) {
             return false;
         }
         if (entity instanceof EntityDragonBase && !this.isTame()) {
@@ -192,7 +199,7 @@ public class EntityIceDragon extends EntityDragonBase {
 
     @Override
     protected boolean canAddPassenger(@NotNull Entity passenger) {
-        if (this.isBlackFrost()) {
+        if (this.isBlackFrost() && !this.isTame()) {
             return passenger instanceof EntityDreadQueen && super.canAddPassenger(passenger);
         }
         return super.canAddPassenger(passenger);
@@ -204,14 +211,6 @@ public class EntityIceDragon extends EntityDragonBase {
             return !this.isModelDead() && !EntityGorgon.isStoneMob(this);
         }
         return super.shouldRenderEyes();
-    }
-
-    @Override
-    public @NotNull InteractionResult mobInteract(@NotNull Player player, @NotNull InteractionHand hand) {
-        if (this.isBlackFrost()) {
-            return InteractionResult.PASS;
-        }
-        return super.mobInteract(player, hand);
     }
 
     @Override
@@ -285,7 +284,7 @@ public class EntityIceDragon extends EntityDragonBase {
 
     @Override
     public boolean canBeControlledByRider() {
-        return !this.isBlackFrost();
+        return !this.isBlackFrost() || this.isTame();
     }
 
     @Override
@@ -302,7 +301,7 @@ public class EntityIceDragon extends EntityDragonBase {
                 case SHAKE_PREY:
                     boolean flag = false;
                     if (new Random().nextInt(2) == 0 && isDirectPathBetweenPoints(this, this.position().add(0, this.getBbHeight() / 2, 0), entityIn.position().add(0, entityIn.getBbHeight() / 2, 0)) &&
-                        entityIn.getBbWidth() < this.getBbWidth() * 0.5F && this.getControllingPassenger() == null && this.getDragonStage() > 1 && !(entityIn instanceof EntityDragonBase) && !DragonUtils.isAnimaniaMob(entityIn) && !this.isBlackFrost()) {
+                        entityIn.getBbWidth() < this.getBbWidth() * 0.5F && this.getControllingPassenger() == null && this.getDragonStage() > 1 && !(entityIn instanceof EntityDragonBase) && !DragonUtils.isAnimaniaMob(entityIn) && (!this.isBlackFrost() || this.isTame())) {
                         this.setAnimation(ANIMATION_SHAKEPREY);
                         flag = true;
                         entityIn.startRiding(this);
@@ -324,7 +323,11 @@ public class EntityIceDragon extends EntityDragonBase {
     public void aiStep() {
         super.aiStep();
         if (!this.level().isClientSide() && this.isBlackFrost()) {
-            this.tickBlackFrostCombat();
+            if (this.isTame()) {
+                this.releaseQueen();
+            } else {
+                this.tickBlackFrostCombat();
+            }
         }
         LivingEntity attackTarget = this.getTarget();
         if (!this.level().isClientSide() && this.isInLava() && this.isAllowedToTriggerFlight() && !this.isModelDead()) {
@@ -753,7 +756,7 @@ public class EntityIceDragon extends EntityDragonBase {
 
     @Override
     public boolean isFood(@Nullable ItemStack stack) {
-        return !this.isBlackFrost() && !stack.isEmpty() && stack.getItem() != null && stack.getItem() == IafItemRegistry.FROST_STEW.get();
+        return !stack.isEmpty() && stack.getItem() != null && stack.getItem() == IafItemRegistry.FROST_STEW.get();
     }
 
     @Override

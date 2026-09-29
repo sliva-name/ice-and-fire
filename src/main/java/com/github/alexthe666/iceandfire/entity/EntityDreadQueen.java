@@ -160,7 +160,7 @@ public class EntityDreadQueen extends EntityDreadMob implements IAnimatedEntity,
             return;
         }
         EntityIceDragon dragon = this.level().getEntitiesOfClass(EntityIceDragon.class, this.getBoundingBox().inflate(16.0D),
-            mount -> mount.isAlive() && mount.isBlackFrost() && !mount.isModelDead() && !mount.isVehicle())
+            mount -> mount.isAlive() && mount.isBlackFrost() && !mount.isTame() && !mount.isModelDead() && !mount.isVehicle())
             .stream().findFirst().orElse(null);
         if (dragon != null) {
             this.startRiding(dragon, true, true);
@@ -168,7 +168,7 @@ public class EntityDreadQueen extends EntityDreadMob implements IAnimatedEntity,
     }
 
     private void shareTargetWithMount() {
-        if (this.getVehicle() instanceof EntityIceDragon dragon && dragon.isBlackFrost()) {
+        if (this.getVehicle() instanceof EntityIceDragon dragon && dragon.isBlackFrost() && !dragon.isTame()) {
             LivingEntity target = this.getTarget();
             if (target != null && target.isAlive()) {
                 dragon.setTarget(target);
@@ -261,7 +261,7 @@ public class EntityDreadQueen extends EntityDreadMob implements IAnimatedEntity,
 
     @Override
     public boolean hurtServer(@NotNull ServerLevel level, @NotNull DamageSource source, float amount) {
-        if (source.getEntity() instanceof EntityIceDragon dragon && dragon.isBlackFrost()) {
+        if (source.getEntity() instanceof EntityIceDragon dragon && dragon.isBlackFrost() && !dragon.isTame()) {
             return false;
         }
         if (this.getVehicle() instanceof EntityIceDragon) {

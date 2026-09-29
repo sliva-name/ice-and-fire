@@ -80,11 +80,11 @@ public final class DreadLandsRulers {
         }
         UUID queenId = queen != null ? queen.getUUID() : data.getQueenId();
         UUID dragonId = dragon != null ? dragon.getUUID() : data.getDragonId();
-        if (queen != null && dragon == null && queen.getVehicle() instanceof EntityIceDragon mount && mount.isBlackFrost()) {
+        if (queen != null && dragon == null && queen.getVehicle() instanceof EntityIceDragon mount && mount.isBlackFrost() && !mount.isTame()) {
             dragonId = mount.getUUID();
             dragon = mount;
         }
-        restrictHome(dragon, portal);
+        restrictHome(dragon, DreadArena.centerFromPortal(portal).above(3));
         remount(queen, dragon);
         data.setRulers(queenId, dragonId);
         return true;
@@ -104,7 +104,7 @@ public final class DreadLandsRulers {
         frost.snapTo(spawn.getX() + 0.5D, spawn.getY(), spawn.getZ() + 0.5D, 0.0F, 0.0F);
         frost.finalizeSpawn(dread, dread.getCurrentDifficultyAt(spawn), EntitySpawnReason.EVENT, null);
         frost.applyBlackFrost();
-        restrictHome(frost, spawn);
+        restrictHome(frost, DreadArena.centerFromPortal(portal).above(3));
         dread.addFreshEntity(frost);
 
         queen.snapTo(spawn.getX() + 0.5D, spawn.getY(), spawn.getZ() + 0.5D, 0.0F, 0.0F);
@@ -134,9 +134,9 @@ public final class DreadLandsRulers {
             }
         }
 
-        EntityIceDragon chosenDragon = keepDragon != null && dread.getEntity(keepDragon) instanceof EntityIceDragon living && living.isAlive() && living.isBlackFrost()
+        EntityIceDragon chosenDragon = keepDragon != null && dread.getEntity(keepDragon) instanceof EntityIceDragon living && living.isAlive() && living.isBlackFrost() && !living.isTame()
             ? living : null;
-        for (EntityIceDragon dragon : dread.getEntitiesOfClass(EntityIceDragon.class, area, dragon -> dragon.isAlive() && dragon.isBlackFrost())) {
+        for (EntityIceDragon dragon : dread.getEntitiesOfClass(EntityIceDragon.class, area, dragon -> dragon.isAlive() && dragon.isBlackFrost() && !dragon.isTame() && dragon.getFirstPassenger() instanceof EntityDreadQueen)) {
             if (chosenDragon == null) {
                 chosenDragon = dragon;
                 continue;
@@ -156,11 +156,11 @@ public final class DreadLandsRulers {
     }
 
     private static EntityIceDragon findDragon(ServerLevel dread, DreadLandsData data, BlockPos portal) {
-        if (data.getDragonId() != null && dread.getEntity(data.getDragonId()) instanceof EntityIceDragon dragon && dragon.isAlive() && dragon.isBlackFrost()) {
+        if (data.getDragonId() != null && dread.getEntity(data.getDragonId()) instanceof EntityIceDragon dragon && dragon.isAlive() && dragon.isBlackFrost() && !dragon.isTame()) {
             return dragon;
         }
         List<EntityIceDragon> dragons = dread.getEntitiesOfClass(EntityIceDragon.class, searchBox(dread, portal),
-            dragon -> dragon.isAlive() && dragon.isBlackFrost());
+            dragon -> dragon.isAlive() && dragon.isBlackFrost() && !dragon.isTame());
         return dragons.isEmpty() ? null : dragons.get(0);
     }
 
