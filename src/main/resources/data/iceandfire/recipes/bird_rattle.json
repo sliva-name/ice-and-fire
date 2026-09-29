@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "F",
+    "B"
+  ],
+  "key": {
+    "F": {
+      "item": "iceandfire:stymphalian_bird_feather"
+    },
+    "B": {
+      "item": "minecraft:bone"
+    }
+  },
+  "result": {
+    "item": "iceandfire:bird_rattle"
+  }
+}

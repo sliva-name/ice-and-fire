@@ -1,0 +1,14 @@
+{
+  "type": "iceandfire:dragonforge",
+  "dragon_type": "ice",
+  "cook_time": 1600,
+  "input": {
+    "item": "iceandfire:blackfrost_heart"
+  },
+  "blood": {
+    "item": "iceandfire:ice_dragon_blood"
+  },
+  "result": {
+    "item": "iceandfire:oath_blackfrost"
+  }
+}

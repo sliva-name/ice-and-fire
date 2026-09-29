@@ -77,12 +77,18 @@ public class EntitySeaSerpent extends Animal implements IAnimatedEntity, IMultip
     private static final Predicate<Entity> NOT_SEA_SERPENT = new Predicate<Entity>() {
         @Override
         public boolean apply(@Nullable Entity entity) {
+            if (entity instanceof Player player && com.github.alexthe666.iceandfire.entity.props.OathProperties.ignoresTide(player)) {
+                return false;
+            }
             return entity instanceof LivingEntity && !(entity instanceof EntitySeaSerpent) && DragonUtils.isAlive((LivingEntity) entity);
         }
     };
     private static final Predicate<Entity> NOT_SEA_SERPENT_IN_WATER = new Predicate<Entity>() {
         @Override
         public boolean apply(@Nullable Entity entity) {
+            if (entity instanceof Player player && com.github.alexthe666.iceandfire.entity.props.OathProperties.ignoresTide(player)) {
+                return false;
+            }
             return entity instanceof LivingEntity && !(entity instanceof EntitySeaSerpent) && DragonUtils.isAlive((LivingEntity) entity) && entity.isInWater();
         }
     };

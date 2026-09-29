@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "P",
+    "C"
+  ],
+  "key": {
+    "P": {
+      "item": "minecraft:prismarine_shard"
+    },
+    "C": {
+      "item": "minecraft:cod"
+    }
+  },
+  "result": {
+    "item": "iceandfire:sea_shell",
+    "count": 1
+  }
+}

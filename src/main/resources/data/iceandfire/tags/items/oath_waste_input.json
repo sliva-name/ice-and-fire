@@ -1,0 +1,10 @@
+{
+  "replace": false,
+  "values": [
+    "iceandfire:myrmex_desert_chitin",
+    "iceandfire:myrmex_jungle_chitin",
+    "iceandfire:deathworm_chitin_yellow",
+    "iceandfire:deathworm_chitin_white",
+    "iceandfire:deathworm_chitin_red"
+  ]
+}

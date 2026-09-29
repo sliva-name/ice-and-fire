@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "B",
+    "C",
+    "S"
+  ],
+  "key": {
+    "B": {
+      "item": "iceandfire:fire_dragon_blood"
+    },
+    "C": {
+      "item": "minecraft:coal"
+    },
+    "S": {
+      "item": "minecraft:stick"
+    }
+  },
+  "result": {
+    "item": "iceandfire:watchfire",
+    "count": 1
+  }
+}

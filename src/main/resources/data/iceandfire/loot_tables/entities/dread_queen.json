@@ -39,6 +39,17 @@
       ]
     },
     {
+      "name": "blackfrost_heart",
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "item",
+          "name": "iceandfire:blackfrost_heart",
+          "weight": 1
+        }
+      ]
+    },
+    {
       "name": "dread_queen_sword",
       "conditions": [
         {

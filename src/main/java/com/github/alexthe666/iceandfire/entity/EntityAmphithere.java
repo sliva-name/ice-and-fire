@@ -39,6 +39,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.ai.goal.*;
+import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.OwnerHurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.OwnerHurtTargetGoal;
 import net.minecraft.world.entity.ai.navigation.WallClimberNavigation;
@@ -265,6 +266,42 @@ public class EntityAmphithere extends TamableAnimal implements ISyncMount, IAnim
         this.targetSelector.addGoal(2, new OwnerHurtByTargetGoal(this));
         this.targetSelector.addGoal(3, new AmphithereAIHurtByTarget(this, false, new Class[0]));
         this.targetSelector.addGoal(3, new AmphithereAITargetItems(this, false));
+        this.targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(this, EntityMyrmexBase.class, 10, false, false, (entity, serverLevel) ->
+            BiomeFactions.amphithereHuntsMyrmex(this, entity)));
+    }
+
+    @Override
+    public void die(@NotNull DamageSource cause) {
+        if (!this.level().isClientSide() && cause.getEntity() instanceof Player killer && this.level() instanceof ServerLevel server) {
+            thankJungleHive(server, killer);
+        }
+        super.die(cause);
+    }
+
+    private void thankJungleHive(ServerLevel server, Player killer) {
+        com.github.alexthe666.iceandfire.world.MyrmexWorldData data = com.github.alexthe666.iceandfire.world.MyrmexWorldData.get(server);
+        if (data == null) {
+            return;
+        }
+        com.github.alexthe666.iceandfire.entity.util.MyrmexHive hive = data.getNearestHive(this.blockPosition(), 64);
+        if (hive == null) {
+            return;
+        }
+        boolean jungle = false;
+        for (EntityMyrmexBase myrmex : server.getEntitiesOfClass(EntityMyrmexBase.class, this.getBoundingBox().inflate(64.0D), mob -> mob.isAlive())) {
+            if (myrmex.getHive() == null || !hive.hiveUUID.equals(myrmex.getHive().hiveUUID)) {
+                continue;
+            }
+            if (!myrmex.isJungle()) {
+                return;
+            }
+            jungle = true;
+        }
+        if (!jungle) {
+            return;
+        }
+        int gift = com.github.alexthe666.iceandfire.item.GearRoles.fullJungleMyrmex(killer) ? 12 : 6;
+        hive.modifyPlayerReputation(killer.getUUID(), gift);
     }
 
     public boolean isStill() {

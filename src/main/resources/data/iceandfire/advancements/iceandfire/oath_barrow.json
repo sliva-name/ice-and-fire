@@ -1,0 +1,33 @@
+{
+  "display": {
+    "icon": {
+      "item": "iceandfire:oath_barrow"
+    },
+    "title": {
+      "translate": "advancements.iceandfire.oath_barrow.title"
+    },
+    "description": {
+      "translate": "advancements.iceandfire.oath_barrow.description"
+    }
+  },
+  "parent": "iceandfire:iceandfire/kill_ghost",
+  "criteria": {
+    "oath": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "iceandfire:oath_barrow"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "oath"
+    ]
+  ]
+}

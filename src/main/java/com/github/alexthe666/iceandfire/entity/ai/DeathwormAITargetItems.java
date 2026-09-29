@@ -43,12 +43,19 @@ public class DeathwormAITargetItems<T extends ItemEntity> extends TargetGoal {
         this.targetEntitySelector = new Predicate<ItemEntity>() {
             @Override
             public boolean test(ItemEntity item) {
-                return item != null && !item.getItem().isEmpty() && item.getItem().getItem() == Blocks.TNT.asItem() &&
+                return item != null && !item.getItem().isEmpty() && likes(item) &&
                     IafMaterials.isSand(item.level().getBlockState(item.blockPosition().below()));
             }
         };
         this.setFlags(EnumSet.of(Flag.TARGET));
 
+    }
+
+    private boolean likes(ItemEntity item) {
+        if (item.getItem().getItem() == Blocks.TNT.asItem()) {
+            return true;
+        }
+        return item.getItem().getItem() == com.github.alexthe666.iceandfire.item.IafItemRegistry.WORM_BAIT.get() && !this.worm.isTame();
     }
 
     @Override
@@ -105,13 +112,18 @@ public class DeathwormAITargetItems<T extends ItemEntity> extends TargetGoal {
             this.stop();
         } else if (this.mob.distanceToSqr(this.targetEntity) < 1) {
             EntityDeathWorm deathWorm = (EntityDeathWorm) this.mob;
+            boolean bait = this.targetEntity.getItem().getItem() == com.github.alexthe666.iceandfire.item.IafItemRegistry.WORM_BAIT.get();
             this.targetEntity.getItem().shrink(1);
             this.mob.playSound(SoundEvents.GENERIC_EAT.value(), 1, 1);
             deathWorm.setAnimation(EntityDeathWorm.ANIMATION_BITE);
-            Player thrower = null;
-            if (this.targetEntity.getOwner() instanceof Player owner)
-                thrower = owner;
-            deathWorm.setExplosive(true, thrower);
+            if (bait) {
+                deathWorm.setTarget(null);
+            } else {
+                Player thrower = null;
+                if (this.targetEntity.getOwner() instanceof Player owner)
+                    thrower = owner;
+                deathWorm.setExplosive(true, thrower);
+            }
             stop();
         }
 

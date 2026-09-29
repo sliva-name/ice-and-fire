@@ -60,5 +60,6 @@ public class ItemScaleArmor extends Item implements IafArmorIdentity, IProtectAg
     public void appendHoverText(@NotNull ItemStack stack, Item.TooltipContext context, net.minecraft.world.item.component.TooltipDisplay display, java.util.function.Consumer<Component> tooltip, @NotNull TooltipFlag flagIn) {
         tooltip.accept(Component.translatable("dragon." + eggType.toString().toLowerCase()).withStyle(eggType.color));
         tooltip.accept(Component.translatable("item.dragonscales_armor.desc").withStyle(ChatFormatting.GRAY));
+        tooltip.accept(Component.translatable("item.iceandfire.dragonscales_armor.set").withStyle(ChatFormatting.DARK_GRAY));
     }
 }

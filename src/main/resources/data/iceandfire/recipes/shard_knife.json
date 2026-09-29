@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "D",
+    "N",
+    "S"
+  ],
+  "key": {
+    "D": {
+      "item": "iceandfire:dread_shard"
+    },
+    "N": {
+      "item": "iceandfire:silver_nugget"
+    },
+    "S": {
+      "item": "minecraft:stick"
+    }
+  },
+  "result": {
+    "item": "iceandfire:shard_knife",
+    "count": 1
+  }
+}

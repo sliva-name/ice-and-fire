@@ -56,5 +56,6 @@ public class ItemTrollArmor extends Item implements IafArmorIdentity {
     @Override
     public void appendHoverText(@NotNull ItemStack stack, Item.TooltipContext context, @NotNull net.minecraft.world.item.component.TooltipDisplay display, @NotNull java.util.function.Consumer<Component> tooltip, @NotNull TooltipFlag flagIn) {
         tooltip.accept(Component.translatable("item.iceandfire.troll_leather_armor_" + getArmorPart(armorSlot) + ".desc").withStyle(ChatFormatting.GREEN));
+        tooltip.accept(Component.translatable("item.iceandfire.troll_leather_armor.set").withStyle(ChatFormatting.DARK_GRAY));
     }
 }

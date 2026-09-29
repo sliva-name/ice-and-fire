@@ -65,7 +65,10 @@ public class EntitySiren extends Monster implements IAnimatedEntity, IVillagerFe
     public static final Predicate<Entity> SIREN_PREY = new Predicate<Entity>() {
         @Override
         public boolean apply(@Nullable Entity p_apply_1_) {
-            return (p_apply_1_ instanceof Player && !((Player) p_apply_1_).isCreative() && !p_apply_1_.isSpectator()) || p_apply_1_ instanceof AbstractVillager || p_apply_1_ instanceof IHearsSiren;
+            if (p_apply_1_ instanceof Player player) {
+                return !player.isCreative() && !player.isSpectator() && !com.github.alexthe666.iceandfire.entity.props.OathProperties.ignoresTide(player);
+            }
+            return p_apply_1_ instanceof AbstractVillager || p_apply_1_ instanceof IHearsSiren;
         }
     };
     private static final EntityDataAccessor<Integer> HAIR_COLOR = SynchedEntityData.defineId(EntitySiren.class, EntityDataSerializers.INT);
@@ -104,8 +107,11 @@ public class EntitySiren extends Monster implements IAnimatedEntity, IVillagerFe
         this.goalSelector.addGoal(3, new MeleeAttackGoal(this, 1.0D, false));
         this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8.0F, 1.0F));
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
+        this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, EntitySeaSerpent.class, 10, false, false, (entity, serverLevel) ->
+            !EntitySiren.this.isCharmed() && entity instanceof EntitySeaSerpent && entity.isAlive()));
         this.targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false, (entity, serverLevel) ->
-            EntitySiren.this.isAgressive() && entity instanceof Player player && !(player.isCreative() || player.isSpectator())));
+            EntitySiren.this.isAgressive() && entity instanceof Player player && !(player.isCreative() || player.isSpectator())
+                && !com.github.alexthe666.iceandfire.entity.props.OathProperties.ignoresTide(player)));
         this.targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(this, AbstractVillager.class, 10, true, false, (entity, serverLevel) ->
             EntitySiren.this.isAgressive()));
         if (worldIn.isClientSide()) {
@@ -120,7 +126,9 @@ public class EntitySiren extends Monster implements IAnimatedEntity, IVillagerFe
 
     public static boolean isWearingEarplugs(LivingEntity entity) {
         ItemStack helmet = entity.getItemBySlot(EquipmentSlot.HEAD);
-        return helmet.getItem() == IafItemRegistry.EARPLUGS.get() || helmet != ItemStack.EMPTY && helmet.getItem().getDescriptionId().contains("earmuff");
+        return helmet.getItem() == IafItemRegistry.EARPLUGS.get()
+            || helmet != ItemStack.EMPTY && helmet.getItem().getDescriptionId().contains("earmuff")
+            || entity instanceof Player player && com.github.alexthe666.iceandfire.item.ItemCarriedBlessing.carries(player, IafItemRegistry.SIREN_BEAD.get());
     }
 
     @Override
@@ -261,7 +269,7 @@ public class EntitySiren extends Monster implements IAnimatedEntity, IVillagerFe
         if ((!this.isInWater() || pathOnHighGround) && !this.isLandNavigator) {
             switchNavigator(true);
         }
-        if (target instanceof Player && ((Player) target).isCreative()) {
+        if (target instanceof Player player && (player.isCreative() || com.github.alexthe666.iceandfire.entity.props.OathProperties.ignoresTide(player))) {
             this.setTarget(null);
             this.setAggressive(false);
         }

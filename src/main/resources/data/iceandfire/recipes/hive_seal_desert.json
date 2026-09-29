@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "iceandfire:myrmex_desert_chitin"
+    },
+    {
+      "item": "iceandfire:myrmex_desert_resin"
+    }
+  ],
+  "result": {
+    "item": "iceandfire:hive_seal",
+    "count": 1
+  }
+}

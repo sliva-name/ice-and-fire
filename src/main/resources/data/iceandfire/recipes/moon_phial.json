@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "G",
+    "S",
+    "E"
+  ],
+  "key": {
+    "G": {
+      "item": "minecraft:glass_bottle"
+    },
+    "S": {
+      "item": "iceandfire:silver_ingot"
+    },
+    "E": {
+      "item": "iceandfire:ectoplasm"
+    }
+  },
+  "result": {
+    "item": "iceandfire:moon_phial",
+    "count": 1
+  }
+}

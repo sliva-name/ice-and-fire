@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "S",
+    "N",
+    "E"
+  ],
+  "key": {
+    "S": {
+      "item": "minecraft:string"
+    },
+    "N": {
+      "item": "iceandfire:silver_nugget"
+    },
+    "E": {
+      "item": "iceandfire:cockatrice_eye"
+    }
+  },
+  "result": {
+    "item": "iceandfire:gaze_gauze"
+  }
+}

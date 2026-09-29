@@ -273,7 +273,8 @@ public abstract class EntityMyrmexBase extends Animal implements IAnimatedEntity
         }
         if (this.getTarget() != null && (haveSameHive(this, this.getTarget()) ||
             this.getTarget() instanceof TamableAnimal && !canAttackTamable((TamableAnimal) this.getTarget()) ||
-            this.getTarget() instanceof Player && this.getHive() != null && !this.getHive().isPlayerReputationLowEnoughToFight(this.getTarget().getUUID()))) {
+            this.getTarget() instanceof Player player && (com.github.alexthe666.iceandfire.item.GearRoles.hiveTruce(player, this)
+                || this.getHive() != null && !this.getHive().isPlayerReputationLowEnoughToFight(player.getUUID())))) {
             this.setTarget(null);
         }
         if (this.getWaitTicks() > 0) {

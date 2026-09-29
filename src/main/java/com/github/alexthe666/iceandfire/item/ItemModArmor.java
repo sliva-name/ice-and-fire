@@ -65,6 +65,9 @@ public class ItemModArmor extends Item implements IafArmorIdentity {
                 tooltip.accept(Component.translatable("item.iceandfire.air_pods.desc").withStyle(ChatFormatting.GREEN));
             }
         }
+        if (this.iafMaterial == IafItemRegistry.MYRMEX_DESERT_ARMOR_MATERIAL || this.iafMaterial == IafItemRegistry.MYRMEX_JUNGLE_ARMOR_MATERIAL) {
+            tooltip.accept(Component.translatable("item.iceandfire.myrmex_armor.set").withStyle(ChatFormatting.DARK_GRAY));
+        }
         super.appendHoverText(stack, context, display, tooltip, flagIn);
     }
 }

@@ -1,0 +1,33 @@
+{
+  "display": {
+    "icon": {
+      "item": "iceandfire:ghost_ingot"
+    },
+    "title": {
+      "translate": "advancements.iceandfire.ghost_ingot.title"
+    },
+    "description": {
+      "translate": "advancements.iceandfire.ghost_ingot.description"
+    }
+  },
+  "parent": "iceandfire:iceandfire/dragon_forge_core",
+  "criteria": {
+    "ingot": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "iceandfire:ghost_ingot"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "ingot"
+    ]
+  ]
+}

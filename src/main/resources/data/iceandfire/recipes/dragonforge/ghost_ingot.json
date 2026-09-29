@@ -1,0 +1,14 @@
+{
+  "type": "iceandfire:dragonforge",
+  "dragon_type": "ice",
+  "cook_time": 800,
+  "input": {
+    "item": "iceandfire:ectoplasm"
+  },
+  "blood": {
+    "item": "iceandfire:ice_dragon_blood"
+  },
+  "result": {
+    "item": "iceandfire:ghost_ingot"
+  }
+}

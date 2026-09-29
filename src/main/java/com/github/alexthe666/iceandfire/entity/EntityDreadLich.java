@@ -74,7 +74,22 @@ public class EntityDreadLich extends EntityDreadMob implements IAnimatedEntity, 
             return EntityDreadMob.canDreadLandSpawn(typeIn, server, reason, pos, randomIn);
         }
         BlockPos blockpos = pos.below();
+        if (reason != EntitySpawnReason.SPAWNER && queenDefeated(worldIn) && randomIn.nextInt(4) != 0) {
+            return false;
+        }
         return reason == EntitySpawnReason.SPAWNER || worldIn.getBlockState(blockpos).isValidSpawn(worldIn, blockpos, typeIn) && randomIn.nextInt(IafConfig.lichSpawnChance) == 0;
+    }
+
+    private static boolean queenDefeated(LevelAccessor worldIn) {
+        if (!(worldIn instanceof ServerLevelAccessor accessor)) {
+            return false;
+        }
+        net.minecraft.server.level.ServerLevel dread = accessor.getLevel().getServer().getLevel(IafDimensions.DREAD_LANDS);
+        if (dread == null) {
+            return false;
+        }
+        com.github.alexthe666.iceandfire.world.DreadLandsData data = com.github.alexthe666.iceandfire.world.DreadLandsData.get(dread);
+        return data != null && data.isDefeated();
     }
 
     @Override

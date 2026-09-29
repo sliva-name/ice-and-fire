@@ -1,0 +1,24 @@
+{
+  "display": {
+    "icon": {
+      "item": "iceandfire:dread_queen_sword"
+    },
+    "title": {
+      "translate": "advancements.iceandfire.blackfrost_heart.title"
+    },
+    "description": {
+      "translate": "advancements.iceandfire.blackfrost_heart.description"
+    }
+  },
+  "parent": "iceandfire:iceandfire/dragonsteel",
+  "criteria": {
+    "queen": {
+      "trigger": "minecraft:player_killed_entity",
+      "conditions": {
+        "entity": {
+          "type": "iceandfire:dread_queen"
+        }
+      }
+    }
+  }
+}

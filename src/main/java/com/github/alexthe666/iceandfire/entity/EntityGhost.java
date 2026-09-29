@@ -192,7 +192,8 @@ public class EntityGhost extends Monster implements IAnimatedEntity, IVillagerFe
         });
         this.goalSelector.addGoal(6, new RandomLookAroundGoal(this));
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
-        this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, Player.class, 10, false, false, (entity, serverLevel) -> entity.isAlive()));
+        this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, Player.class, 10, false, false, (entity, serverLevel) ->
+            entity.isAlive() && !(entity instanceof Player player && com.github.alexthe666.iceandfire.entity.props.OathProperties.ignoresBarrow(player))));
         this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, LivingEntity.class, 10, false, false, (entity, serverLevel) -> DragonUtils.isAlive(entity) && DragonUtils.isVillager(entity)));
     }
 

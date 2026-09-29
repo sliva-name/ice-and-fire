@@ -1,0 +1,33 @@
+{
+  "display": {
+    "icon": {
+      "item": "iceandfire:road_loaf"
+    },
+    "title": {
+      "translate": "advancements.iceandfire.road_loaf.title"
+    },
+    "description": {
+      "translate": "advancements.iceandfire.road_loaf.description"
+    }
+  },
+  "parent": "iceandfire:iceandfire/root",
+  "criteria": {
+    "loaf": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "iceandfire:road_loaf"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "loaf"
+    ]
+  ]
+}

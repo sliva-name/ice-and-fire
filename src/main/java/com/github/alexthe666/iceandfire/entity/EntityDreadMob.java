@@ -7,6 +7,7 @@ import net.minecraft.world.level.storage.ValueInput;
 import com.github.alexthe666.iceandfire.entity.util.DragonUtils;
 import com.github.alexthe666.iceandfire.entity.util.IDreadMob;
 import com.github.alexthe666.iceandfire.entity.util.IHumanoid;
+import com.github.alexthe666.iceandfire.world.DreadLandsData;
 import com.github.alexthe666.iceandfire.world.IafDimensions;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -48,6 +49,12 @@ public class EntityDreadMob extends Monster implements IDreadMob {
 
     public static boolean canDreadLandSpawn(EntityType<? extends Mob> type, ServerLevelAccessor world, EntitySpawnReason reason, BlockPos pos, net.minecraft.util.RandomSource random) {
         if (IafDimensions.isDreadLands(world.getLevel())) {
+            if (reason != EntitySpawnReason.SPAWNER) {
+                DreadLandsData data = DreadLandsData.get(world.getLevel());
+                if (data != null && data.isDefeated() && random.nextInt(4) != 0) {
+                    return false;
+                }
+            }
             BlockPos groundPos = pos.below();
             return world.getBlockState(groundPos).isFaceSturdy(world, groundPos, net.minecraft.core.Direction.UP)
                 && world.getFluidState(pos).isEmpty();

@@ -170,6 +170,10 @@ public class EntityMyrmexSentinel extends EntityMyrmexBase {
         this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 6.0F));
         this.goalSelector.addGoal(7, new RandomLookAroundGoal(this));
         this.targetSelector.addGoal(1, new MyrmexAIDefendHive(this));
+        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, EntityDeathWorm.class, 5, false, false, (entity, serverLevel) ->
+            BiomeFactions.huntsDeathWorm(this, entity)));
+        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, EntityAmphithere.class, 5, false, false, (entity, serverLevel) ->
+            BiomeFactions.huntsAmphithere(this, entity)));
         this.targetSelector.addGoal(3, new HurtByTargetGoal(this));
         this.targetSelector.addGoal(4, new MyrmexAIAttackPlayers(this));
         this.targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(this, LivingEntity.class, 4, true, true, (entity, serverLevel) ->

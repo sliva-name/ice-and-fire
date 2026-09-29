@@ -94,13 +94,16 @@ public class IafVillagerRegistry {
         trades.get(3).add((entity, random) -> IafOffers.of(new ItemStack(Items.EMERALD, 6), new ItemStack(IafItemRegistry.FIRE_DRAGON_FLESH.get(), 2), 8, 3, emeraldForItemsMultiplier));
         trades.get(3).add((entity, random) -> IafOffers.of(new ItemStack(Items.EMERALD, 7), new ItemStack(IafItemRegistry.ICE_DRAGON_FLESH.get(), 1), 8, 3, emeraldForItemsMultiplier));
         trades.get(3).add((entity, random) -> IafOffers.of(new ItemStack(Items.EMERALD, 8), new ItemStack(IafItemRegistry.LIGHTNING_DRAGON_FLESH.get(), 1), 8, 3, emeraldForItemsMultiplier));
+        trades.get(3).add((entity, random) -> IafOffers.of(new ItemStack(Items.EMERALD, 10), new ItemStack(IafItemRegistry.DRAGON_MEAL.get(), 1), 8, 5, emeraldForItemsMultiplier));
+        trades.get(4).add((entity, random) -> IafOffers.of(new ItemStack(IafItemRegistry.MYRMEX_DESERT_CHITIN.get(), 8), new ItemStack(Items.EMERALD, 1), 12, 4, itemForEmeraldMultiplier));
+        trades.get(4).add((entity, random) -> IafOffers.of(new ItemStack(IafItemRegistry.MYRMEX_JUNGLE_CHITIN.get(), 8), new ItemStack(Items.EMERALD, 1), 12, 4, itemForEmeraldMultiplier));
         trades.get(4).add((entity, random) -> IafOffers.of(new ItemStack(Items.EMERALD, 10), new ItemStack(IafItemRegistry.DRAGON_BONE.get(), 2), 20, 5, emeraldForItemsMultiplier));
         trades.get(4).add((entity, random) -> IafOffers.of(new ItemStack(Items.EMERALD, 4), new ItemStack(IafItemRegistry.SHINY_SCALES.get(), 1), 5, 2, emeraldForItemsMultiplier));
         trades.get(4).add((entity, random) -> IafOffers.of(new ItemStack(IafItemRegistry.DREAD_SHARD.get(), 5), new ItemStack(Items.EMERALD, 1), 10, 4, itemForEmeraldMultiplier));
         trades.get(4).add((entity, random) -> IafOffers.of(new ItemStack(Items.EMERALD, 8), new ItemStack(IafItemRegistry.STYMPHALIAN_BIRD_FEATHER.get(), 12), 3, 6, emeraldForItemsMultiplier));
         trades.get(4).add((entity, random) -> IafOffers.of(new ItemStack(Items.EMERALD, 4), new ItemStack(IafItemRegistry.TROLL_TUSK.get(), 12), 7, 3, emeraldForItemsMultiplier));
-        trades.get(5).add((entity, random) -> IafOffers.of(new ItemStack(Items.EMERALD, 15), new ItemStack(IafItemRegistry.SERPENT_FANG.get(), 3), 20, 3, emeraldForItemsMultiplier));
-        trades.get(5).add((entity, random) -> IafOffers.of(new ItemStack(Items.EMERALD, 12), new ItemStack(IafItemRegistry.HYDRA_FANG.get(), 1), 20, 3, emeraldForItemsMultiplier));
+        trades.get(5).add((entity, random) -> IafOffers.of(new ItemStack(IafItemRegistry.SERPENT_FANG.get(), 2), new ItemStack(Items.EMERALD, 8), 12, 8, itemForEmeraldMultiplier));
+        trades.get(5).add((entity, random) -> IafOffers.of(new ItemStack(IafItemRegistry.HYDRA_FANG.get(), 1), new ItemStack(Items.EMERALD, 6), 12, 8, itemForEmeraldMultiplier));
         trades.get(5).add((entity, random) -> IafOffers.of(new ItemStack(IafItemRegistry.ECTOPLASM.get(), 6), new ItemStack(Items.EMERALD, 1), 7, 3, itemForEmeraldMultiplier));
     }
 

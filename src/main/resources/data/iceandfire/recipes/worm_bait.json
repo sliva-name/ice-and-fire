@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "minecraft:rotten_flesh"
+    },
+    {
+      "item": "minecraft:wheat"
+    },
+    {
+      "item": "iceandfire:deathworm_chitin_yellow"
+    }
+  ],
+  "result": {
+    "item": "iceandfire:worm_bait",
+    "count": 4
+  }
+}

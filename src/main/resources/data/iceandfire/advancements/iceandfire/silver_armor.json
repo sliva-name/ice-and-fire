@@ -1,0 +1,36 @@
+{
+  "display": {
+    "icon": {
+      "item": "iceandfire:armor_silver_metal_chestplate"
+    },
+    "title": {
+      "translate": "advancements.iceandfire.silver_armor.title"
+    },
+    "description": {
+      "translate": "advancements.iceandfire.silver_armor.description"
+    }
+  },
+  "parent": "iceandfire:iceandfire/root",
+  "criteria": {
+    "silver": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "iceandfire:armor_silver_metal_helmet",
+              "iceandfire:armor_silver_metal_chestplate",
+              "iceandfire:armor_silver_metal_leggings",
+              "iceandfire:armor_silver_metal_boots"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "silver"
+    ]
+  ]
+}

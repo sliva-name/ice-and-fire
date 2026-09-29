@@ -69,7 +69,16 @@ public class EntityGorgon extends Monster implements IAnimatedEntity, IVillagerF
     }
 
     public static boolean isBlindfolded(LivingEntity attackTarget) {
-        return attackTarget != null && (attackTarget.getItemBySlot(EquipmentSlot.HEAD).getItem() == IafItemRegistry.BLINDFOLD.get() || attackTarget.hasEffect(MobEffects.BLINDNESS) || ServerEvents.isBlindMob(attackTarget));
+        if (attackTarget == null) {
+            return false;
+        }
+        if (attackTarget.getItemBySlot(EquipmentSlot.HEAD).getItem() == IafItemRegistry.BLINDFOLD.get()
+            || attackTarget.hasEffect(MobEffects.BLINDNESS)
+            || ServerEvents.isBlindMob(attackTarget)) {
+            return true;
+        }
+        return attackTarget instanceof Player player
+            && com.github.alexthe666.iceandfire.item.ItemCarriedBlessing.carries(player, IafItemRegistry.GAZE_GAUZE.get());
     }
 
     public static AttributeSupplier.Builder bakeAttributes() {

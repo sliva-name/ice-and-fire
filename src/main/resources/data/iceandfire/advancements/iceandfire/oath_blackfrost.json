@@ -1,0 +1,33 @@
+{
+  "display": {
+    "icon": {
+      "item": "iceandfire:oath_blackfrost"
+    },
+    "title": {
+      "translate": "advancements.iceandfire.oath_blackfrost.title"
+    },
+    "description": {
+      "translate": "advancements.iceandfire.oath_blackfrost.description"
+    }
+  },
+  "parent": "iceandfire:iceandfire/blackfrost_heart",
+  "criteria": {
+    "oath": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "iceandfire:oath_blackfrost"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "oath"
+    ]
+  ]
+}

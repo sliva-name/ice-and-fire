@@ -1,13 +1,15 @@
 package com.github.alexthe666.iceandfire.item;
 
-import com.github.alexthe666.iceandfire.IceAndFire;
-import net.minecraft.world.entity.Entity;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
+import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nullable;
+import java.util.function.Consumer;
 
 public class ItemDeathwormArmor extends Item implements IafArmorIdentity {
 
@@ -26,5 +28,11 @@ public class ItemDeathwormArmor extends Item implements IafArmorIdentity {
     @Override
     public void initializeClient(java.util.function.Consumer<net.minecraftforge.client.extensions.common.IClientItemExtensions> consumer) {
         IafArmors.initClient(this, consumer);
+    }
+
+    @Override
+    public void appendHoverText(@NotNull ItemStack stack, Item.TooltipContext context, @NotNull TooltipDisplay display,
+                                @NotNull Consumer<Component> tooltip, @NotNull TooltipFlag flag) {
+        tooltip.accept(Component.translatable("item.iceandfire.deathworm_armor.set").withStyle(ChatFormatting.DARK_GRAY));
     }
 }

@@ -1,0 +1,33 @@
+{
+  "display": {
+    "icon": {
+      "item": "iceandfire:oath_waste"
+    },
+    "title": {
+      "translate": "advancements.iceandfire.oath_waste.title"
+    },
+    "description": {
+      "translate": "advancements.iceandfire.oath_waste.description"
+    }
+  },
+  "parent": "iceandfire:iceandfire/kill_deathworm",
+  "criteria": {
+    "oath": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "iceandfire:oath_waste"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "oath"
+    ]
+  ]
+}

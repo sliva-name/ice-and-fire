@@ -13,7 +13,9 @@ public class MyrmexAIAttackPlayers extends NearestAttackableTargetGoal {
     @SuppressWarnings("unchecked")
     public MyrmexAIAttackPlayers(EntityMyrmexBase myrmex) {
         super(myrmex, Player.class, 10, true, true, (living, serverLevel) ->
-            living instanceof Player entity && (myrmex.getHive() == null
+            living instanceof Player entity
+                && !com.github.alexthe666.iceandfire.item.GearRoles.hiveTruce(entity, myrmex)
+                && (myrmex.getHive() == null
                 || myrmex.getHive().isPlayerReputationLowEnoughToFight(entity.getUUID())));
         this.myrmex = myrmex;
     }

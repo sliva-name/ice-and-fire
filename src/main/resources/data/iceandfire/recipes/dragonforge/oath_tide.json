@@ -1,0 +1,14 @@
+{
+  "type": "iceandfire:dragonforge",
+  "dragon_type": "lightning",
+  "cook_time": 1200,
+  "input": {
+    "item": "iceandfire:sea_serpent_fang"
+  },
+  "blood": {
+    "item": "iceandfire:lightning_dragon_blood"
+  },
+  "result": {
+    "item": "iceandfire:oath_tide"
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "display": {
+    "icon": {
+      "item": "iceandfire:oath_tide"
+    },
+    "title": {
+      "translate": "advancements.iceandfire.oath_tide.title"
+    },
+    "description": {
+      "translate": "advancements.iceandfire.oath_tide.description"
+    }
+  },
+  "parent": "iceandfire:iceandfire/kill_sea_serpent",
+  "criteria": {
+    "oath": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "iceandfire:oath_tide"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "oath"
+    ]
+  ]
+}

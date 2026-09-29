@@ -5,8 +5,11 @@ import com.github.alexthe666.iceandfire.entity.EntityIceDragon;
 import com.github.alexthe666.iceandfire.entity.IafEntityRegistry;
 import com.github.alexthe666.iceandfire.entity.util.HomePosition;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.level.levelgen.Heightmap;
@@ -54,8 +57,18 @@ public final class DreadLandsRulers {
 
     public static void markQueenDefeated(ServerLevel dread) {
         DreadLandsData data = DreadLandsData.get(dread);
-        if (data != null) {
-            data.markDefeated();
+        if (data == null || data.isDefeated()) {
+            return;
+        }
+        data.markDefeated();
+        if (data.getDragonId() != null && dread.getEntity(data.getDragonId()) instanceof EntityIceDragon dragon && dragon.isAlive()) {
+            dragon.hasHomePosition = false;
+            dragon.homePos = null;
+        }
+        Component line = Component.translatable("dread.message.cold_recedes");
+        for (ServerPlayer player : dread.getServer().getPlayerList().getPlayers()) {
+            player.sendSystemMessage(line);
+            player.level().playSound(null, player.blockPosition(), SoundEvents.BEACON_DEACTIVATE, SoundSource.AMBIENT, 0.8F, 0.5F);
         }
     }
 

@@ -1,15 +1,21 @@
 package com.github.alexthe666.iceandfire.item;
 
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.Consumable;
 import net.minecraft.world.item.component.Consumables;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.item.consume_effects.ApplyStatusEffectsConsumeEffect;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.function.Consumer;
 
 public class ItemGenericFood extends Item {
     private final int healAmount;
@@ -69,5 +75,13 @@ public class ItemGenericFood extends Item {
     }
 
     public void onFoodEaten(ItemStack stack, Level worldIn, LivingEntity livingEntity) {
+    }
+
+    @Override
+    public void appendHoverText(@NotNull ItemStack stack, Item.TooltipContext context, @NotNull TooltipDisplay display,
+                                @NotNull Consumer<Component> tooltip, @NotNull TooltipFlag flag) {
+        if (this == IafItemRegistry.ROAD_LOAF.get() || this == IafItemRegistry.HALL_PIE.get()) {
+            tooltip.accept(Component.translatable(getDescriptionId() + ".desc_0").withStyle(ChatFormatting.GRAY));
+        }
     }
 }

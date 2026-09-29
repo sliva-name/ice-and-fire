@@ -23,6 +23,7 @@ import com.github.alexthe666.iceandfire.misc.IafDamageRegistry;
 import com.github.alexthe666.iceandfire.misc.IafTagRegistry;
 import com.github.alexthe666.iceandfire.pathfinding.raycoms.Pathfinding;
 import com.github.alexthe666.iceandfire.pathfinding.raycoms.pathjobs.AbstractPathJob;
+import com.github.alexthe666.iceandfire.entity.props.OathProperties;
 import com.github.alexthe666.iceandfire.world.gen.WorldGenFireDragonCave;
 import com.github.alexthe666.iceandfire.world.gen.WorldGenIceDragonCave;
 import com.github.alexthe666.iceandfire.world.gen.WorldGenLightningDragonCave;
@@ -281,6 +282,16 @@ public class ServerEvents {
                 multi -= 0.1;
             }
             event.setAmount(event.getAmount() * multi);
+            event.setAmount(GearRoles.scaleBreath(event.getEntity(), damageType, event.getAmount()));
+        }
+        if (event.getSource().getEntity() instanceof Player attacker && event.getEntity() != null) {
+            event.setAmount(OathProperties.outgoing(attacker, event.getEntity(), event.getAmount()));
+        }
+        if (event.getEntity() instanceof Player victim) {
+            event.setAmount(OathProperties.incoming(victim, event.getSource(), event.getAmount()));
+            if (event.getSource().getEntity() instanceof LivingEntity attacker) {
+                OathProperties.answer(victim, attacker);
+            }
         }
     }
 
@@ -482,6 +493,11 @@ public class ServerEvents {
         }
         if (event.getEntity() instanceof Player player && !player.level().isClientSide()) {
             ItemHydraHeart.tickHotbar(player);
+            if (player.tickCount % 20 == 0) {
+                OathProperties.tick(player);
+                GearRoles.tick(player);
+                ItemCarriedBlessing.tick(player);
+            }
         }
         if (AiDebug.isEnabled() && event.getEntity() instanceof Mob && AiDebug.contains((Mob) event.getEntity())) {
             AiDebug.logData();

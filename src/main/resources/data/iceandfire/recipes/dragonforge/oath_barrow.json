@@ -1,0 +1,14 @@
+{
+  "type": "iceandfire:dragonforge",
+  "dragon_type": "ice",
+  "cook_time": 1200,
+  "input": {
+    "item": "iceandfire:dread_shard"
+  },
+  "blood": {
+    "item": "iceandfire:ice_dragon_blood"
+  },
+  "result": {
+    "item": "iceandfire:oath_barrow"
+  }
+}

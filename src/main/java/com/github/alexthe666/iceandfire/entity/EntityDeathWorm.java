@@ -128,6 +128,12 @@ public class EntityDeathWorm extends TamableAnimal implements ISyncMount, ICusto
                         return false;
                     }
 
+                    if (input instanceof Player player && com.github.alexthe666.iceandfire.entity.props.OathProperties.ignoresWaste(player)) {
+                        return false;
+                    }
+                    if (input instanceof com.github.alexthe666.iceandfire.entity.EntityMyrmexBase) {
+                        return true;
+                    }
                     if (input instanceof Player || input instanceof Animal) {
                         return true;
                     }
@@ -257,8 +263,29 @@ public class EntityDeathWorm extends TamableAnimal implements ISyncMount, ICusto
 
     @Override
     public void die(@NotNull DamageSource cause) {
+        if (!this.level().isClientSide() && cause.getEntity() instanceof Player killer && this.level() instanceof ServerLevel server) {
+            thankDesertHive(server, killer);
+        }
         clearSegments();
         super.die(cause);
+    }
+
+    private void thankDesertHive(ServerLevel server, Player killer) {
+        com.github.alexthe666.iceandfire.world.MyrmexWorldData data = com.github.alexthe666.iceandfire.world.MyrmexWorldData.get(server);
+        if (data == null) {
+            return;
+        }
+        com.github.alexthe666.iceandfire.entity.util.MyrmexHive hive = data.getNearestHive(this.blockPosition(), 64);
+        if (hive == null) {
+            return;
+        }
+        for (EntityMyrmexBase myrmex : server.getEntitiesOfClass(EntityMyrmexBase.class, this.getBoundingBox().inflate(64.0D), mob -> mob.isAlive())) {
+            if (myrmex.getHive() != null && hive.hiveUUID.equals(myrmex.getHive().hiveUUID) && myrmex.isJungle()) {
+                return;
+            }
+        }
+        int gift = com.github.alexthe666.iceandfire.entity.props.OathProperties.get(killer) == com.github.alexthe666.iceandfire.item.OathType.WASTE ? 12 : 6;
+        hive.modifyPlayerReputation(killer.getUUID(), gift);
     }
 
     @Override

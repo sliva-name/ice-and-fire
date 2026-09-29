@@ -1,0 +1,33 @@
+{
+  "display": {
+    "icon": {
+      "item": "iceandfire:fishing_spear"
+    },
+    "title": {
+      "translate": "advancements.iceandfire.fishing_spear.title"
+    },
+    "description": {
+      "translate": "advancements.iceandfire.fishing_spear.description"
+    }
+  },
+  "parent": "iceandfire:iceandfire/root",
+  "criteria": {
+    "spear": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "iceandfire:fishing_spear"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "spear"
+    ]
+  ]
+}

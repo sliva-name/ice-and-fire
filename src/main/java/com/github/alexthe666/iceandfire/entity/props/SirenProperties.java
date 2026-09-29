@@ -113,6 +113,10 @@ public class SirenProperties {
     }
 
     public static void tickCharmedEntity(LivingEntity entity) {
+        if (entity instanceof Player player && OathProperties.ignoresTide(player)) {
+            clearCharmedStatus(entity);
+            return;
+        }
         EntitySiren siren = getSiren(entity);
         if (siren == null) {
             if (getOrCreateCharmData(entity).getBooleanOr(SIREN_CHARMED, false)) {
