@@ -10,6 +10,7 @@ import net.minecraft.stats.Stats;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -112,11 +113,17 @@ public class IafSpawnEggItem extends SpawnEggItem {
         if (!entityType.isAllowedInPeaceful() && level.getDifficulty() == Difficulty.PEACEFUL) {
             return InteractionResult.FAIL;
         }
-        if (entityType.spawn((ServerLevel) level, stack, user, spawnPos, EntitySpawnReason.SPAWN_ITEM_USE, tryMoveDown, movedUp) != null) {
+        Entity spawned = entityType.spawn((ServerLevel) level, stack, user, spawnPos, EntitySpawnReason.SPAWN_ITEM_USE, tryMoveDown, movedUp);
+        if (spawned != null) {
+            afterSpawn(spawned);
             stack.consume(1, user);
             level.gameEvent(user, GameEvent.ENTITY_PLACE, spawnPos);
         }
         return InteractionResult.SUCCESS;
+    }
+
+    /** Lets a subclass finish the mob the egg just placed. */
+    protected void afterSpawn(Entity spawned) {
     }
 
     @Override
