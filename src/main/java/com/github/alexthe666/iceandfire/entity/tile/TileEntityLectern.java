@@ -18,6 +18,7 @@ import net.minecraft.network.chat.Component;
 
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.util.Mth;
+import net.minecraft.world.Container;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.WorldlyContainer;
 import net.minecraft.world.entity.player.Inventory;
@@ -32,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -115,6 +117,10 @@ public class TileEntityLectern extends BaseContainerBlockEntity implements World
             if (this.stacks.get(index).getCount() <= count) {
                 itemstack = this.stacks.get(index);
                 this.stacks.set(index, ItemStack.EMPTY);
+                if (index == 0) {
+                    this.setChanged();
+                    randomizePages(getItem(0), getItem(1));
+                }
                 return itemstack;
             } else {
                 itemstack = this.stacks.get(index).split(count);
@@ -155,7 +161,7 @@ public class TileEntityLectern extends BaseContainerBlockEntity implements World
     }
 
     public EnumBestiaryPages[] randomizePages(ItemStack bestiary, ItemStack manuscript) {
-        if (!level.isClientSide()) {
+        if (level != null && !level.isClientSide()) {
             if (bestiary.getItem() == IafItemRegistry.BESTIARY.get()) {
                 List<EnumBestiaryPages> possibleList = getPossiblePages();
                 localRand.setSeed(this.level.getGameTime());
@@ -175,6 +181,9 @@ public class TileEntityLectern extends BaseContainerBlockEntity implements World
                 } else {
                     selectedPages[2] = null;
                 }
+            } else {
+                // No book in the slot any more: forget the offered pages.
+                Arrays.fill(selectedPages, null);
             }
             int page1 = selectedPages[0] == null ? -1 : selectedPages[0].ordinal();
             int page2 = selectedPages[1] == null ? -1 : selectedPages[1].ordinal();
@@ -189,12 +198,23 @@ public class TileEntityLectern extends BaseContainerBlockEntity implements World
         super.loadAdditional(compound);
         this.stacks = NonNullList.withSize(this.getContainerSize(), ItemStack.EMPTY);
         ContainerHelper.loadAllItems(compound, this.stacks);
-
+        EnumBestiaryPages[] pages = EnumBestiaryPages.values();
+        Arrays.fill(this.selectedPages, null);
+        List<Integer> saved = compound.read("SelectedPages", com.mojang.serialization.Codec.INT.listOf()).orElse(List.of());
+        for (int i = 0; i < this.selectedPages.length && i < saved.size(); i++) {
+            int ordinal = saved.get(i);
+            this.selectedPages[i] = ordinal >= 0 && ordinal < pages.length ? pages[ordinal] : null;
+        }
     }
 
     @Override
     public void saveAdditional(@NotNull ValueOutput compound) {
         ContainerHelper.saveAllItems(compound, this.stacks);
+        List<Integer> saved = new ArrayList<>();
+        for (EnumBestiaryPages page : this.selectedPages) {
+            saved.add(page == null ? -1 : page.ordinal());
+        }
+        compound.store("SelectedPages", com.mojang.serialization.Codec.INT.listOf(), saved);
     }
 
     public void startOpen(@NotNull Player player) {
@@ -221,7 +241,7 @@ public class TileEntityLectern extends BaseContainerBlockEntity implements World
 
     @Override
     public boolean stillValid(@NotNull Player player) {
-        return true;
+        return Container.stillValidBlockEntity(this, player);
     }
 
     @Override

@@ -24,8 +24,7 @@ public class MessageSetMyrmexHiveNull {
 
         public static void handle(MessageSetMyrmexHiveNull message, CustomPayloadEvent.Context context) {
             context.setPacketHandled(true);
-            Player player = context.getSender();
-            if (player != null) {
+            if (context.isClientSide()) {
                 IceAndFire.PROXY.setReferencedHive(null);
             }
         }

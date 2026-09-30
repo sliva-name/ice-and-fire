@@ -71,7 +71,8 @@ public abstract class WorldGenDragonCave extends Feature<NoneFeatureConfiguratio
         // Update the position so it doesn't go above the ocean floor
         for(int k = 0; k < 20; ++k) {
             for(int l = 0; l < 20; ++l) {
-                j = Math.min(j, worldIn.getHeight(Heightmap.Types.OCEAN_FLOOR_WG, position.getX() + k, position.getZ() + l));
+                // Sampled around the chunk being generated: reading further away is outside the safe worldgen zone
+                j = Math.min(j, worldIn.getHeight(Heightmap.Types.OCEAN_FLOOR_WG, chunkPos.getMinBlockX() - 2 + k, chunkPos.getMinBlockZ() - 2 + l));
             }
         }
 
@@ -111,6 +112,9 @@ public abstract class WorldGenDragonCave extends Feature<NoneFeatureConfiguratio
         Set<BlockPos> shellBlocksSet = sphereBlocks.map(BlockPos::immutable).collect(Collectors.toSet());
         Set<BlockPos> hollowBlocksSet = hollowBlocks.map(BlockPos::immutable).collect(Collectors.toSet());
         shellBlocksSet.removeAll(hollowBlocksSet);
+        // The side chambers can reach past the chunks a feature may touch; cut the cave off there.
+        shellBlocksSet.removeIf(pos -> !WorldGenSafety.isSafe(worldIn, pos, 0));
+        hollowBlocksSet.removeIf(pos -> !WorldGenSafety.isSafe(worldIn, pos, 0));
 
         //setBlocks
         createShell(worldIn, rand, shellBlocksSet);
@@ -166,7 +170,10 @@ public abstract class WorldGenDragonCave extends Feature<NoneFeatureConfiguratio
             BlockPos pos = sphere.pos;
             int radius = sphere.radius;
             for (int i = 0; i < 15 + rand.nextInt(10); i++) {
-                CEILING_DECO.generate(worldIn, rand, pos.above(radius / 2 - 1).offset(rand.nextInt(radius) - radius / 2, 0, rand.nextInt(radius) - radius / 2));
+                BlockPos decoPos = pos.above(radius / 2 - 1).offset(rand.nextInt(radius) - radius / 2, 0, rand.nextInt(radius) - radius / 2);
+                if (WorldGenSafety.isSafe(worldIn, decoPos, 2)) {
+                    CEILING_DECO.generate(worldIn, rand, decoPos);
+                }
             }
 
         }

@@ -90,7 +90,10 @@ public class MessageDragonControl {
                         } else if (entity instanceof EntityDeathWorm) {
                             EntityDeathWorm deathworm = (EntityDeathWorm) entity;
                             deathworm.setControlState(message.controlState);
-                            deathworm.setPos(message.getPosX(), message.getPosY(), message.getPosZ());
+                            // The client position is only a hint: accept it when it is a small correction, never a teleport.
+                            if (!context.isClientSide() && IafNetwork.isNear(deathworm, message.getPosX(), message.getPosY(), message.getPosZ(), 4)) {
+                                deathworm.setPos(message.getPosX(), message.getPosY(), message.getPosZ());
+                            }
                         } else if (entity instanceof EntityAmphithere) {
                             EntityAmphithere amphi = (EntityAmphithere) entity;
                             if (amphi.isOwnedBy(player)) {

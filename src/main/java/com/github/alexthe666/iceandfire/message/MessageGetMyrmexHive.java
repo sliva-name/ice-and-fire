@@ -2,6 +2,7 @@ package com.github.alexthe666.iceandfire.message;
 
 import com.github.alexthe666.iceandfire.IceAndFire;
 import com.github.alexthe666.iceandfire.entity.util.MyrmexHive;
+import com.github.alexthe666.iceandfire.item.ItemMyrmexStaff;
 import com.github.alexthe666.iceandfire.world.MyrmexWorldData;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
@@ -33,22 +34,28 @@ public class MessageGetMyrmexHive {
         }
 
         public static void handle(MessageGetMyrmexHive message, CustomPayloadEvent.Context context) {
-            Player player = context.getSender();
-            MyrmexHive serverHive = MyrmexHive.fromNBT(message.hive);
-            CompoundTag tag = new CompoundTag();
-            serverHive.writeVillageDataToNBT(tag);
-            serverHive.readVillageDataFromNBT(tag);
-            IceAndFire.PROXY.setReferencedHive(serverHive);
             context.setPacketHandled(true);
-            if(context.isClientSide()){
-                player = IceAndFire.PROXY.getClientSidePlayer();
-            }else {
-                if (MyrmexWorldData.get(player.level()) != null) {
-                    MyrmexHive realHive = MyrmexWorldData.get(player.level()).getHiveFromUUID(serverHive.hiveUUID);
-                    realHive.readVillageDataFromNBT(serverHive.toNBT());
-                }
+            if (message.hive == null) {
+                return;
             }
-
+            MyrmexHive receivedHive = MyrmexHive.fromNBT(message.hive);
+            if (context.isClientSide()) {
+                CompoundTag tag = new CompoundTag();
+                receivedHive.writeVillageDataToNBT(tag);
+                receivedHive.readVillageDataFromNBT(tag);
+                IceAndFire.PROXY.setReferencedHive(receivedHive);
+                return;
+            }
+            // Client -> server: the staff GUIs edit their local copy and send it back. Only accept it for an existing
+            // hive whose staff the sender is actually holding.
+            Player player = context.getSender();
+            if (player == null || !ItemMyrmexStaff.holdsStaffFor(player, receivedHive.hiveUUID)) {
+                return;
+            }
+            MyrmexHive realHive = MyrmexWorldData.get(player.level()).getHiveFromUUID(receivedHive.hiveUUID);
+            if (realHive != null) {
+                realHive.readVillageDataFromNBT(receivedHive.toNBT());
+            }
         }
     }
 }

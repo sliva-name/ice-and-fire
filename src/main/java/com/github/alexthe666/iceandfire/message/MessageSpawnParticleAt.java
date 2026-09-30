@@ -41,6 +41,10 @@ public class MessageSpawnParticleAt {
 
         public static void handle(MessageSpawnParticleAt message, CustomPayloadEvent.Context context) {
             context.setPacketHandled(true);
+            if (!context.isClientSide()) {
+                // Server-to-client only: never let a client drive this on the server.
+                return;
+            }
             Player player = context.getSender();
             if(context.isClientSide()){
                 player = IceAndFire.PROXY.getClientSidePlayer();

@@ -676,7 +676,7 @@ public class EntityAmphithere extends TamableAnimal implements ISyncMount, IAnim
         flightCooldown = compound.getIntOr("FlightCooldown", 0);
         ridingTime = compound.getIntOr("RidingTime", 0);
         this.hasHomePosition = compound.getBooleanOr("HasHomePosition", false);
-        if (hasHomePosition && compound.getIntOr("HomeAreaX", 0) != 0 && compound.getIntOr("HomeAreaY", 0) != 0 && compound.getIntOr("HomeAreaZ", 0) != 0) {
+        if (hasHomePosition && compound.getInt("HomeAreaX").isPresent() && compound.getInt("HomeAreaY").isPresent() && compound.getInt("HomeAreaZ").isPresent()) {
             homePos = new BlockPos(compound.getIntOr("HomeAreaX", 0), compound.getIntOr("HomeAreaY", 0), compound.getIntOr("HomeAreaZ", 0));
         }
         this.setCommand(compound.getIntOr("Command", 0));

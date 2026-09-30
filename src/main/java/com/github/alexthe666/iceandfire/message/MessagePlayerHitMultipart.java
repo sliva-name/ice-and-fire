@@ -40,26 +40,10 @@ public class MessagePlayerHitMultipart {
         }
 
         public static void handle(MessagePlayerHitMultipart message, CustomPayloadEvent.Context context) {
+            // Dead by design: EntityMutlipartPart#getParent is null on the client, so the client never sends this.
+            // The server already handles the vanilla interact/attack packets aimed at the part entity itself, and
+            // trusting a client supplied target id/damage here would allow unlimited-reach hits and damage spoofing.
             context.setPacketHandled(true);
-            Player player = context.getSender();
-            if(context.isClientSide()){
-                player = IceAndFire.PROXY.getClientSidePlayer();
-            }
-            if (player != null) {
-                if (player.level() != null) {
-                    Entity entity = player.level().getEntity(message.creatureID);
-                    if (entity != null && entity instanceof LivingEntity) {
-                        double dist = player.distanceTo(entity);
-                        LivingEntity mob = (LivingEntity) entity;
-                        if (dist < 100) {
-                            player.attack(mob);
-                            if (mob instanceof EntityHydra) {
-                                ((EntityHydra) mob).triggerHeadFlags(message.extraData);
-                            }
-                        }
-                    }
-                }
-            }
         }
     }
 }

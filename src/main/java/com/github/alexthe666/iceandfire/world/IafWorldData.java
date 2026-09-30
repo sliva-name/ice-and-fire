@@ -36,9 +36,7 @@ public class IafWorldData extends SavedData {
     private static final Codec<Map<FeatureType, List<Pair<String, BlockPos>>>> MAP_CODEC =
         Codec.unboundedMap(Codec.STRING.xmap(FeatureType::valueOf, FeatureType::name), ENTRY_CODEC.listOf());
 
-    private static final Map<FeatureType, List<Pair<String, BlockPos>>> LAST_GENERATED = new HashMap<>();
-
-    public static final Codec<IafWorldData> CODEC = MAP_CODEC.xmap(IafWorldData::fromSaved, data -> LAST_GENERATED);
+    public static final Codec<IafWorldData> CODEC = MAP_CODEC.xmap(IafWorldData::fromSaved, IafWorldData::snapshot);
 
     public static final SavedDataType<IafWorldData> TYPE = new SavedDataType<>(
         Identifier.fromNamespaceAndPath(IceAndFire.MODID, "general"),
@@ -47,13 +45,23 @@ public class IafWorldData extends SavedData {
         DataFixTypes.LEVEL
     );
 
+    // Per instance (one per dimension save), never static: a static map leaked positions between worlds and
+    // dimensions, and worldgen threads call check() concurrently, so every access goes through the instance lock.
+    private final Map<FeatureType, List<Pair<String, BlockPos>>> lastGenerated = new HashMap<>();
+
     public IafWorldData() { /* Nothing to do */ }
 
     private static IafWorldData fromSaved(Map<FeatureType, List<Pair<String, BlockPos>>> map) {
-        LAST_GENERATED.clear();
+        IafWorldData data = new IafWorldData();
         // Codec.listOf() / unboundedMap decode to immutable collections.
-        map.forEach((type, entries) -> LAST_GENERATED.put(type, new ArrayList<>(entries)));
-        return new IafWorldData();
+        map.forEach((type, entries) -> data.lastGenerated.put(type, new ArrayList<>(entries)));
+        return data;
+    }
+
+    private synchronized Map<FeatureType, List<Pair<String, BlockPos>>> snapshot() {
+        Map<FeatureType, List<Pair<String, BlockPos>>> copy = new HashMap<>();
+        lastGenerated.forEach((type, entries) -> copy.put(type, new ArrayList<>(entries)));
+        return copy;
     }
 
     @Nullable
@@ -61,9 +69,9 @@ public class IafWorldData extends SavedData {
         if (world instanceof ServerLevel) {
             ServerLevel overworld = world.getServer().getLevel(world.dimension());
             SavedDataStorage storage = overworld.getDataStorage();
-            IafWorldData data = storage.computeIfAbsent(TYPE);
-            data.setDirty();
-            return data;
+            synchronized (IafWorldData.class) {
+                return storage.computeIfAbsent(TYPE);
+            }
         }
 
         return null;
@@ -73,12 +81,8 @@ public class IafWorldData extends SavedData {
         return check(feature.getFeatureType(), position, id);
     }
 
-    public boolean check(final FeatureType type, final BlockPos position, final String id) {
-        List<Pair<String, BlockPos>> entries = LAST_GENERATED.get(type);
-        if (!(entries instanceof ArrayList)) {
-            entries = entries == null ? new ArrayList<>() : new ArrayList<>(entries);
-            LAST_GENERATED.put(type, entries);
-        }
+    public synchronized boolean check(final FeatureType type, final BlockPos position, final String id) {
+        List<Pair<String, BlockPos>> entries = lastGenerated.computeIfAbsent(type, key -> new ArrayList<>());
 
         boolean canGenerate = true;
         Pair<String, BlockPos> toRemove = null;
@@ -96,6 +100,7 @@ public class IafWorldData extends SavedData {
         }
 
         entries.add(Pair.of(id, position));
+        this.setDirty();
 
         return canGenerate;
     }

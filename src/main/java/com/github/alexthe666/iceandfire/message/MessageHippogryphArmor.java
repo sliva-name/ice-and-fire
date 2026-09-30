@@ -4,6 +4,7 @@ import com.github.alexthe666.iceandfire.entity.EntityHippocampus;
 import com.github.alexthe666.iceandfire.entity.EntityHippogryph;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.event.network.CustomPayloadEvent;
 
@@ -40,34 +41,20 @@ public class MessageHippogryphArmor {
         public static void handle(MessageHippogryphArmor message, CustomPayloadEvent.Context context) {
             context.setPacketHandled(true);
             Player player = context.getSender();
-            if (player != null) {
-                if (player.level() != null) {
-                    Entity entity = player.level().getEntity(message.dragonId);
-                    if (entity != null && entity instanceof EntityHippogryph) {
-                        EntityHippogryph hippo = (EntityHippogryph) entity;
-                        if (message.slot_index == 0) {
-                            hippo.setSaddled(message.armor_type == 1);
-                        }
-                        if (message.slot_index == 1) {
-                            hippo.setChested(message.armor_type == 1);
-                        }
-                        if (message.slot_index == 2) {
-                            hippo.setArmor(message.armor_type);
-                        }
-                    }
-                    if (entity != null && entity instanceof EntityHippocampus) {
-                        EntityHippocampus hippo = (EntityHippocampus) entity;
-                        if (message.slot_index == 0) {
-                            hippo.setSaddled(message.armor_type == 1);
-                        }
-                        if (message.slot_index == 1) {
-                            hippo.setChested(message.armor_type == 1);
-                        }
-                        if (message.slot_index == 2) {
-                            hippo.setArmor(message.armor_type);
-                        }
-                    }
-                }
+            if (player == null) {
+                return;
+            }
+            // The client's gear values are not trusted. The server owns the inventory, so it only re-derives the
+            // saddle / chest / armor state from it, and only for the owner standing near the mount.
+            Entity entity = player.level().getEntity(message.dragonId);
+            if (entity == null || player.distanceToSqr(entity) > 64 * 64
+                || !(entity instanceof TamableAnimal tamable) || !tamable.isOwnedBy(player)) {
+                return;
+            }
+            if (entity instanceof EntityHippogryph hippo) {
+                hippo.refreshInventory();
+            } else if (entity instanceof EntityHippocampus hippo) {
+                hippo.containerChanged(null);
             }
         }
     }

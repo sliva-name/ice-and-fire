@@ -39,6 +39,10 @@ public class MessageUpdatePixieHouseModel {
 
         public static void handle(MessageUpdatePixieHouseModel message, CustomPayloadEvent.Context context) {
             context.setPacketHandled(true);
+            if (!context.isClientSide()) {
+                // Server-to-client only: never let a client drive this on the server.
+                return;
+            }
             Player player = context.getSender();
             if(context.isClientSide()){
                 player = IceAndFire.PROXY.getClientSidePlayer();

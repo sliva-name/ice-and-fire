@@ -16,6 +16,7 @@ import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.world.Container;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.WorldlyContainer;
 import net.minecraft.world.entity.player.Inventory;
@@ -109,7 +110,7 @@ public class TileEntityPodium extends BaseContainerBlockEntity implements Worldl
             stack.setCount(this.getMaxStackSize());
         }
         this.setChanged();
-        if (!level.isClientSide()) {
+        if (level != null && !level.isClientSide()) {
             IceAndFire.sendMSGToAll(new MessageUpdatePodium(this.getBlockPos().asLong(), stacks.get(0)));
         }
     }
@@ -144,7 +145,7 @@ public class TileEntityPodium extends BaseContainerBlockEntity implements Worldl
 
     @Override
     public boolean stillValid(@NotNull Player player) {
-        return true;
+        return Container.stillValidBlockEntity(this, player);
     }
 
     @Override

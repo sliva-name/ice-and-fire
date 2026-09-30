@@ -360,7 +360,10 @@ public class TileEntityDragonforge extends BaseContainerBlockEntity implements W
         }
 
         cookStack.shrink(1);
-        bloodStack.shrink(1);
+        // The blood slot may hold the shared ItemStack.EMPTY (unrecipe'd items cook to ash without it); never shrink that.
+        if (!bloodStack.isEmpty()) {
+            bloodStack.shrink(1);
+        }
     }
 
     @Override

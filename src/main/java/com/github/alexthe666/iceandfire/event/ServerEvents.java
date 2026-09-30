@@ -39,6 +39,8 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.ai.goal.WrappedGoal;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -64,6 +66,7 @@ import net.minecraft.world.level.storage.loot.providers.number.UniformGenerator;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraftforge.event.LootTableLoadEvent;
+import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.EntityStruckByLightningEvent;
 import net.minecraftforge.event.entity.ProjectileImpactEvent;
 import net.minecraftforge.event.entity.living.*;
@@ -653,6 +656,14 @@ public class ServerEvents {
     }
 
     @SubscribeEvent
+    public void onPlayerClone(PlayerEvent.Clone event) {
+        // Citadel resets its tag on death; an oath and the shame of breaking one must survive it.
+        if (event.isWasDeath()) {
+            OathProperties.copyAfterDeath(event.getOriginal(), event.getEntity());
+        }
+    }
+
+    @SubscribeEvent
     public void onPlayerStartTracking(PlayerEvent.StartTracking event) {
         if (event.getTarget() instanceof LivingEntity) {
             // Make sure that when a player starts tracking an entity that has additional data
@@ -669,28 +680,40 @@ public class ServerEvents {
         }
     }
 
+    private static boolean hasGoal(Mob mob, Class<? extends Goal> goalClass) {
+        for (WrappedGoal wrapped : mob.goalSelector.getAvailableGoals()) {
+            if (goalClass.isInstance(wrapped.getGoal())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Joins (not FinalizeSpawn) so the behaviours also reach mobs loaded from disk, bred, or moved between
+     * dimensions. The dedupe keeps a mob that re-joins with its old goal selector from stacking the goals.
+     */
     @SubscribeEvent
-    public void onEntityJoinWorld(MobSpawnEvent.FinalizeSpawn event) {
+    public void onEntityJoinWorld(EntityJoinLevelEvent event) {
+        if (event.getLevel().isClientSide() || !(event.getEntity() instanceof Mob mob)) {
+            return;
+        }
         try {
-            if (event.getEntity() != null && isSheep(event.getEntity()) && event.getEntity() instanceof Animal) {
-                Animal animal = (Animal) event.getEntity();
+            if (isSheep(mob) && mob instanceof Animal animal && !hasGoal(mob, EntitySheepAIFollowCyclops.class)) {
                 animal.goalSelector.addGoal(8, new EntitySheepAIFollowCyclops(animal, 1.2D));
             }
-            if (event.getEntity() != null && isVillager(event.getEntity()) && event.getEntity() instanceof Mob && IafConfig.villagersFearDragons) {
-                Mob villager = (Mob) event.getEntity();
-                villager.goalSelector.addGoal(1, new VillagerAIFearUntamed((PathfinderMob) villager, LivingEntity.class, 8.0F, 0.8D, 0.8D, VILLAGER_FEAR));
-            }
-            if (event.getEntity() != null && isLivestock(event.getEntity()) && event.getEntity() instanceof Mob && IafConfig.animalsFearDragons) {
-                Mob animal = (Mob) event.getEntity();
-                animal.goalSelector.addGoal(1, new VillagerAIFearUntamed((PathfinderMob) animal, LivingEntity.class, 30, 1.0D, 0.5D, new java.util.function.Predicate<LivingEntity>() {
+            if (isVillager(mob) && IafConfig.villagersFearDragons && !hasGoal(mob, VillagerAIFearUntamed.class)) {
+                mob.goalSelector.addGoal(1, new VillagerAIFearUntamed((PathfinderMob) mob, LivingEntity.class, 8.0F, 0.8D, 0.8D, VILLAGER_FEAR));
+            } else if (isLivestock(mob) && IafConfig.animalsFearDragons && !hasGoal(mob, VillagerAIFearUntamed.class)) {
+                mob.goalSelector.addGoal(1, new VillagerAIFearUntamed((PathfinderMob) mob, LivingEntity.class, 30, 1.0D, 0.5D, new java.util.function.Predicate<LivingEntity>() {
                     @Override
                     public boolean test(LivingEntity entity) {
-                        return entity != null && entity instanceof IAnimalFear && ((IAnimalFear) entity).shouldAnimalsFear(animal);
+                        return entity != null && entity instanceof IAnimalFear && ((IAnimalFear) entity).shouldAnimalsFear(mob);
                     }
                 }));
             }
         } catch (Exception e) {
-            IceAndFire.LOGGER.warn("Tried to add unique behaviors to vanilla mobs and encountered an error");
+            IceAndFire.LOGGER.warn("Tried to add unique behaviors to vanilla mobs and encountered an error", e);
         }
     }
 

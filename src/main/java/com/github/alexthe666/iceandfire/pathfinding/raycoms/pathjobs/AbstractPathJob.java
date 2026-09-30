@@ -48,7 +48,7 @@ public abstract class AbstractPathJob implements Callable<Path> {
     /**
      * Which citizens are being tracked by which players.
      */
-    public static final Map<Player, UUID> trackingMap = new HashMap<>();
+    public static final Map<Player, UUID> trackingMap = new java.util.concurrent.ConcurrentHashMap<>();
     /**
      * Start position to path from.
      */

@@ -54,6 +54,14 @@ public class MessageDragonSyncFire {
                     Entity entity = player.level().getEntity(message.dragonId);
                     if (entity != null && entity instanceof EntityDragonBase) {
                         EntityDragonBase dragon = (EntityDragonBase) entity;
+                        if (!context.isClientSide()) {
+                            // Only the owner riding the dragon may aim its breath, at a nearby point, with a plain sync type.
+                            boolean validType = message.syncType == 0 || message.syncType == 5;
+                            if (!validType || !dragon.isOwnedBy(player) || !IafNetwork.isRiding(player, dragon)
+                                || !IafNetwork.isNear(dragon, message.posX, message.posY, message.posZ, 128)) {
+                                return;
+                            }
+                        }
                         dragon.stimulateFire(message.posX, message.posY, message.posZ, message.syncType);
                     }
                 }

@@ -37,6 +37,21 @@ public class ItemMyrmexStaff extends Item {
         }
     }
 
+    /** True when {@code player} holds a staff bound to the hive {@code hiveId}; hive edits from clients require this. */
+    public static boolean holdsStaffFor(Player player, UUID hiveId) {
+        if (hiveId == null) {
+            return false;
+        }
+        for (InteractionHand hand : InteractionHand.values()) {
+            ItemStack held = player.getItemInHand(hand);
+            if (held.getItem() instanceof ItemMyrmexStaff && IafItemData.has(held)
+                && IafItemData.copy(held).read("HiveUUID", UUIDUtil.CODEC).filter(hiveId::equals).isPresent()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     public @NotNull InteractionResult use(@NotNull Level worldIn, Player playerIn, @NotNull InteractionHand hand) {
         ItemStack itemStackIn = playerIn.getItemInHand(hand);
@@ -47,11 +62,10 @@ public class ItemMyrmexStaff extends Item {
             UUID id = IafItemData.copy(itemStackIn).read("HiveUUID", UUIDUtil.CODEC).orElseThrow();
             if (!worldIn.isClientSide()) {
                 MyrmexHive hive = MyrmexWorldData.get(worldIn).getHiveFromUUID(id);
-                MyrmexWorldData.addHive(worldIn, new MyrmexHive());
                 if (hive != null) {
-                    IceAndFire.sendMSGToAll(new MessageGetMyrmexHive(hive.toNBT()));
+                    IceAndFire.sendMSGToPlayer(new MessageGetMyrmexHive(hive.toNBT()), (net.minecraft.server.level.ServerPlayer) playerIn);
                 } else {
-                    IceAndFire.sendMSGToAll(new MessageSetMyrmexHiveNull());
+                    IceAndFire.sendMSGToPlayer(new MessageSetMyrmexHiveNull(), (net.minecraft.server.level.ServerPlayer) playerIn);
                 }
             } else if (id != null && !id.equals(new UUID(0, 0))) {
                 IceAndFire.PROXY.openMyrmexStaffGui(itemStackIn);
@@ -74,9 +88,9 @@ public class ItemMyrmexStaff extends Item {
                 if (!context.getLevel().isClientSide()) {
                     MyrmexHive hive = MyrmexWorldData.get(context.getLevel()).getHiveFromUUID(id);
                     if (hive != null) {
-                        IceAndFire.sendMSGToAll(new MessageGetMyrmexHive(hive.toNBT()));
+                        IceAndFire.sendMSGToPlayer(new MessageGetMyrmexHive(hive.toNBT()), (net.minecraft.server.level.ServerPlayer) context.getPlayer());
                     } else {
-                        IceAndFire.sendMSGToAll(new MessageSetMyrmexHiveNull());
+                        IceAndFire.sendMSGToPlayer(new MessageSetMyrmexHiveNull(), (net.minecraft.server.level.ServerPlayer) context.getPlayer());
                     }
                 } else if (id != null && !id.equals(new UUID(0, 0))) {
                     IceAndFire.PROXY.openMyrmexAddRoomGui(context.getPlayer().getItemInHand(context.getHand()), context.getClickedPos(), context.getPlayer().getDirection());

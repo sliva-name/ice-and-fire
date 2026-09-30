@@ -92,11 +92,18 @@ public class ItemDragonHorn extends Item {
         ItemStack stack = context.getItemInHand();
         if (IafItemData.has(stack) && !IafItemData.copy(stack).getStringOr("DragonHornEntityID", "").isEmpty()) {
             Level world = context.getLevel();
+            if (world.isClientSide()) {
+                // The server places the dragon; a client-side copy would only leave a phantom entity behind.
+                return InteractionResult.SUCCESS;
+            }
             CompoundTag stored = IafItemData.copy(stack);
             String id = stored.getStringOr("DragonHornEntityID", "");
             EntityType type = BuiltInRegistries.ENTITY_TYPE.getOptional(Identifier.parse(id)).orElse(null);
             if (type != null) {
                 Entity entity = type.create(world, EntitySpawnReason.SPAWN_ITEM_USE);
+                if (entity == null) {
+                    return InteractionResult.FAIL;
+                }
                 if (entity instanceof EntityDragonBase) {
                     IafEntityNbt.load(entity, stored.getCompoundOrEmpty("EntityTag"));
                 }

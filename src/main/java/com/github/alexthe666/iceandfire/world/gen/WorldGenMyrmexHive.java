@@ -13,6 +13,7 @@ import com.github.alexthe666.iceandfire.world.MyrmexWorldData;
 import com.mojang.serialization.Codec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EntitySpawnReason;
@@ -45,6 +46,10 @@ public class WorldGenMyrmexHive extends Feature<NoneFeatureConfiguration> implem
     private boolean small;
     private final boolean jungle;
     private BlockPos centerOfHive;
+    // Features may only touch the generating chunk plus one chunk around it. Everything the hive builds or reads is kept
+    // inside this box (null while unbounded), otherwise the region logs an unsafe read/write for every block it skips.
+    private BlockPos regionMin;
+    private BlockPos regionMax;
 
     public WorldGenMyrmexHive(boolean small, boolean jungle, Codec<NoneFeatureConfiguration> configFactoryIn) {
         super(configFactoryIn);
@@ -52,7 +57,7 @@ public class WorldGenMyrmexHive extends Feature<NoneFeatureConfiguration> implem
         this.jungle = jungle;
     }
 
-    public boolean placeSmallGen(WorldGenLevel worldIn, net.minecraft.util.RandomSource rand, BlockPos pos) {
+    public synchronized boolean placeSmallGen(WorldGenLevel worldIn, net.minecraft.util.RandomSource rand, BlockPos pos) {
         hasFoodRoom = false;
         hasNursery = false;
         totalRooms = 0;
@@ -63,8 +68,23 @@ public class WorldGenMyrmexHive extends Feature<NoneFeatureConfiguration> implem
         return false;
     }
 
+    private boolean inRegion(BlockPos pos, int margin) {
+        return regionMin == null
+            || pos.getX() >= regionMin.getX() + margin && pos.getX() <= regionMax.getX() - margin
+            && pos.getZ() >= regionMin.getZ() + margin && pos.getZ() <= regionMax.getZ() - margin;
+    }
+
+    /** Shortens a straight path so that its far end, with a room of the given radius around it, stays in the region. */
+    private int fitLength(BlockPos offset, Direction direction, int length, int margin) {
+        while (length > 0 && !inRegion(offset.relative(direction, length), margin)) {
+            length--;
+        }
+        return length;
+    }
+
+    // The feature instance is shared between worldgen threads and keeps per-hive state in its fields.
     @Override
-    public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> context) {
+    public synchronized boolean place(FeaturePlaceContext<NoneFeatureConfiguration> context) {
         WorldGenLevel worldIn = context.level();
         net.minecraft.util.RandomSource rand = context.random();
         BlockPos pos = context.origin();
@@ -85,8 +105,18 @@ public class WorldGenMyrmexHive extends Feature<NoneFeatureConfiguration> implem
         int down = Math.max(15, pos.getY() - 20 + rand.nextInt(10));
         BlockPos undergroundPos = BlockPos.containing(pos.getX(), down, pos.getZ());
         entrances = 0;
+        // Build around the middle of the chunk so the hive has the same room to grow in every direction.
+        ChunkPos chunk = ChunkPos.containing(pos);
+        regionMin = new BlockPos(chunk.getMinBlockX() - 16, worldIn.getMinY(), chunk.getMinBlockZ() - 16);
+        regionMax = new BlockPos(chunk.getMaxBlockX() + 16, worldIn.getMaxY(), chunk.getMaxBlockZ() + 16);
+        undergroundPos = new BlockPos(chunk.getMiddleBlockX(), undergroundPos.getY(), chunk.getMiddleBlockZ());
         centerOfHive = undergroundPos;
-        generateMainRoom(worldIn, rand, undergroundPos);
+        try {
+            generateMainRoom(worldIn, rand, undergroundPos);
+        } finally {
+            regionMin = null;
+            regionMax = null;
+        }
         this.small = false;
         return true;
     }
@@ -169,6 +199,11 @@ public class WorldGenMyrmexHive extends Feature<NoneFeatureConfiguration> implem
                 if (entrances < 3 && rand.nextInt(1 + entrances * 2) == 0 && hasFoodRoom && hasNursery && totalRooms > 3 || entrances == 0) {
                     generateEntrance(world, rand, offset.relative(direction, 1), 4, 4, direction);
                 } else {
+                    // The room at the end needs its whole radius (7, plus the resin shell) inside the region.
+                    length = fitLength(offset, direction, length, 11);
+                    if (length < 3) {
+                        return;
+                    }
                     for (int i = 0; i < length; i++) {
                         generateCircle(world, rand, offset.relative(direction, i), 3, 5, direction);
                     }
@@ -185,6 +220,9 @@ public class WorldGenMyrmexHive extends Feature<NoneFeatureConfiguration> implem
     private void generateRoom(LevelAccessor world, net.minecraft.util.RandomSource rand, BlockPos position, int size, int height, int roomChance, Direction direction) {
         BlockState resin = jungle ? JUNGLE_RESIN : DESERT_RESIN;
         BlockState sticky_resin = jungle ? STICKY_JUNGLE_RESIN : STICKY_DESERT_RESIN;
+        if (!inRegion(position, size + 4)) {
+            return;
+        }
         RoomType type = RoomType.random(rand);
         if (!hasFoodRoom) {
             type = RoomType.FOOD;
@@ -214,13 +252,18 @@ public class WorldGenMyrmexHive extends Feature<NoneFeatureConfiguration> implem
     }
 
     private void generateEntrance(LevelAccessor world, net.minecraft.util.RandomSource rand, BlockPos position, int size, int height, Direction direction) {
+        if (!inRegion(position, size + 6)) {
+            return;
+        }
         BlockPos up = position.above();
         hive.getEntranceBottoms().put(up, direction);
         while (up.getY() < world.getHeightmapPos(small ? Heightmap.Types.MOTION_BLOCKING_NO_LEAVES : Heightmap.Types.WORLD_SURFACE_WG, up).getY()
                 && ! world.getBlockState(up).is(BlockTags.LOGS))
         {
             generateCircleRespectSky(world, rand, up, size, height, direction);
-            up = up.above().relative(direction);
+            BlockPos next = up.above().relative(direction);
+            // Drift sideways only while there is room; otherwise the shaft climbs straight to the surface.
+            up = inRegion(next, size + 6) ? next : up.above();
         }
         BlockState resin = jungle ? JUNGLE_RESIN : DESERT_RESIN;
         BlockState sticky_resin = jungle ? STICKY_JUNGLE_RESIN : STICKY_DESERT_RESIN;

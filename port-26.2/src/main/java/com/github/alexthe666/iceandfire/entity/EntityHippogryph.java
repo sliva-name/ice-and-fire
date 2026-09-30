@@ -519,7 +519,7 @@ public class EntityHippogryph extends TamableAnimal implements ISyncMount, IAnim
             IceAndFire.sendMSGToServer(new MessageHippogryphArmor(this.getId(), 2, getIntFromArmor(hippogryphInventory.getItem(2))));
         }
         this.hasHomePosition = compound.getBooleanOr("HasHomePosition", false);
-        if (hasHomePosition && compound.getIntOr("HomeAreaX", 0) != 0 && compound.getIntOr("HomeAreaY", 0) != 0 && compound.getIntOr("HomeAreaZ", 0) != 0) {
+        if (hasHomePosition && compound.getInt("HomeAreaX").isPresent() && compound.getInt("HomeAreaY").isPresent() && compound.getInt("HomeAreaZ").isPresent()) {
             homePos = new BlockPos(compound.getIntOr("HomeAreaX", 0), compound.getIntOr("HomeAreaY", 0), compound.getIntOr("HomeAreaZ", 0));
         }
         this.setCommand(compound.getIntOr("Command", 0));

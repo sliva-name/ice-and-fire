@@ -4,6 +4,8 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.event.network.CustomPayloadEvent;
 import net.minecraftforge.network.ChannelBuilder;
 import net.minecraftforge.network.SimpleChannel;
@@ -50,6 +52,27 @@ public final class IafNetwork {
         add(play, MessageSyncPathReached.class, (message, buf) -> message.write(buf), MessageSyncPathReached::read, MessageSyncPathReached::handle);
         add(play, MessageSwingArm.class, MessageSwingArm::write, MessageSwingArm::read, MessageSwingArm.Handler::handle);
         return play.build();
+    }
+
+    /**
+     * Server-side sanity check for a client supplied position: finite and within {@code range} blocks of the entity.
+     * Positions far from the acting entity would otherwise let a client force chunk loads or unbounded block edits.
+     */
+    public static boolean isNear(Entity entity, double x, double y, double z, double range) {
+        if (!Double.isFinite(x) || !Double.isFinite(y) || !Double.isFinite(z)) {
+            return false;
+        }
+        return entity.distanceToSqr(x, y, z) <= range * range;
+    }
+
+    /** True when {@code player} is a passenger (directly or through another mount) of {@code mount}. */
+    public static boolean isRiding(Player player, Entity mount) {
+        for (Entity passenger : mount.getPassengers()) {
+            if (passenger == player || isRiding(player, passenger)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static <M> void add(

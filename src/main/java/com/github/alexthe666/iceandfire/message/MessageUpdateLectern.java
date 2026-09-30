@@ -52,10 +52,11 @@ public class MessageUpdateLectern {
 
         public static void handle(MessageUpdateLectern message, CustomPayloadEvent.Context context) {
             context.setPacketHandled(true);
-            Player player = context.getSender();
-            if(context.isClientSide()){
-                player = IceAndFire.PROXY.getClientSidePlayer();
+            if (!context.isClientSide()) {
+                // Page choices are decided by the server (ContainerLectern#clickMenuButton); never trust a client here.
+                return;
             }
+            Player player = IceAndFire.PROXY.getClientSidePlayer();
             if (player != null) {
                 if (player.level() != null) {
                     BlockPos pos = BlockPos.of(message.blockPos);

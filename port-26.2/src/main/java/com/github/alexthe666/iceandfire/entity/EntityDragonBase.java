@@ -832,7 +832,7 @@ public abstract class EntityDragonBase extends TamableAnimal implements IPassabi
         this.modelDeadProgress = compound.getFloatOr("DeadProg", 0.0F);
         this.setCustomPose(compound.getStringOr("CustomPose", ""));
         this.hasHomePosition = compound.getBooleanOr("HasHomePosition", false);
-        if (hasHomePosition && compound.getIntOr("HomeAreaX", 0) != 0 && compound.getIntOr("HomeAreaY", 0) != 0 && compound.getIntOr("HomeAreaZ", 0) != 0) {
+        if (hasHomePosition && compound.getInt("HomeAreaX").isPresent() && compound.getInt("HomeAreaY").isPresent() && compound.getInt("HomeAreaZ").isPresent()) {
             homePos = new HomePosition(compound, this.level());
         }
         this.setTackling(compound.getBooleanOr("Tackle", false));

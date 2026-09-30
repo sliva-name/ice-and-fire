@@ -296,7 +296,7 @@ public class MyrmexHive {
         }
         this.colonyName = compound.getStringOr("ColonyName", "");
         this.villageRadius = compound.getIntOr("Radius", 0);
-        if (compound.read("WanderRadius", UUIDUtil.CODEC).isPresent()) {
+        if (compound.contains("WanderRadius")) {
             this.wanderRadius = compound.getIntOr("WanderRadius", 0);
         }
         this.lastAddDoorTimestamp = compound.getIntOr("Stable", 0);
@@ -308,7 +308,7 @@ public class MyrmexHive {
         this.myrmexList.clear();
         for (int i = 0; i < hiveMembers.size(); ++i) {
             CompoundTag CompoundNBT = hiveMembers.getCompoundOrEmpty(i);
-            this.myrmexList.add(CompoundNBT.read("MyrmexUUID", UUIDUtil.CODEC).orElseThrow());
+            CompoundNBT.read("MyrmexUUID", UUIDUtil.CODEC).ifPresent(this.myrmexList::add);
         }
         ListTag foodRoomList = compound.getListOrEmpty("FoodRooms");
         this.foodRooms.clear();
@@ -341,7 +341,7 @@ public class MyrmexHive {
             CompoundTag CompoundNBT = entranceBottomsList.getCompoundOrEmpty(i);
             this.entranceBottoms.put(new BlockPos(CompoundNBT.getIntOr("X", 0), CompoundNBT.getIntOr("Y", 0), CompoundNBT.getIntOr("Z", 0)), Direction.from2DDataValue(CompoundNBT.getIntOr("Facing", 0)));
         }
-        hiveUUID = compound.read("HiveUUID", UUIDUtil.CODEC).orElseThrow();
+        hiveUUID = compound.read("HiveUUID", UUIDUtil.CODEC).orElseGet(UUID::randomUUID);
         ListTag nbttaglist1 = compound.getListOrEmpty("Players");
         this.playerReputation.clear();
         for (int j = 0; j < nbttaglist1.size(); ++j) {

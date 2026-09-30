@@ -3,6 +3,7 @@ package com.github.alexthe666.iceandfire;
 import com.github.alexthe666.iceandfire.config.BiomeConfig;
 import com.github.alexthe666.iceandfire.config.ConfigHolder;
 import com.github.alexthe666.iceandfire.entity.EntityDragonBase;
+import com.github.alexthe666.iceandfire.entity.util.DragonUtils;
 import com.github.alexthe666.iceandfire.entity.util.IHasCustomizableAttributes;
 import com.github.alexthe666.iceandfire.entity.util.MyrmexHive;
 import com.github.alexthe666.iceandfire.enums.EnumParticles;
@@ -39,9 +40,19 @@ public class CommonProxy {
     @SubscribeEvent
     public static void onModConfigChanged(final ModConfigEvent.Reloading event) {
         final ModConfig config = event.getConfig();
-        // In case we reload the config clear the attribute cache to allow for values to be modified
-        if (config.getSpec() == ConfigHolder.SERVER_SPEC) {
+        // A reload must re-bake the values as well, otherwise edited config files are ignored until a restart
+        if (config.getSpec() == ConfigHolder.CLIENT_SPEC) {
+            if (ConfigHolder.CLIENT_SPEC.isLoaded()) {
+                IafConfig.bakeClient(config);
+            }
+        } else if (config.getSpec() == ConfigHolder.SERVER_SPEC) {
+            // The watcher also fires while the world is closing, when the values are no longer readable
+            if (ConfigHolder.SERVER_SPEC.isLoaded()) {
+                IafConfig.bakeServer(config);
+            }
+            // Clear the attribute and block caches to allow for values to be modified
             IHasCustomizableAttributes.ATTRIBUTE_MODIFIER_MAP.clear();
+            DragonUtils.clearBlockCache();
         }
     }
 

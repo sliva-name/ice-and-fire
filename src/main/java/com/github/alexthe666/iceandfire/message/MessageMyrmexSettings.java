@@ -3,6 +3,7 @@ package com.github.alexthe666.iceandfire.message;
 import com.github.alexthe666.iceandfire.IceAndFire;
 import com.github.alexthe666.iceandfire.entity.EntityMyrmexBase;
 import com.github.alexthe666.iceandfire.entity.util.MyrmexHive;
+import com.github.alexthe666.iceandfire.item.ItemMyrmexStaff;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.Entity;
@@ -43,15 +44,16 @@ public class MessageMyrmexSettings {
         public static void handle(MessageMyrmexSettings message, CustomPayloadEvent.Context context) {
             context.setPacketHandled(true);
             Player player = context.getSender();
-            if(context.isClientSide()){
-                player = IceAndFire.PROXY.getClientSidePlayer();
+            if (context.isClientSide()) {
+                return;
             }
             if (player != null) {
                 if (player.level() != null) {
                     Entity entity = player.level().getEntity(message.queenID);
                     if (entity != null && entity instanceof EntityMyrmexBase) {
                         MyrmexHive hive = ((EntityMyrmexBase) entity).getHive();
-                        if (hive != null) {
+                        if (hive != null && ItemMyrmexStaff.holdsStaffFor(player, hive.hiveUUID)
+                            && player.distanceToSqr(entity) < 64 * 64) {
                             hive.reproduces = message.reproduces;
                             if (message.deleteRoom) {
                                 hive.removeRoom(BlockPos.of(message.roomToDelete));

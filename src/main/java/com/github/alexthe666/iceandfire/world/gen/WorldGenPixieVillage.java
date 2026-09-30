@@ -10,6 +10,7 @@ import com.github.alexthe666.iceandfire.world.IafWorldRegistry;
 import com.mojang.serialization.Codec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.Blocks;
@@ -37,13 +38,18 @@ public class WorldGenPixieVillage extends Feature<NoneFeatureConfiguration> impl
         }
 
         int maxRoads = IafConfig.pixieVillageSize + rand.nextInt(5);
-        BlockPos buildPosition = position;
+        // Roads wander away from the start, so begin in the middle of the chunk and clip to the safe worldgen zone.
+        ChunkPos chunk = ChunkPos.containing(position);
+        BlockPos buildPosition = new BlockPos(chunk.getMiddleBlockX(), position.getY(), chunk.getMiddleBlockZ());
         int placedRoads = 0;
         while(placedRoads < maxRoads){
             int roadLength = 10 + rand.nextInt(15);
-            Direction buildingDirection = Direction.from2DDataValue(rand.nextInt(3));
+            Direction buildingDirection = Direction.from2DDataValue(rand.nextInt(4));
             for(int i = 0; i < roadLength; i++) {
                 BlockPos buildPosition2 = buildPosition.relative(buildingDirection, i);
+                if (!WorldGenSafety.isSafe(worldIn, buildPosition2, 3)) {
+                    continue;
+                }
                 buildPosition2 = worldIn.getHeightmapPos(Heightmap.Types.WORLD_SURFACE_WG, buildPosition2).below();
                 if (worldIn.getBlockState(buildPosition2).getFluidState().isEmpty()) {
                     worldIn.setBlock(buildPosition2, Blocks.DIRT_PATH.defaultBlockState(), 2);

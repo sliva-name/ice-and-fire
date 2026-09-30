@@ -89,6 +89,22 @@ public final class OathProperties {
         return true;
     }
 
+    /** Carries the oath and the forsworn shame over to the respawned player; other misc data stays reset. */
+    public static void copyAfterDeath(Player original, Player respawned) {
+        CompoundTag from = misc(CitadelEntityData.getCitadelTag(original));
+        if (from == null) {
+            return;
+        }
+        CompoundTag root = CitadelEntityData.getOrCreateCitadelTag(respawned);
+        CompoundTag misc = miscOrEmpty(root);
+        for (String key : new String[]{OATH, FORSWORN_OATH, FORSWORN_UNTIL}) {
+            if (from.contains(key)) {
+                misc.put(key, from.get(key).copy());
+            }
+        }
+        root.put(MISC_DATA, misc);
+    }
+
     public static boolean ignoresWaste(Player player) {
         return get(player) == OathType.WASTE;
     }

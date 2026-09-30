@@ -44,7 +44,8 @@ public class MyrmexWorldData extends SavedData {
     );
 
     private final List<BlockPos> villagerPositionsList = Lists.newArrayList();
-    private final List<MyrmexHive> hiveList = Lists.newArrayList();
+    // Worldgen threads add hives while the server thread ticks and saves them.
+    private final List<MyrmexHive> hiveList = new java.util.concurrent.CopyOnWriteArrayList<>();
     private Level world;
     private int tickCounter;
 

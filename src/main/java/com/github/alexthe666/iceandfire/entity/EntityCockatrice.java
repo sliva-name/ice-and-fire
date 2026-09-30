@@ -370,7 +370,7 @@ public class EntityCockatrice extends TamableAnimal implements IAnimatedEntity, 
         this.setTamingPlayer(tag.getIntOr("TamingPlayer", 0));
         this.setCommand(tag.getIntOr("Command", 0));
         this.hasHomePosition = tag.getBooleanOr("HasHomePosition", false);
-        if (hasHomePosition && tag.getIntOr("HomeAreaX", 0) != 0 && tag.getIntOr("HomeAreaY", 0) != 0 && tag.getIntOr("HomeAreaZ", 0) != 0) {
+        if (hasHomePosition && tag.getInt("HomeAreaX").isPresent() && tag.getInt("HomeAreaY").isPresent() && tag.getInt("HomeAreaZ").isPresent()) {
             homePos = new HomePosition(tag, this.level());
         }
     }

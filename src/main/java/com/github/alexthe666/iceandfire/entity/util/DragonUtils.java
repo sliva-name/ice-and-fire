@@ -40,7 +40,7 @@ import java.util.Objects;
 public class DragonUtils {
 
 
-    private static final Map<Block, Boolean> BLOCK_CACHE = new HashMap<>();
+    private static final Map<Block, Boolean> BLOCK_CACHE = new java.util.concurrent.ConcurrentHashMap<>();
 
     public static BlockPos getBlockInViewEscort(EntityDragonBase dragon) {
         BlockPos escortPos = dragon.getEscortPosition();
@@ -321,6 +321,10 @@ public class DragonUtils {
 
     public static boolean isInHomeDimension(EntityDragonBase dragonBase) {
         return (dragonBase.getHomeDimensionName() == null || getDimensionName(dragonBase.level()).equals(dragonBase.getHomeDimensionName()));
+    }
+
+    public static void clearBlockCache() {
+        BLOCK_CACHE.clear();
     }
 
     public static boolean canDragonBreak(Block block) {
