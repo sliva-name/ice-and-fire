@@ -96,8 +96,12 @@ public class EntityIceDragon extends EntityDragonBase {
         this.entityData.set(BLACK_FROST, blackFrost);
     }
 
+    /** Set while the boss dragon has its growth frozen, so taming can unfreeze it without undoing a sickly meal. */
+    private boolean bossAgeLock;
+
     public void applyBlackFrost() {
         this.setBlackFrost(true);
+        this.bossAgeLock = true;
         this.setGender(false);
         this.setVariant(0);
         this.setAgeInDays(100);
@@ -272,6 +276,7 @@ public class EntityIceDragon extends EntityDragonBase {
         compound.putBoolean("Swimming", this.isDragonSwimming());
         compound.putInt("SwimmingTicks", this.ticksSwiming);
         compound.putBoolean("BlackFrost", this.isBlackFrost());
+        compound.putBoolean("BossAgeLock", this.bossAgeLock);
     }
 
     @Override
@@ -280,6 +285,7 @@ public class EntityIceDragon extends EntityDragonBase {
         this.setDragonSwimming(compound.getBooleanOr("Swimming", false));
         this.ticksSwiming = compound.getIntOr("SwimmingTicks", 0);
         this.setBlackFrost(compound.getBooleanOr("BlackFrost", false));
+        this.bossAgeLock = compound.getBooleanOr("BossAgeLock", this.isBlackFrost() && this.isAgingDisabled());
     }
 
     @Override
@@ -325,6 +331,10 @@ public class EntityIceDragon extends EntityDragonBase {
         if (!this.level().isClientSide() && this.isBlackFrost()) {
             if (this.isTame()) {
                 this.releaseQueen();
+                if (this.bossAgeLock) {
+                    this.bossAgeLock = false;
+                    this.setAgingDisabled(false);
+                }
             } else {
                 this.tickBlackFrostCombat();
             }
