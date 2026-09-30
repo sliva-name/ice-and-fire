@@ -507,7 +507,7 @@ public abstract class EntityDragonBase extends TamableAnimal implements IPassabi
     }
 
     protected void updateBurnTarget() {
-        if (burningTarget != null && !this.isSleeping() && !this.isModelDead() && !this.isBaby()) {
+        if (burningTarget != null && !this.isSleeping() && !this.isModelDead() && !this.isDragonBaby()) {
             float maxDist = 115 * this.getDragonStage();
             boolean flag = false;
             if (this.level().getBlockEntity(burningTarget) instanceof TileEntityDragonforgeInput && ((TileEntityDragonforgeInput) this.level().getBlockEntity(burningTarget)).isAssembled()
@@ -947,7 +947,7 @@ public abstract class EntityDragonBase extends TamableAnimal implements IPassabi
         this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(Math.round(minimumHealth + (healthStep * age)));
         this.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(Math.round(minimumDamage + (attackStep * age)));
         this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(minimumSpeed + (speedStep * age));
-        final double baseValue = minimumArmor + (armorStep * this.getAgeInDays());
+        final double baseValue = minimumArmor + (armorStep * age);
         this.getAttribute(Attributes.ARMOR).setBaseValue(baseValue);
         if (!this.level().isClientSide()) {
             this.getAttribute(Attributes.ARMOR).removeModifier(ARMOR_MODIFIER_ID);
@@ -1682,6 +1682,14 @@ public abstract class EntityDragonBase extends TamableAnimal implements IPassabi
         } else {
             return 1;
         }
+    }
+
+    /**
+     * Hatchlings are the dragons younger than stage 2. 26.2 made AgeableMob.isBaby() final and driven by
+     * its own flag, so the stage has to be read directly instead of through isBaby().
+     */
+    public boolean isDragonBaby() {
+        return getDragonStage() < 2;
     }
 
     public boolean isTeen() {
@@ -2865,7 +2873,7 @@ public abstract class EntityDragonBase extends TamableAnimal implements IPassabi
     }
 
     public boolean isAllowedToTriggerFlight() {
-        return (this.hasFlightClearance() && this.onGround() || this.isInWater()) && !this.isOrderedToSit() && this.getPassengers().isEmpty() && !this.isBaby() && !this.isSleeping() && this.canMove();
+        return (this.hasFlightClearance() && this.onGround() || this.isInWater()) && !this.isOrderedToSit() && this.getPassengers().isEmpty() && !this.isDragonBaby() && !this.isSleeping() && this.canMove();
     }
 
     public BlockPos getEscortPosition() {

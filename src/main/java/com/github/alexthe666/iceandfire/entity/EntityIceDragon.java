@@ -372,7 +372,7 @@ public class EntityIceDragon extends EntityDragonBase {
         }
         if (this.isDragonSwimming() && !this.isModelDead()) {
             ticksSwiming++;
-            if ((this.isInMaterialWater() || this.isOverWater()) && (ticksSwiming > 4000 || this.getTarget() != null && this.isInWater() != this.getTarget().isInWater()) && !this.isBaby() && !this.isHovering() && !this.isFlying()) {
+            if ((this.isInMaterialWater() || this.isOverWater()) && (ticksSwiming > 4000 || this.getTarget() != null && this.isInWater() != this.getTarget().isInWater()) && !this.isDragonBaby() && !this.isHovering() && !this.isFlying()) {
                 this.setHovering(true);
                 this.jumpFromGround();
                 this.setDeltaMovement(this.getDeltaMovement().add(0.0D, 0.8D, 0.0D));
@@ -399,7 +399,7 @@ public class EntityIceDragon extends EntityDragonBase {
 
     @Override
     public void riderShootFire(Entity controller) {
-        if (this.getRandom().nextInt(5) == 0 && !this.isBaby()) {
+        if (this.getRandom().nextInt(5) == 0 && !this.isDragonBaby()) {
             if (this.getAnimation() != ANIMATION_FIRECHARGE) {
                 this.setAnimation(ANIMATION_FIRECHARGE);
             } else if (this.getAnimationTick() == 15) {
@@ -415,7 +415,7 @@ public class EntityIceDragon extends EntityDragonBase {
                 d4 = d4 + this.random.nextGaussian() * 0.007499999832361937D * inaccuracy;
                 EntityDragonIceCharge entitylargefireball = new EntityDragonIceCharge(
                     IafEntityRegistry.ICE_DRAGON_CHARGE.get(), level(), this, d2, d3, d4);
-                float size = this.isBaby() ? 0.4F : this.shouldDropLoot() ? 1.3F : 0.8F;
+                float size = this.isDragonBaby() ? 0.4F : this.shouldDropLoot() ? 1.3F : 0.8F;
                 entitylargefireball.setPos(headVec.x, headVec.y, headVec.z);
                 if (!this.level().isClientSide()) {
                     this.level().addFreshEntity(entitylargefireball);
@@ -596,7 +596,7 @@ public class EntityIceDragon extends EntityDragonBase {
                     this.playSound(IafSoundRegistry.ICEDRAGON_BREATH, 4, 1);
                     EntityDragonIceCharge entitylargefireball = new EntityDragonIceCharge(
                         IafEntityRegistry.ICE_DRAGON_CHARGE.get(), level(), this, d2, d3, d4);
-                    float size = this.isBaby() ? 0.4F : this.shouldDropLoot() ? 1.3F : 0.8F;
+                    float size = this.isDragonBaby() ? 0.4F : this.shouldDropLoot() ? 1.3F : 0.8F;
                     entitylargefireball.setPos(headVec.x, headVec.y, headVec.z);
                     if (!this.level().isClientSide()) {
                         this.level().addFreshEntity(entitylargefireball);
@@ -662,7 +662,7 @@ public class EntityIceDragon extends EntityDragonBase {
                 this.playSound(IafSoundRegistry.FIREDRAGON_BREATH, 4, 1);
                 EntityDragonIceCharge entitylargefireball = new EntityDragonIceCharge(
                     IafEntityRegistry.ICE_DRAGON_CHARGE.get(), level(), this, d2, d3, d4);
-                float size = this.isBaby() ? 0.4F : this.shouldDropLoot() ? 1.3F : 0.8F;
+                float size = this.isDragonBaby() ? 0.4F : this.shouldDropLoot() ? 1.3F : 0.8F;
                 entitylargefireball.setPos(headVec.x, headVec.y, headVec.z);
                 if (!this.level().isClientSide()) {
                     this.level().addFreshEntity(entitylargefireball);
