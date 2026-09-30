@@ -50,11 +50,7 @@ public class IafDragonFlightManager {
 
         if (dragon.getTarget() != null && dragon.getTarget().isAlive()) {
             if (dragon instanceof EntityIceDragon && dragon.isInWater()) {
-                if (dragon.getTarget() == null) {
-                    dragon.airAttack = IafDragonAttacks.Air.SCORCH_STREAM;
-                } else {
-                    dragon.airAttack = IafDragonAttacks.Air.TACKLE;
-                }
+                dragon.airAttack = IafDragonAttacks.Air.TACKLE;
             }
             LivingEntity entity = dragon.getTarget();
             if (dragon.airAttack == IafDragonAttacks.Air.TACKLE) {
@@ -92,10 +88,7 @@ public class IafDragonFlightManager {
                 } else {
                     viewBlock = DragonUtils.getBlockInViewEscort(dragon);
                 }
-            } else if (dragon.lookingForRoostAIFlag) {
-                double xDist = Math.abs(dragon.getX() - dragon.getHomePosition().getX() - 0.5F);
-                double zDist = Math.abs(dragon.getZ() - dragon.getHomePosition().getZ() - 0.5F);
-                double xzDist = Math.sqrt(xDist * xDist + zDist * zDist);
+            } else if (dragon.lookingForRoostAIFlag && dragon.getHomePosition() != null) {
                 BlockPos upPos = dragon.getHomePosition();
                 if (dragon.getDistanceSquared(Vec3.atCenterOf(dragon.getHomePosition())) > 200) {
                     upPos = upPos.above(30);
@@ -252,17 +245,20 @@ public class IafDragonFlightManager {
             float distY = (float) (dragon.flightManager.getFlightTarget().y - dragon.getY());
             float distZ = (float) (dragon.flightManager.getFlightTarget().z - dragon.getZ());
             double planeDist = Math.sqrt(distX * distX + distZ * distZ);
-            double yDistMod = 1.0D - (double) Mth.abs(distY * 0.7F) / planeDist;
+            // A steep climb used to push this negative, which flipped the heading away from the target.
+            double yDistMod = planeDist < 1.0E-4D ? 0.0D : Math.max(0.0D, 1.0D - (double) Mth.abs(distY * 0.7F) / planeDist);
             distX = (float) ((double) distX * yDistMod);
             distZ = (float) ((double) distZ * yDistMod);
             planeDist = Mth.sqrt(distX * distX + distZ * distZ);
             double dist = Math.sqrt(distX * distX + distZ * distZ + distY * distY);
             if (dist > 1.0F) {
                 float yawCopy = dragon.getYRot();
-                float atan = (float) Mth.atan2(distZ, distX);
-                float yawTurn = Mth.wrapDegrees(dragon.getYRot() + 90);
-                float yawTurnAtan = Mth.wrapDegrees(atan * 57.295776F);
-                dragon.setYRot(IafDragonFlightManager.approachDegrees(yawTurn, yawTurnAtan, dragon.airAttack == IafDragonAttacks.Air.TACKLE && dragon.getTarget() != null ? 10 : 4.0F) - 90.0F);
+                if (planeDist > 1.0E-3D) {
+                    float atan = (float) Mth.atan2(distZ, distX);
+                    float yawTurn = Mth.wrapDegrees(dragon.getYRot() + 90);
+                    float yawTurnAtan = Mth.wrapDegrees(atan * 57.295776F);
+                    dragon.setYRot(IafDragonFlightManager.approachDegrees(yawTurn, yawTurnAtan, dragon.airAttack == IafDragonAttacks.Air.TACKLE && dragon.getTarget() != null ? 10 : 4.0F) - 90.0F);
+                }
                 dragon.yBodyRot = dragon.getYRot();
                 if (IafDragonFlightManager.degreesDifferenceAbs(yawCopy, dragon.getYRot()) < 3.0F) {
                     speedModifier = IafDragonFlightManager.approach((float) speedModifier, 1.8F, 0.005F * (1.8F / (float) speedModifier));
@@ -312,7 +308,7 @@ public class IafDragonFlightManager {
             double dist = dragonVec.distanceTo(moveVec);
             dragon.setDeltaMovement(normalized.x * flySpeed, normalized.y * flySpeed, normalized.z * flySpeed);
             if (dist > 2.5E-7) {
-                float yaw = (float) Math.toDegrees(Math.PI * 2 - Math.atan2(normalized.x, normalized.y));
+                float yaw = (float) Math.toDegrees(Math.PI * 2 - Math.atan2(normalized.x, normalized.z));
                 dragon.setYRot(rotlerp(dragon.getYRot(), yaw, 5));
                 dragon.setSpeed((float) (speedModifier));
             }

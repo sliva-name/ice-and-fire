@@ -116,6 +116,11 @@ public class PathingStuckHandler implements IStuckHandler
      */
     private BlockPos moveAwayStartPos = BlockPos.ZERO;
 
+    /**
+     * Options whose climbing was switched off by the move-away step, restored once the entity is free again
+     */
+    private PathingOptions suppressedClimb = null;
+
     private final Random rand = new Random();
 
     private PathingStuckHandler()
@@ -148,8 +153,8 @@ public class PathingStuckHandler implements IStuckHandler
         final double distanceToGoal =
             navigator.getOurEntity().position().distanceTo(new Vec3(navigator.getDesiredPos().getX(), navigator.getDesiredPos().getY(), navigator.getDesiredPos().getZ()));
 
-        // Close enough to be considered at the goal
-        if (distanceToGoal < MIN_TARGET_DIST)
+        // Close enough to be considered at the goal; a wide body reaches its target from further away
+        if (distanceToGoal < Math.max(MIN_TARGET_DIST, navigator.getOurEntity().getBbWidth() + 1.0D))
         {
             resetGlobalStuckTimers();
             return;
@@ -279,7 +284,10 @@ public class PathingStuckHandler implements IStuckHandler
             delayToNextUnstuckAction = 200;
             navigator.stop();
             navigator.moveAwayFromXYZ(new BlockPos(navigator.getOurEntity().blockPosition()), 10, 1.0f, false);
-            navigator.getPathingOptions().setCanClimb(false);
+            if (navigator.getPathingOptions().canClimb()) {
+                suppressedClimb = navigator.getPathingOptions();
+                suppressedClimb.setCanClimb(false);
+            }
             moveAwayStartPos = navigator.getOurEntity().blockPosition();
             return;
         }
@@ -342,6 +350,10 @@ public class PathingStuckHandler implements IStuckHandler
     private void resetStuckTimers()
     {
         delayToNextUnstuckAction = delayBeforeActions;
+        if (suppressedClimb != null) {
+            suppressedClimb.setCanClimb(true);
+            suppressedClimb = null;
+        }
         lastPathIndex = -1;
         progressedNodes = 0;
         stuckLevel = 0;
@@ -530,6 +542,7 @@ public class PathingStuckHandler implements IStuckHandler
     public PathingStuckHandler withDelayBeforeStuckActions(int delay)
     {
         delayBeforeActions = delay;
+        delayToNextUnstuckAction = delay;
         return this;
     }
 

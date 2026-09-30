@@ -527,7 +527,8 @@ public abstract class EntityDragonBase extends TamableAnimal implements IPassabi
     protected abstract void breathFireAtPos(BlockPos burningTarget);
 
     protected PathingStuckHandler createStuckHandler() {
-        return PathingStuckHandler.createStuckHandler();
+        // A dragon that cannot move for a minute is a fight the player is winning by standing still.
+        return PathingStuckHandler.createStuckHandler().withDelayBeforeStuckActions(20 * 20);
     }
 
     @Override
