@@ -102,7 +102,7 @@ public class BlockJar extends BaseEntityBlock {
             if (!world.isClientSide()) {
                 world.addFreshEntity(item);
             }
-            world.playLocalSound(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5, IafSoundRegistry.PIXIE_HURT, SoundSource.NEUTRAL, 1, 1, false);
+            world.playSound(null, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5, IafSoundRegistry.PIXIE_HURT, SoundSource.NEUTRAL, 1, 1);
             return InteractionResult.SUCCESS;
         }
         return InteractionResult.PASS;

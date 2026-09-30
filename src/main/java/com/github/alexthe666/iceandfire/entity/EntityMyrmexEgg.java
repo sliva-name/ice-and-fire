@@ -169,7 +169,7 @@ public class EntityMyrmexEgg extends LivingEntity implements IBlacklistedFromSta
             if (!this.level().isClientSide()) {
                 this.level().addFreshEntity(myrmex);
             }
-            this.level().playLocalSound(this.getX(), this.getY() + this.getEyeHeight(), this.getZ(), IafSoundRegistry.EGG_HATCH, this.getSoundSource(), 2.5F, 1.0F, false);
+            this.level().playSound(null, this.getX(), this.getY() + this.getEyeHeight(), this.getZ(), IafSoundRegistry.EGG_HATCH, this.getSoundSource(), 2.5F, 1.0F);
         }
     }
 
