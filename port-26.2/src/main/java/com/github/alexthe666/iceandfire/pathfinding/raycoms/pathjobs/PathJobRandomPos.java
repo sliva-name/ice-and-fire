@@ -35,7 +35,8 @@ public class PathJobRandomPos extends AbstractPathJob
     /**
      * Random pathing rand.
      */
-    private static final RandomSource random = RandomSource.create();
+    // Shared by jobs running on several pathfinding threads; the legacy source throws on concurrent use.
+    private static final RandomSource random = RandomSource.createThreadSafe();
 
 
     /**

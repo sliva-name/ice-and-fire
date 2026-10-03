@@ -53,7 +53,9 @@ public final class Pathfinding {
      */
     public static ThreadPoolExecutor getExecutor() {
         if (executor == null) {
-            executor = new ThreadPoolExecutor(1, IafConfig.dragonPathfindingThreads, 10, TimeUnit.SECONDS, jobQueue, new IafThreadFactory());
+            // An unbounded queue never grows the pool past its core size, so the core size has to be the configured thread count.
+            final int threads = IafConfig.dragonPathfindingThreads;
+            executor = new ThreadPoolExecutor(threads, threads, 10, TimeUnit.SECONDS, jobQueue, new IafThreadFactory());
         }
         return executor;
     }
