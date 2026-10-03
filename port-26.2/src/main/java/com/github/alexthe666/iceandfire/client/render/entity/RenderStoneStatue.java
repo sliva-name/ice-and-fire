@@ -266,9 +266,9 @@ public class RenderStoneStatue extends EntityRenderer<EntityStoneStatue, StoneSt
 
     private Entity resolveFake(EntityStoneStatue statue) {
         String key = statue.getTrappedEntityTypeString();
-        Entity cached = hollowEntityMap.get(key);
-        if (cached != null) {
-            return cached;
+        // Failures are cached as null too: retrying parses the statue tag again on every frame.
+        if (hollowEntityMap.containsKey(key)) {
+            return hollowEntityMap.get(key);
         }
         Minecraft client = Minecraft.getInstance();
         if (client.level == null) {
@@ -277,14 +277,13 @@ public class RenderStoneStatue extends EntityRenderer<EntityStoneStatue, StoneSt
         try {
             var input = net.minecraft.world.level.storage.TagValueInput.create(
                 net.minecraft.util.ProblemReporter.DISCARDING, client.level.registryAccess(), statue.getTrappedTag());
-            Entity build = statue.getTrappedEntityType().create(input, client.level, new net.minecraft.world.entity.EntitySpawnRequest(net.minecraft.world.entity.EntitySpawnReason.LOAD, false)).orElse(null);
-            if (build == null) {
-                return null;
-            }
+            // The static create(ValueInput, ...) reads the type from an "id" field the statue tag does not have.
+            Entity build = net.minecraft.world.entity.EntityType.create(statue.getTrappedEntityType(), input, client.level, net.minecraft.world.entity.EntitySpawnReason.LOAD).orElse(null);
             hollowEntityMap.put(key, build);
             return build;
         } catch (Exception e) {
             IceAndFire.LOGGER.warn("Mob {} could not build statue NBT", key);
+            hollowEntityMap.put(key, null);
             return null;
         }
     }

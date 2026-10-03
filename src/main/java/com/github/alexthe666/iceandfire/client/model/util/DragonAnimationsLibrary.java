@@ -7,6 +7,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 
 import java.util.HashMap;
+import java.util.Map;
 
 
 /**
@@ -15,14 +16,29 @@ import java.util.HashMap;
 public class DragonAnimationsLibrary {
     private static final Logger LOGGER = LogManager.getLogger();
     private static final HashMap<String, TabulaModel<?>> models = new HashMap<>();
+    /**
+     * Animators ask for poses for every cube of every dragon each frame, so lookups skip building the string key
+     */
+    private static final Map<IEnumDragonModelTypes, Map<IEnumDragonPoses, TabulaModel<?>>> lookup = new HashMap<>();
     private static String toKey(IEnumDragonPoses p, IEnumDragonModelTypes m) {
         return p.getPose() + m.getModelType();
     }
 
+    private static void put(String key, TabulaModel<?> model) {
+        models.put(key, model);
+        lookup.clear();
+    }
+
     public static TabulaModel<?> getModel(IEnumDragonPoses pose, IEnumDragonModelTypes modelType) {
-        TabulaModel<?> result = models.get(toKey(pose, modelType));
+        Map<IEnumDragonPoses, TabulaModel<?>> byPose = lookup.computeIfAbsent(modelType, type -> new HashMap<>());
+        TabulaModel<?> result = byPose.get(pose);
+        if (result != null)
+            return result;
+        result = models.get(toKey(pose, modelType));
         if(result == null)
             LOGGER.error("No model defined for " + pose.getPose() + modelType.getModelType() + " have you registered your animations?");
+        else
+            byPose.put(pose, result);
         return result;
     }
 
@@ -90,7 +106,7 @@ public class DragonAnimationsLibrary {
         }
 
         //put model
-        models.put(toKey(pose, modelType), result);
+        put(toKey(pose, modelType), result);
     }
 
     /**
@@ -120,7 +136,7 @@ public class DragonAnimationsLibrary {
         if (source == null) {
             return;
         }
-        models.put(toKey(pose, modelType), source);
+        put(toKey(pose, modelType), source);
     }
 
     /**
@@ -155,7 +171,7 @@ public class DragonAnimationsLibrary {
                     "Overriding existing model '" + destKey +
                     "' with reference to '"       + toKey(pose, modelSource));
 
-        models.put(destKey, source);
+        put(destKey, source);
     }
 
 }

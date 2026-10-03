@@ -9,6 +9,9 @@ import com.github.alexthe666.iceandfire.client.render.entity.DragonRenderState;
 import com.github.alexthe666.iceandfire.client.render.entity.DragonRenderState.AnimationKind;
 import net.minecraft.util.Mth;
 
+import java.util.IdentityHashMap;
+import java.util.Map;
+
 public abstract class DragonTabulaModelAnimator extends IceAndFireTabulaModelAnimator implements ITabulaModelAnimator<DragonRenderState> {
 
     protected TabulaModel<?>[] walkPoses;
@@ -21,6 +24,11 @@ public abstract class DragonTabulaModelAnimator extends IceAndFireTabulaModelAni
     protected AdvancedModelBox[] toesPartsR;
     protected AdvancedModelBox[] clawL;
     protected AdvancedModelBox[] clawR;
+    /**
+     * Per render model, the cubes whose female pose differs from the male one and the angles to blend towards
+     */
+    private final Map<TabulaModel<?>, Map<AdvancedModelBox, float[]>> femaleRotations = new IdentityHashMap<>();
+    private Map<AdvancedModelBox, float[]> currentFemaleRotations = Map.of();
 
     public DragonTabulaModelAnimator(TabulaModel<?> baseModel) {
         super(baseModel);
@@ -45,6 +53,7 @@ public abstract class DragonTabulaModelAnimator extends IceAndFireTabulaModelAni
         if (neckParts == null) {
             init(model);
         }
+        currentFemaleRotations = femaleRotations.computeIfAbsent(model, this::collectFemaleRotations);
         animate(model, entity, limbSwing, limbSwingAmount, ageInTicks, rotationYaw, rotationPitch, scale);
 
         boolean walking = !entity.hovering && !entity.flying && entity.hoverProgress <= 0 && entity.flyProgress <= 0;
@@ -265,19 +274,33 @@ public abstract class DragonTabulaModelAnimator extends IceAndFireTabulaModelAni
 
     protected void genderMob(DragonRenderState entity, AdvancedModelBox cube) {
         if (!entity.male) {
-            TabulaModel<?> maleModel = getModel(EnumDragonPoses.MALE);
-            TabulaModel<?> femaleModel = getModel(EnumDragonPoses.FEMALE);
+            float[] rotation = currentFemaleRotations.get(cube);
+            if (rotation != null) {
+                this.setRotateAngle(cube, 1F, rotation[0], rotation[1], rotation[2]);
+            }
+        }
+    }
+
+    /**
+     * The male and female poses never change, so compare them once instead of for every cube on every frame.
+     */
+    private Map<AdvancedModelBox, float[]> collectFemaleRotations(TabulaModel<?> model) {
+        TabulaModel<?> maleModel = getModel(EnumDragonPoses.MALE);
+        TabulaModel<?> femaleModel = getModel(EnumDragonPoses.FEMALE);
+        Map<AdvancedModelBox, float[]> rotations = new IdentityHashMap<>();
+        for (AdvancedModelBox cube : model.getCubes().values()) {
             AdvancedModelBox femaleModelCube = femaleModel.getCube(cube.boxName);
             AdvancedModelBox maleModelCube = maleModel.getCube(cube.boxName);
             if (maleModelCube == null || femaleModelCube == null)
-                return;
+                continue;
             float x = femaleModelCube.rotateAngleX;
             float y = femaleModelCube.rotateAngleY;
             float z = femaleModelCube.rotateAngleZ;
             if (x != maleModelCube.rotateAngleX || y != maleModelCube.rotateAngleY || z != maleModelCube.rotateAngleZ) {
-                this.setRotateAngle(cube, 1F, x, y, z);
+                rotations.put(cube, new float[]{x, y, z});
             }
         }
+        return rotations;
     }
 
     protected abstract TabulaModel<?> getModel(EnumDragonPoses pose);
