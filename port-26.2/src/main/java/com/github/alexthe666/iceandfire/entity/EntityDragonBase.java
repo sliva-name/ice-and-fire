@@ -528,6 +528,7 @@ public abstract class EntityDragonBase extends TamableAnimal implements IPassabi
 
     protected PathingStuckHandler createStuckHandler() {
         // A dragon that cannot move for a minute is a fight the player is winning by standing still.
+        // No teleports: the handler drops the mob onto path nodes and one-block gaps, where a dragon-sized body lands in a wall again.
         return PathingStuckHandler.createStuckHandler().withDelayBeforeStuckActions(20 * 20);
     }
 
@@ -546,7 +547,7 @@ public abstract class EntityDragonBase extends TamableAnimal implements IPassabi
     }
 
     protected PathNavigation createNavigator(Level worldIn, AdvancedPathNavigate.MovementType type, PathingStuckHandler stuckHandler, float width, float height) {
-        AdvancedPathNavigate newNavigator = new AdvancedPathNavigate(this, level(), type, width, height);
+        AdvancedPathNavigate newNavigator = new AdvancedPathNavigate(this, level(), type, width, height, stuckHandler);
         this.navigation = newNavigator;
         newNavigator.setCanFloat(true);
         newNavigator.getNodeEvaluator().setCanOpenDoors(true);
@@ -556,7 +557,7 @@ public abstract class EntityDragonBase extends TamableAnimal implements IPassabi
     protected void switchNavigator(int navigatorType) {
         if (navigatorType == 0) {
             this.moveControl = new IafDragonFlightManager.GroundMoveHelper(this);
-            this.navigation = createNavigator(level(), AdvancedPathNavigate.MovementType.WALKING, createStuckHandler().withTeleportSteps(5));
+            this.navigation = createNavigator(level(), AdvancedPathNavigate.MovementType.WALKING);
             this.navigatorType = 0;
             this.setFlying(false);
             this.setHovering(false);
@@ -1872,10 +1873,10 @@ public abstract class EntityDragonBase extends TamableAnimal implements IPassabi
 
     @Override
     protected EntityDimensions getDefaultDimensions(@NotNull Pose poseIn) {
-        // The mesh sits a little outside the registered box. Pitch stretches that upright box so a dive still contains the chest.
-        float pitch = Math.abs(this.getDragonPitch()) * ((float) Math.PI / 180F);
-        float reach = 1F + 0.55F * Mth.sin(pitch);
-        return this.getType().getDimensions().scale(this.getAgeScale() * 1.08F * reach);
+        // The mesh sits a little outside the registered box. 8% keeps the torso covered without a new shape.
+        // Pitch must not resize it: the game never pushes a box this size back out of blocks, so a dive or climb
+        // near terrain wedged the dragon in it. The body parts tilt with the pitch and cover the chest instead.
+        return this.getType().getDimensions().scale(this.getAgeScale() * 1.08F);
     }
 
     @Override
